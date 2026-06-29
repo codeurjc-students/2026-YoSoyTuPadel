@@ -1,6 +1,8 @@
 # 2026-YoSoyTuPadel: una aplicación web diseñada para digitalizar y gestionar la actividad diaria de una academia de pádel
 YoSoyTuPadel es una página web que automatiza la reserva de pistas y el alquiler del equipamiento propio del club (palas), así como la contratación de entrenadores privados, conectando de forma efectiva a los alumnos, entrenadores y al administrador del centro. De esta forma, se aseguran horarios y disponibilidad en tiempo real, permitiendo a la comunidad del club gestionar sus actividades deportivas de manera cómoda sin tener que ir a la academia.
 
+Este proyecto es mi Trabajo de Fin de Grado (TFG). Se desarrolla siguiendo estrictamente las directrices metodológicas de la Universidad Rey Juan Carlos. El proceso está estructurado en diferentes fases de desarrollo, reflejadas en la organización de este archivo README. Para la elaboración de esta planificación, se ha seguido como referencia el documento: [Desarrollo de una aplicación web como TFG](https://urjc-my.sharepoint.com/:w:/r/personal/micael_gallego_urjc_es/_layouts/15/Doc.aspx?sourcedoc=%7BC6E36275-66B0-42E1-B228-36C4AC67F162%7D&file=Desarrollo%20de%20una%20aplicaci%C3%B3n%20web%20como%20TFG%20v4.docx&action=default&mobileredirect=true).
+
 ## 📋Información del proyecto
 
 * **Nombre de la App:** YoSoyTuPadel
