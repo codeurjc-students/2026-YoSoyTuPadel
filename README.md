@@ -10,8 +10,8 @@ Este proyecto es mi Trabajo de Fin de Grado (TFG). Se desarrolla siguiendo estri
 * **Tutor:** Michel Maes Bermejo
 * **Archivo de seguimiento:** [Seguimiento TFG](https://urjc-my.sharepoint.com/:w:/r/personal/micael_gallego_urjc_es/Documents/Formacion_CodeURJC/TFGs/TFGs%20por%20tutor/TFGs%20Michel/2026-27/Victor%20Candel/Seguimiento%20TFG.docx?d=w2ccb69f8b81a4d0ea43f91e6c2e8a255&csf=1&web=1&e=ahCtmf)
 
-
 # FASE 1 : Definición de funcionalidades y pantallas
+
 ## Entidades
 
 | Entidad | Descripción | Acciones |
@@ -23,7 +23,8 @@ Este proyecto es mi Trabajo de Fin de Grado (TFG). Se desarrolla siguiendo estri
 
 ### Diagrama inicial de clases 
 
-<img width="920" height="573" alt="DiagramaDeClasesInicial" src="https://github.com/user-attachments/assets/74a61e9f-bb20-4372-aad1-ea4b82e906d8" />
+<img width="920" height="573" alt="DiagramaDeClasesInicial" src="https://github.com/user-attachments/assets/bd4d9a4f-d187-4469-ba4e-02d63e52b1a4" />
+
 
 ## 🔍Objetivos
 
@@ -87,12 +88,66 @@ La aplicación será capaz de gestionar imágenes subidas por los usuarios para 
 
 * **Gráficos de líneas:** Cada usuario alumno tendrá en su perfil un gráfico de la progresión de su nivel a lo largo de los entrenamientos, subiendo o bajando de puntuación dependiendo de su desempeño en los entrenos y la valoración que le asigne el entrenador correspondiente.
 
+
 ## 🛠️Tecnologías complementarias
 
 * **Integración de Mapas (Google Maps / OpenStreetMap API):** Se utilizará una API de mapas interactivos en la pantalla de los detalles de una pista para posicionarla geográficamente, permitiendo mostrar de manera precisa la ubicación de las pistas e instalaciones del club mediante marcadores personalizados.
+
 
 ## 🤖Algoritmo o consulta avanzada
 
 El usuario podrá filtrar a su gusto las pistas que le aparecen en el catálogo de pistas, ya bien sea por precio, tipo, tipo de paredes, o valoraciones(las pistas estarán valoradas por una calificación).
 
+
 ## 💻 Boceto de pantallas
+
+### Pantalla de inicio de sesión o registro 
+En estas pantallas los usuarios podrán inicar sesión para hacer uso de los servicios que ofrece la aplicación de la academia o por el contrario registrarse si son usuarios no registrados: 
+Para el inicio de sesión: 
+
+<img width="1912" height="855" alt="image" src="https://github.com/user-attachments/assets/fbeb4318-e6bd-4a72-95bb-54fadc8923dc" />
+
+Para el registro: 
+
+<img width="1915" height="860" alt="image" src="https://github.com/user-attachments/assets/0d6f8fb5-9dd9-4ac1-ac0a-57d35a76b4e9" />
+
+
+### Pantalla del Menu Principal
+Desde esta pantalla se podrá acceder al catálogo de palas de alquiler, la lista de entrenadores para contratar y y la reserva de pistas. De igual forma, si el usuario es un alumno o un profesor, se podrá acceder a la pantalla del perfil de usuario. Adicionalmente se incluirá el nombre del usuario, la fecha actual y la fecha y hora del proximo entreno que haya contratado:
+
+<img width="1168" height="650" alt="image" src="https://github.com/user-attachments/assets/ce3a3deb-bda9-4e90-b899-a2ca335aba51" />
+
+
+### Pantalla de Perfil del Usuario
+En esta interfaz el usuario registrado podrá observar todos sus atributos como el nombre, el nickname, el peso, etc. También se encontrará aqui el número de partidos jugados y la gráfica de líneas de la progresión del nivel del jugador y el usuario podrá también editar o eliminar su perfil desde esta pantalla. Donde se aprecia AG iría la foto de usuario: 
+
+<img width="500" height="743" alt="image" src="https://github.com/user-attachments/assets/ec788539-bd9a-49ed-856c-ea5594adc158" />
+
+ 
+### Pantalla de Catálogo de Palas
+En esta vista se mostrarán todas las palas disponibles con su correspondiente foto, nombre , marca, precio por uso y valoración. En esta ventana el administrador podrá crear nuevas palas, o modificar o eliminar las existentes:
+
+<img width="1171" height="822" alt="image" src="https://github.com/user-attachments/assets/ed0709a0-97df-40f8-bcbf-d5d2d868639d" />
+
+
+### Pantalla de Lista de entrenadores 
+En esta pantalla se mostrará las lista de entrenadores disponibles con su respectiva imagen, nombre, especialidad de enseñanza, nivel de certificación de la FEP (Federación Española de Padel), valoración y precios por sesión.
+
+<img width="763" height="718" alt="image" src="https://github.com/user-attachments/assets/bff1e984-741f-4c2d-ae77-0872212bc273" />
+
+
+### Pantalla de Lista de Pistas Para Reservar
+En esta vista se mostrarán todas las pistas disponibles con una vista previa de su ubicación (aunque en este caso se pone una foto genérica hasta su su implementación), nombre , tipo, precio por hora y si hay destacadas. En esta ventana el administrador podrá crear nuevas pistas, o modificar o eliminar las existentes:
+
+<img width="1176" height="837" alt="image" src="https://github.com/user-attachments/assets/23cbdc73-dfc0-4c86-b25f-c3e636b4848f" />
+
+
+
+
+> Cabe destacar que todas estas pantallas son bocetos y durante el desarrollo de este proyecto pueden tener variaciones, es decir, no son definitivas.
+
+
+
+
+
+
