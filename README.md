@@ -16,14 +16,35 @@ Este proyecto es mi Trabajo de Fin de Grado (TFG). Se desarrolla siguiendo estri
 
 | Entidad | Descripción | Acciones |
 | :--- | :--- | :--- | 
-| **User (Usuario)** | Almacena toda la información sobre un usuario específico en la plataforma. Puede ser de los siguientes tipos: Usuario no registrado, Alumno, Entrenador o Administrador | - Registrarse (usuario no registrado)<br> - Iniciar sesión<br>- Cerrar sesión<br>- Editar perfil<br>- Eliminar usuario | 
-| **Racket (Pala)** | Representa las palas de la academia disponibles para alquiler, opcionalmente, el usuario puede llevar su propia pala también. (tanto para reserva de pista como para entrenamientos)| - Alquilar pala<br>Para el admin :<br> - Editar detalles<br>- Cambiar disponibilidad<br>  | 
-| **Court (Pista)** | Representa las instalaciones físicas de las pistas de pádel en el club. | Para el admin :<br> - Crear pista<br>- Eliminar pista<br>- Editar pista | 
+| **User (Usuario)** | Almacena toda la información sobre un usuario específico en la plataforma, podrá hacer y cancelar reservas y alquilar palas. Puede ser de los siguientes tipos: Usuario no registrado, Alumno, Entrenador o Administrador | - Registrarse (usuario no registrado)<br> - Iniciar sesión<br>- Cerrar sesión<br>- Editar perfil<br>- Eliminar usuario | 
+| **Racket (Pala)** | Representa las palas de la academia disponibles para alquiler, opcionalmente, el usuario puede llevar su propia pala también. (tanto para reserva de pista como para entrenamientos)| - Alquilar pala<br>- Ver detalles <br> Para el admin :<br> - Editar detalles<br>- Eliminar pala<br>  | 
+| **Court (Pista)** | Representa las instalaciones físicas de las pistas de pádel en el club. | - Ver detalles <br> Para el admin :<br> - Crear pista<br>- Eliminar pista<br>- Editar pista | 
 | **Booking (Reserva)** | Vincula a un usuario alumno y una pista en una fecha y un intervalo de tiempo concretos. | - Crear reserva<br>- Cancelar reserva<br>  |
+
+### Funcionalidad para Tipos de Usuario
+- Usuario No Registrado: Podrá entrar en la página principal de la aplicación y podrá ver tanto el catálogo de palas, la lista de entrenadores y la lista de pistas disponibles pero no podrá hacer uso de los servicios de la academía. Es decir, no podrá alquilar palas, no podrá contratar entrenadores ni reservar pistas, y obviamente no podrá entrar en la pantalla de perfil de usuario.
+- Usuario Registrado (Alumno): Podrá hacer lo mismo que el usuario registrado pero teniendo acceso a los servicios de la plataformas tales como alquilar una pala, contratar a un entrenador, reservar una pista o entrar en su perfil, puediendo modificarlo o incluso eliminar su cuenta.
+- Entrenador: El entrenador tendrá la capacidad para modificar el nivel de un alumno despues de un entrenamiento con el mismo. De igual forma que el usuario, podrá entrar en sus perfil con las mismas capacidades.
+- Administrador: El administrador podrá acceder a todas las pantallas de la aplicación pudiendo modificar el catálogo de palas y pistas. También tendrá la capacidad para modificar el nivel de un alumno o incluso eliminar su usuario.
+
+
 
 ### Diagrama inicial de clases 
 
 <img width="920" height="573" alt="DiagramaDeClasesInicial" src="https://github.com/user-attachments/assets/bd4d9a4f-d187-4469-ba4e-02d63e52b1a4" />
+
+## 🔐Permisos de usuario
+
+La siguiente tabla detalla los permisos de los usuarios para las acciones principales de la web. Cabe destacar que todas las transacciones financieras se gestionan físicamente en la sede de la academia. También, que algunas acciones no esten disponibles porque no se les encuentra sentido como por ejemplo puede ser que un administrador alquile una pala.
+
+| Acción | Anónimo | Registrado (Alumno) | Entrenador | Administrador |
+| :--- | :--- | :--- | :--- | :--- |
+| **Ver página de inicio / Info** | sí | sí | sí | sí |
+| **Ver página de palas, entrenadores o pistas** | sí | sí | sí | sí |
+| **Reservar pista / Alquilar pala / Contratar entrenador** | no | sí | no | no |
+| **Modificar nivel de un alumno** | no | no | sí | sí |
+| **Gestionar catálogo de palas y pistas (CRUD)**| no | no | no | sí |
+| **Ver / Modificar / Eliminar - Perfil** | no | sí | sí | no |
 
 
 ## 🔍Objetivos
@@ -40,7 +61,7 @@ El propósito funcional de YoSoyTuPadel es proporcionar una plataforma digital q
 
 ### Objetivos técnicos
 
-El desarrollo técnico se abordará bajo una arquitectura moderna desacoplada que garantice el rendimiento, la escalabilidad y la facilidad de mantenimiento del software. Se planifica la construcción de un backend basado en microservicios o API REST monolítica que interactúe con una base de datos relacional, mientras que el frontend se estructurará como una aplicación de página única (SPA) interactiva.
+El desarrollo técnico se abordará bajo una arquitectura moderna desacoplada que garantice el rendimiento, la escalabilidad y la facilidad de mantenimiento del software. Se planifica la construcción de un backend basado en microservicios o API REST monolítica en Java que interactúe con una base de datos relacional, mientras que el frontend se estructurará como una aplicación de página única (SPA) interactiva.
 
 * **Arquitectura desacoplada API REST:** Implementación del backend utilizando Java con el framework Spring Boot para dotar a la web de servicios seguros y estandarizados.
 * **Interfaz de Usuario SPA:** Creación del frontend mediante React para construir una aplicación de página única fluida, reactiva y con componentes modulares.
@@ -56,24 +77,11 @@ Todas las entidades tendrán operaciones CRUD. Aunque obviamente alguna de estas
 
 ### Funcionalidades Intermedias
 * **Gestión de Nivel:** Permite a los usuarios con rol de **Entrenador** evaluar a los jugadores que han asistido a sus entrenamientos. El entrenador dispondrá de la capacidad de modificar el nivel del alumno para ajustarlo a su desempeño real, incluyendo la posibilidad de bajarle el nivel técnico en la plataforma si se considera necesario.
-* **Nivelación inicial:** Permite a los usuarios iniciantes en la aplicación adquirir un nivel inicial al registrarse, asignandoles un nivel determinado dependiendo de las respuestas del mismo a una serie de preguntas.
+* **Nivelación inicial:** Permite a los usuarios iniciantes o no registrados en la aplicación adquirir un nivel inicial al registrarse, asignandoles un nivel determinado dependiendo de las respuestas del mismo a una serie de preguntas.
 
 ### Funcionalidades Avanzadas
 * **Sistema de Filtrado de Pistas:** Implementación de un filtro de búsqueda dinámico en la selección de pistas a reservar. Los usuarios podrán filtrar las pistas disponibles en tiempo real según distintos criterios como el precio o el tipo de pista (al aire libre o techado).
 
-
-## 🔐Permisos de usuario
-
-La siguiente tabla detalla los permisos de los usuarios para las acciones principales de la web. Cabe destacar que todas las transacciones financieras se gestionan físicamente en la sede de la academia. También, que algunas acciones no esten disponibles porque no se les encuentra sentido como por ejemplo puede ser que un administrador alquile una pala.
-
-| Acción | Anónimo | Registrado (Alumno) | Entrenador | Administrador |
-| :--- | :--- | :--- | :--- | :--- |
-| **Ver página de inicio / Info** | sí | sí | sí | sí |
-| **Ver página de palas, entrenadores o pistas** | sí | sí | sí | sí |
-| **Reservar pista / Alquilar pala / Contratar entrenador** | no | sí | no | no |
-| **Modificar/Bajar nivel de un jugador** | no | no | sí | sí |
-| **Gestionar catálogo de palas y pistas (CRUD)**| no | no | no | sí |
-| **Ver / Modificar / Eliminar - Perfil** | no | sí | sí | no |
 
 
 ## 🖼️Imágenes
@@ -81,7 +89,8 @@ La siguiente tabla detalla los permisos de los usuarios para las acciones princi
 La aplicación será capaz de gestionar imágenes subidas por los usuarios para personalizar la interfaz de perfil de usuario:
 * Los usuarios alumnos pueden subir una foto de perfil, tanto subir una nueva si no se tiene, como modificar una ya presubida.
 * De igual forma, los entrenadores podrán hacer lo mismo que los usuarios alumno, pero estas podrán ser vista por los alumnos a la hora de buscar en el catálogo de entrenadores.
-* Cada entidad pala incluirá una fotografía en el catálogo, la cual se encargará de subir el administrador para que los alumnos conozcan el modelo real que van a alquilar.
+
+Cada entidad pala incluirá una fotografía en el catálogo, la cual se encargará de subir el administrador para que los alumnos conozcan el modelo real que van a alquilar.
 
 
 ## 📈Gráficos
@@ -103,11 +112,11 @@ El usuario podrá filtrar a su gusto las pistas que le aparecen en el catálogo 
 
 ### Pantalla de inicio de sesión o registro 
 En estas pantallas los usuarios podrán inicar sesión para hacer uso de los servicios que ofrece la aplicación de la academia o por el contrario registrarse si son usuarios no registrados: 
-Para el inicio de sesión: 
+- Para el inicio de sesión: 
 
 <img width="1912" height="855" alt="image" src="https://github.com/user-attachments/assets/fbeb4318-e6bd-4a72-95bb-54fadc8923dc" />
 
-Para el registro: 
+- Para el registro: 
 
 <img width="1915" height="860" alt="image" src="https://github.com/user-attachments/assets/0d6f8fb5-9dd9-4ac1-ac0a-57d35a76b4e9" />
 
@@ -125,7 +134,7 @@ En esta interfaz el usuario registrado podrá observar todos sus atributos como 
 
  
 ### Pantalla de Catálogo de Palas
-En esta vista se mostrarán todas las palas disponibles con su correspondiente foto, nombre , marca, precio por uso y valoración. En esta ventana el administrador podrá crear nuevas palas, o modificar o eliminar las existentes:
+En esta vista se mostrarán todas las palas disponibles con su correspondiente foto, nombre , marca, precio por uso y valoración. El usuario podrá ver detalles más precisos del producto antes de alquilarlo. En esta ventana el administrador podrá crear nuevas palas, o modificar o eliminar las existentes:
 
 <img width="1171" height="822" alt="image" src="https://github.com/user-attachments/assets/ed0709a0-97df-40f8-bcbf-d5d2d868639d" />
 
@@ -137,7 +146,7 @@ En esta pantalla se mostrará las lista de entrenadores disponibles con su respe
 
 
 ### Pantalla de Lista de Pistas Para Reservar
-En esta vista se mostrarán todas las pistas disponibles con una vista previa de su ubicación (aunque en este caso se pone una foto genérica hasta su su implementación), nombre , tipo, precio por hora y si hay destacadas. En esta ventana el administrador podrá crear nuevas pistas, o modificar o eliminar las existentes:
+En esta vista se mostrarán todas las pistas disponibles con una vista previa de su ubicación (aunque en este caso se pone una foto genérica hasta su implementación), nombre , tipo, precio por hora y si hay destacadas. De forma similar a la pantalla del catálogo de palas, el usuario podrá ver sus detalles antes de reservarla. En esta ventana el administrador podrá crear nuevas pistas, o modificar o eliminar las existentes:
 
 <img width="1176" height="837" alt="image" src="https://github.com/user-attachments/assets/23cbdc73-dfc0-4c86-b25f-c3e636b4848f" />
 
