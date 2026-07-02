@@ -124,31 +124,31 @@ En estas pantallas los usuarios podrán inicar sesión para hacer uso de los ser
 ### Pantalla del Menu Principal
 Desde esta pantalla se podrá acceder al catálogo de palas de alquiler, la lista de entrenadores para contratar y y la reserva de pistas. De igual forma, si el usuario es un alumno o un profesor, se podrá acceder a la pantalla del perfil de usuario. Adicionalmente se incluirá el nombre del usuario, la fecha actual y la fecha y hora del proximo entreno que haya contratado:
 
-<img width="1168" height="650" alt="image" src="https://github.com/user-attachments/assets/ce3a3deb-bda9-4e90-b899-a2ca335aba51" />
+<img width="1162" height="617" alt="image" src="https://github.com/user-attachments/assets/1ca33a11-987a-49e7-8cff-fd44069ed3ec" />
 
 
 ### Pantalla de Perfil del Usuario
-En esta interfaz el usuario registrado podrá observar todos sus atributos como el nombre, el nickname, el peso, etc. También se encontrará aqui el número de partidos jugados y la gráfica de líneas de la progresión del nivel del jugador y el usuario podrá también editar o eliminar su perfil desde esta pantalla. Donde se aprecia AG iría la foto de usuario: 
+En esta interfaz el usuario registrado podrá observar todos sus atributos como el nombre, el nickname, el peso, etc. También se encontrará aqui el número de partidos jugados, el número de entrenamientos realizados y la gráfica de líneas de la progresión del nivel del jugador y el usuario podrá también editar o eliminar su perfil desde esta pantalla. Donde se aprecia AG iría la foto de usuario: 
 
-<img width="500" height="743" alt="image" src="https://github.com/user-attachments/assets/ec788539-bd9a-49ed-856c-ea5594adc158" />
+<img width="600" height="862" alt="image" src="https://github.com/user-attachments/assets/1ddf4408-5579-4e04-976b-784278d95a60" />
 
  
 ### Pantalla de Catálogo de Palas
-En esta vista se mostrarán todas las palas disponibles con su correspondiente foto, nombre , marca, precio por uso y valoración. El usuario podrá ver detalles más precisos del producto antes de alquilarlo. En esta ventana el administrador podrá crear nuevas palas, o modificar o eliminar las existentes:
+En esta vista se mostrarán todas las palas disponibles con su correspondiente foto, nombre , marca, precio por uso y valoración. Además de poder volver al menú principal el usuario podrá ver detalles más precisos del producto antes de alquilarlo. En esta ventana el administrador podrá crear nuevas palas, o modificar o eliminar las existentes:
 
-<img width="1171" height="822" alt="image" src="https://github.com/user-attachments/assets/ed0709a0-97df-40f8-bcbf-d5d2d868639d" />
+<img width="1052" height="798" alt="image" src="https://github.com/user-attachments/assets/24e64c54-ee12-4c26-9bfb-5b62606402b5" />
 
 
 ### Pantalla de Lista de entrenadores 
-En esta pantalla se mostrará las lista de entrenadores disponibles con su respectiva imagen, nombre, especialidad de enseñanza, nivel de certificación de la FEP (Federación Española de Padel), valoración y precios por sesión.
+En esta pantalla se mostrará las lista de entrenadores disponibles con su respectiva imagen, nombre, especialidad de enseñanza, nivel de certificación de la FEP (Federación Española de Padel), valoración y precios por sesión. Además se podrá volver al menú principal:
 
-<img width="763" height="718" alt="image" src="https://github.com/user-attachments/assets/bff1e984-741f-4c2d-ae77-0872212bc273" />
+<img width="932" height="868" alt="image" src="https://github.com/user-attachments/assets/918499cf-67a3-47c2-adbb-368dfa933f98" />
 
 
 ### Pantalla de Lista de Pistas Para Reservar
-En esta vista se mostrarán todas las pistas disponibles con una vista previa de su ubicación (aunque en este caso se pone una foto genérica hasta su implementación), nombre , tipo, precio por hora y si hay destacadas. De forma similar a la pantalla del catálogo de palas, el usuario podrá ver sus detalles antes de reservarla. En esta ventana el administrador podrá crear nuevas pistas, o modificar o eliminar las existentes:
+En esta vista se mostrarán todas las pistas disponibles con una vista previa de su ubicación (aunque en este caso se pone una foto genérica hasta su implementación), nombre , tipo, precio por hora y si hay destacadas. De forma similar a la pantalla del catálogo de palas, el usuario podrá ver sus detalles antes de reservarla. Además de poder volver al menú principal. En esta ventana el administrador podrá crear nuevas pistas, o modificar o eliminar las existentes:
 
-<img width="1176" height="837" alt="image" src="https://github.com/user-attachments/assets/23cbdc73-dfc0-4c86-b25f-c3e636b4848f" />
+<img width="1073" height="863" alt="image" src="https://github.com/user-attachments/assets/f82ce3b9-d181-405a-8d62-cc3bff0142f8" />
 
 
 
