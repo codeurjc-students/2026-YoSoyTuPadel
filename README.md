@@ -11,9 +11,13 @@ Este proyecto es mi Trabajo de Fin de Grado (TFG). Se desarrolla siguiendo estri
 * **Tutor:** Michel Maes Bermejo
 * **Archivo de seguimiento:** [Seguimiento TFG](https://urjc-my.sharepoint.com/:w:/r/personal/micael_gallego_urjc_es/Documents/Formacion_CodeURJC/TFGs/TFGs%20por%20tutor/TFGs%20Michel/2026-27/Victor%20Candel/Seguimiento%20TFG.docx?d=w2ccb69f8b81a4d0ea43f91e6c2e8a255&csf=1&web=1&e=ahCtmf)
 
-# FASE 1 : Definición de funcionalidades y pantallas
+## 📌 Proceso metodológico del proyecto
 
-## Entidades
+- [Fase 1: Definición de funcionalidades y pantallas](#fase-1-definición-de-funcionalidades-y-pantallas)
+- [Fase 2: Configuración del repositorio, pruebas unitarias y CI](#fase-2-configuración-del-repositorio-pruebas-unitarias-y-ci)
+
+
+## Entidades de la aplicación
 
 | Entidad | Descripción | Acciones |
 | :--- | :--- | :--- | 
@@ -22,7 +26,10 @@ Este proyecto es mi Trabajo de Fin de Grado (TFG). Se desarrolla siguiendo estri
 | **Court (Pista)** | Representa las instalaciones físicas de las pistas de pádel en el club. | - Ver detalles <br> Para el admin :<br> - Crear pista<br>- Eliminar pista<br>- Editar pista | 
 | **Booking (Reserva)** | Vincula a un usuario alumno y una pista en una fecha y un intervalo de tiempo concretos. | - Crear reserva<br>- Cancelar reserva<br>  |
 
-### Funcionalidad para Tipos de Usuario
+# Fase 1: Definición de funcionalidades y pantallas
+
+
+## Funcionalidad para Tipos de Usuario
 - Usuario No Registrado: Podrá entrar en la página principal de la aplicación y podrá ver tanto el catálogo de palas, la lista de entrenadores y la lista de pistas disponibles pero no podrá hacer uso de los servicios de la academia. Es decir, no podrá alquilar palas, no podrá contratar entrenadores ni reservar pistas, y obviamente no podrá entrar en la pantalla de perfil de usuario.
 - Usuario Registrado (Alumno): Podrá hacer lo mismo que el usuario registrado pero teniendo acceso a los servicios de la plataforma tales como alquilar una pala, contratar a un entrenador, reservar una pista o entrar en su perfil, pudiendo modificarlo o incluso eliminar su cuenta.
 - Entrenador: El entrenador tendrá la capacidad para modificar el nivel de un alumno después de un entrenamiento con el mismo. De igual forma que el usuario, podrá entrar en su perfil con las mismas capacidades.
@@ -121,6 +128,14 @@ En estas pantallas, los usuarios podrán iniciar sesión para hacer uso de los s
 
 <img width="1915" height="860" alt="image" src="https://github.com/user-attachments/assets/0d6f8fb5-9dd9-4ac1-ac0a-57d35a76b4e9" />
 
+Tras introducir los datos de registro el nuevo alumno responderá una serie de preguntas para determinar su nivel inicial. En dicho cuestionario también habrá la posibilidad de cancelar el registro, pasar a la siguiente pregunta o finalizar registro.
+A continuación se muestras dos bocestos de ejemplo: 
+
+<img width="596" height="817" alt="image" src="https://github.com/user-attachments/assets/9c081a32-bd78-46a5-b5c5-2edfc1cb5b3c" />
+
+
+<img width="598" height="775" alt="image" src="https://github.com/user-attachments/assets/2057478d-1b65-4d19-9520-19e97d21e2af" />
+
 
 ### Pantalla del Menú Principal
 Desde esta pantalla se podrá acceder al catálogo de palas de alquiler, la lista de entrenadores para contratar y la reserva de pistas. De igual forma, si el usuario es un alumno o un profesor, se podrá acceder a la pantalla del perfil de usuario. Adicionalmente se incluirá el nombre del usuario, la fecha actual y la fecha y hora del próximo entreno que haya contratado:
@@ -134,12 +149,17 @@ En esta interfaz el usuario registrado podrá observar todos sus atributos como 
 <img width="537" height="803" alt="image" src="https://github.com/user-attachments/assets/9f5e5f68-b757-4411-a43b-3c8d89bf42ae" />
 
 
-
  
 ### Pantalla de Catálogo de Palas
 En esta vista se mostrarán todas las palas disponibles con su correspondiente foto, nombre, marca, precio por uso y valoración. Además de poder volver al menú principal el usuario podrá ver detalles más precisos del producto antes de alquilarlo. En esta ventana el administrador podrá crear nuevas palas, o modificar o eliminar las existentes:
 
 <img width="1052" height="798" alt="image" src="https://github.com/user-attachments/assets/24e64c54-ee12-4c26-9bfb-5b62606402b5" />
+
+
+### Formulario de alta de una pala
+En este formulario accesible desde el catálogo de palas el administrador podrá completar los datos de una pala que desee dar de alta, también podrá cancelarlo o volver al catálogo de palas.
+
+<img width="690" height="833" alt="image" src="https://github.com/user-attachments/assets/a1dea2ea-5d24-48c2-aee1-bc15e79387d5" />
 
 
 ### Pantalla de Lista de entrenadores 
@@ -153,10 +173,20 @@ En esta vista se mostrarán todas las pistas disponibles con una vista previa de
 
 <img width="1073" height="863" alt="image" src="https://github.com/user-attachments/assets/f82ce3b9-d181-405a-8d62-cc3bff0142f8" />
 
+### Pantalla de disponibilidad, detalles y reserva de una pista
+Si un usuario quiere reservar una pista pista, tras clickar en el botón de disponibilidad de la pista correspondiente de la lista de pistas disponible podrá ver detalles más especificos de la pista. También podrá seleccionar una hora determinada de un día elegido a su elección y finalizar la reserva. De igual forma podrá cancelar y volver al catálogo de pistas. 
 
+<img width="547" height="840" alt="image" src="https://github.com/user-attachments/assets/6e85936c-818c-4a3f-9a27-13808cd01ad3" />
+
+Tras finalizar la reserva de la pista el usuario podrá ver un mensaje de confirmación si se ha reservado de forma correcta:
+
+<img width="435" height="508" alt="image" src="https://github.com/user-attachments/assets/04e1935b-38b7-47e5-9270-76fc4789c789" />
 
 
 > Cabe destacar que todas estas pantallas son bocetos y durante el desarrollo de este proyecto pueden tener variaciones, es decir, no son definitivas.
+
+
+# Fase 2: Configuración del repositorio, pruebas unitarias y CI
 
 
 
