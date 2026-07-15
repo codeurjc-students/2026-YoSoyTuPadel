@@ -5,6 +5,16 @@ backend/.mvn/wrapper/maven-wrapper.jar
 !**/backend/src/main/**/target/
 !**/backend/src/test/**/target/
 
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/*.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+frontend/lerna-debug.log*
+
 ### STS ###
 .apt_generated
 .classpath
