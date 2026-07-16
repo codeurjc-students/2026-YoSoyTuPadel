@@ -1,49 +1,61 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react';
+import api from './service/api';
 
-// Definimos la estructura de una pala usando TypeScript
-interface Pala {
-  id: number;
-  nombre: string;
-  tipo: 'Dura' | 'Blanda';
-  precioPorHora: number;
-  disponible: boolean;
+interface Racket {
+    id: number;
+    brand: string;
+    name: string;
+    description: string;
+    pricePerDay: number;
 }
 
 function App() {
-  // Simulamos los datos que en el futuro vendrán del backend (base de datos)
-  const [pistas] = useState<Pala[]>([
-    { id: 1, nombre: 'Vertex02', tipo: 'Dura', precioPorHora: 20, disponible: true },
-    { id: 2, nombre: 'Vertex03', tipo: 'Blanda', precioPorHora: 18, disponible: true },
-    { id: 3, nombre: 'Vertex04', tipo: 'Blanda', precioPorHora: 15, disponible: false },
-  ]);
+    const [rackets, setRackets] = useState<Racket[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
 
-  return (
-      <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-        <h1>🎾 YoSoyTuPadel - Catálogo de Palas</h1>
-        <hr />
+    useEffect(() => {
+        api.get<Racket[]>('/api/rackets')
+            .then((response) => {
+                setRackets(response.data);
+                setLoading(false);
+            })
+            .catch((err) => {
+                console.error('Error al conectar con la base de datos:', err);
+                setError('No se ha podido conectar con el servidor.');
+                setLoading(false);
+            });
+    }, []);
 
-          <h2>Nuestras Palas</h2>
-        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-          {pistas.map((pista) => (
-              <div
-                  key={pista.id}
-                  style={{
-                    border: '1px solid #ccc',
-                    borderRadius: '8px',
-                    padding: '15px',
-                    width: '200px',
-                    backgroundColor: pista.disponible ? '#e2f0cb' : '#f5cdcd'
-                  }}
-              >
-                <h3>{pista.nombre}</h3>
-                <p><strong>Tipo:</strong> {pista.tipo}</p>
-                <p><strong>Precio/Hora:</strong> {pista.precioPorHora}€</p>
-                <p><strong>Estado:</strong> {pista.disponible ? 'Disponible' : 'No disponible'}</p>
-              </div>
-          ))}
+    return (
+        <div>
+            <h1>YoSoyTuPadel </h1>
+            <hr />
+
+            <h2>Catálogo de Palas</h2>
+
+            {loading && <p>Cargando palas de la base de datos...</p>}
+
+            {error && (
+                <div>
+                    <p><strong>Error:</strong> {error}</p>
+                </div>
+            )}
+
+            {!loading && !error && (
+                <ul>
+                    {rackets.map((racket) => (
+                        <li key={racket.id}>
+                            <h3>{racket.brand} - {racket.name}</h3>
+                            <p>{racket.description}</p>
+                            <p>Precio de Alquiler: {racket.pricePerDay} € por sesión</p>
+                            <hr />
+                        </li>
+                    ))}
+                </ul>
+            )}
         </div>
-      </div>
-  )
+    );
 }
 
-export default App
+export default App;
