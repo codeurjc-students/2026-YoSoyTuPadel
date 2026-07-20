@@ -2,22 +2,24 @@ package es.urjc.code.yosoytupadel.backend.config;
 
 import es.urjc.code.yosoytupadel.backend.entities.Racket;
 import es.urjc.code.yosoytupadel.backend.repository.RacketRepository;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.stereotype.Component;
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-@Component
-public class DataBaseInitializer implements CommandLineRunner {
+@Service
+public class DataBaseInitializer {
 
+    @Autowired
     private final RacketRepository racketRepository;
 
     public DataBaseInitializer(RacketRepository racketRepository) {
         this.racketRepository = racketRepository;
     }
 
-    @Override
-    public void run(String... args) throws Exception {
+    @PostConstruct
+    public void init(){
         if (racketRepository.count() == 0) {
 
             Racket racket1 = new Racket(
