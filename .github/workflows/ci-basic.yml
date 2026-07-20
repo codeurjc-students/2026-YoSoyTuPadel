@@ -11,7 +11,7 @@ on:
 
 jobs:
 
-  # JOB 1: CONTROL DE CALIDAD DEL BACKEND
+  # JOB 1: CONTROL DE CALIDAD DEL BACKEND.
 
   backend-checks:
     name: Backend - Build & Unit Tests
