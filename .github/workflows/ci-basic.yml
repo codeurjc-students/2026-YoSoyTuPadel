@@ -32,11 +32,13 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      - name: Descargar dependencias de Maven
+        run: mvn dependency:go-offline -B
+        
       - name: Compilar el proyecto
         run: mvn compile -DskipTests
 
       - name: Ejecutar Tests Unitarios del Backend
-
         run: mvn test -Dtest=*UnitTest,*ControllerTest,*ServiceTest
 
   # JOB 2: CONTROL DE CALIDAD DEL CLIENTE (REACT) + SONARCLOUD
