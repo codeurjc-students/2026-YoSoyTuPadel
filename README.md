@@ -187,10 +187,163 @@ Tras finalizar la reserva de la pista el usuario podrá ver un mensaje de confir
 > Cabe destacar que todas estas pantallas son bocetos y durante el desarrollo de este proyecto pueden tener variaciones, es decir, no son definitivas.
 
 
+---
+
+
 # Fase 2: Configuración del repositorio, pruebas unitarias y CI
 
+La aplicación web **YoSoyTuPadel** sigue una arquitectura **SPA (Single Page Application)** desacoplada, donde la interfaz gráfica se ejecuta de forma íntegra en el navegador web del usuario y se comunica asíncronamente con el servidor mediante peticiones HTTP a una API REST. Esta arquitectura permite separar estrictamente la lógica de presentación de la lógica de negocio. El sistema está compuesto por tres partes fundamentales:
+1. **Cliente:** Aplicación web SPA en React que gestiona la vista y la lógica de presentación.
+2. **Servidor:** API REST monolítica desarrollada en Java con Spring Boot que procesa las reglas de negocio, la lógica de reservas, autenticación y gestión de catálogo.
+3. **Base de Datos:** Sistema relacional MySQL encargado de la persistencia de los datos del sistema.
+
+### Resumen de la Arquitectura y Proceso de Desarrollo
+
+| Dimensión | Descripción |
+| :--- | :--- |
+| **Tipo** | Aplicación Web SPA desacoplada con API REST Backend |
+| **Tecnologías** | Java 21, Spring Boot 4.0.7, React, TypeScript, Node.js, MySQL |
+| **Herramientas** | IntelliJ IDEA, Docker Desktop, Postman, GitHub |
+| **Control de Calidad** | Tests unitarios (JUnit 5, Vitest), Testcontainers, Selenium, SonarCloud, GitHub Actions |
+| **Proceso de Desarrollo** | Iterativo e incremental apoyado en prácticas de Kanban, Git y CI/CD |
 
 
+## Tecnologías
+
+A continuación se listan las tecnologías requeridas para la ejecución de la aplicación web:
+
+* **[Java 21](https://www.oracle.com/java/):** Lenguaje de programación principal orientado a objetos utilizado en el backend para implementar la lógica de dominio y los servicios de negocio.
+* **[Spring Boot 4.0.7](https://spring.io/projects/spring-boot):** Framework Java que simplifica la creación de aplicaciones web desacopladas, gestionando la inyección de dependencias, la persistencia JPA/Hibernate y la exposición de servicios web RESTful.
+* **[React](https://react.dev/):** Librería de JavaScript basada en componentes declarativos y reutilizables empleada para construir la interfaz SPA del cliente.
+* **[Node.js](https://nodejs.org/):** Entorno de ejecución para JavaScript en el servidor, utilizado en el proyecto como motor del gestor de paquetes (`npm`) y para el empaquetado del frontend.
+* **[MySQL](https://www.mysql.com/):** Sistema de gestión de bases de datos relacional utilizado para el almacenamiento persistente de usuarios, pistas, palas y reservas.
+* **[Vite](https://vitejs.dev/):** Herramienta de compilación rápida (*bundler*) y servidor de desarrollo optimizado para aplicaciones frontend en React.
 
 
+## Herramientas
 
+Herramientas auxiliares y entornos de desarrollo (IDEs) empleados durante la construcción de la aplicación:
+
+* **[IntelliJ IDEA](https://www.jetbrains.com/idea/):** Entorno de desarrollo integrado (IDE) avanzado utilizado para la programación y ejecución del servidor backend en Java/Spring Boot.
+* **[Docker Desktop](https://www.docker.com/products/docker-desktop/):** Plataforma de virtualización a nivel de sistema operativo utilizada para aislar y desplegar servicios en contenedores (base de datos MySQL local y entornos de prueba).
+* **[Postman](https://www.postman.com/):** Herramienta cliente HTTP para interactuar de forma aislada con la API REST y testear endpoints antes de la integración.
+* **[GitHub](https://github.com/codeurjc-students/2026-YoSoyTuPadel):** Sistema de control de versiones distribuido empleado para el seguimiento del código fuente y el trabajo en ramas.
+
+## Arquitectura
+### API REST
+La especificación técnica y documentación interactiva de la API REST se genera de forma automatizada mediante la integración de `springdoc-openapi-starter-webmvc-ui` y `springdoc-openapi-maven-plugin`, los cuales compilan la documentación de la API Rest en un documento OpenAPI v3 (`api-docs.yaml`) y posteriormente compilan la vista HTML con Redocly.
+
+* **[Ver Documentación Interactiva de la API REST en HTML (vía RawGithack)](https://raw.githack.com/codeurjc-students/2026-YoSoyTuPadel/main/docs/api/api-docs.html)**
+
+
+## Control de Calidad
+
+### Pruebas Automáticas de Cliente y Servidor
+
+#### Servidor (Backend Java)
+* **Tipos de Pruebas:** Pruebas unitarias de controladores/servicios (JUnit 5, Mockito) e integración con base de datos mediante **Testcontainers** y **Selenium**.
+* **Funcionalidades Probadas:**
+  * **Entidad Racket (Palas):** Verificación de la consulta y obtención de la lista de palas desde la base de datos para su posterior renderizado en la interfaz gráfica.
+* **Captura del resumen de la ejecución de las pruebas del backend (Tras ejecutar `mvn clean test`):**
+  <img width="1252" height="287" alt="image" src="https://github.com/user-attachments/assets/a67d7dad-7e0d-483e-9b55-3c80c29e3572" />
+
+
+#### Cliente (Frontend React)
+* **Tipos de Pruebas:** Pruebas unitarias de componentes con **Vitest** y **React Testing Library**.
+* **Funcionalidades Probadas:**
+  * Renderizado del componente del catálogo de palas cargado desde el backend.
+* **Captura del resumen de la ejecución de las pruebas del frontend (Tras ejecutar `npm run test`):**
+  <img width="927" height="292" alt="image" src="https://github.com/user-attachments/assets/c7445772-d01d-4b98-93e0-9d43ec8ea0be" />
+
+### Herramientas de Análisis Estático de Código
+El análisis estático de código se realiza de manera automática mediante la integración de **SonarCloud** en el flujo de CI.
+* Captura del resumen del análisis de código del proyecto en SonarCloud:
+ <img width="761" height="457" alt="image" src="https://github.com/user-attachments/assets/22bc1f19-f33a-4fb3-9cd2-4aadb4834e0c" />
+ 
+* Captura del resumen de métricas del tamaño del código, se ha utilizado la herramienta **cloc** (ejecutando `cloc . --exclude-dir=node_modules,target,.git,dist,build`):
+<img width="647" height="422" alt="image" src="https://github.com/user-attachments/assets/f8aa11db-c6a6-4300-9986-c151f140b561" />
+
+## Proceso de Desarrollo
+
+### Gestión de Tareas
+Para la organización y seguimiento del trabajo se han utilizado las herramientas nativas de **GitHub**:
+
+*   **GitHub Issues:** Cada nueva funcionalidad, corrección de errores (*bugs*) o tarea técnica se registra como una *Issue* independiente. Las tareas se categorizan mediante etiquetas (*labels*) como `enhancement`, `bug`, `documentation` o `testing`.
+*   **GitHub Projects & Tablero Kanban:** La gestión visual del trabajo se apoya en la herramienta **GitHub Projects**. Se ha implementado un tablero Kanban adaptado con un flujo de trabajo de 5 estados para reflejar el ciclo de vida real de cada tarea:
+
+    *   **`Backlog`:** Tareas pendientes identificadas que aún no han sido priorizadas para su realización.
+    *   **`Ready`:** Tareas preparadas, refinadas y especificadas, listas para ser tomadas por el desarrollador.
+    *   **`In progress`:** Tareas que se están desarrollando activamente en el momento actual.
+    *   **`In review`:** Tareas cuyo código está completado y se encuentran en fase de revisión de código.
+    *   **`Done`:** Funcionalidades e *issues* completamente finalizadas, validadas e integradas en la rama principal.
+
+
+* **Captura del tablero Kanban en GitHub Projects realizado hasta el momento:**
+  <img width="1680" height="800" alt="image" src="https://github.com/user-attachments/assets/3e653d11-6d22-4fef-a58e-fc6c7a67addc" />
+
+  
+### Control de Versiones (GitHub)
+El control de versiones del software se ha gestionado mediante **GitHub**, alojando el código en un repositorio de GitHub.
+
+*   **Estrategia de Ramas:**
+    *   `main`: Contiene el código en producción, siempre estable y listo para su despliegue.
+    *   `develop`: Rama principal de integración donde se consolidan las nuevas funcionalidades probadas.
+    *   `feature/*`: Ramas efímeras creadas para desarrollar una funcionalidad o issue específica (ej. `feature/racket-management`, `feature/user-auth`). Tras ser completadas y verificadas, se integran en `develop` mediante *Pull Requests* (PR).
+    *   `fix/*`: Ramas destinadas a la corrección de errores.
+
+*   **Métricas de uso de Git:**
+    *   **Número total de commits:** 
+    *   **Número de ramas creadas:** 
+    *   **Pull Requests integradas:** 
+
+### Integración Continua (CI)
+Se han automatizado los flujos de integración continua a través de **GitHub Actions** (`.github/workflows/ci-basic.yml`). El flujo se dispara automáticamente ante cada *push* o *Pull Request* hacia la rama  `main`, ejecutando los siguientes pasos:
+
+1.  **Checkout & Setup:** Descarga del código fuente y configuración de los entornos de ejecución (**Java JDK 21** y **Node.js**).
+2.  **Compilación y Tests de Backend:** Ejecución del comando Maven para validar la compilación y pasar la suite de pruebas unitarias y de integración.
+3.  **Análisis Estático (SonarCloud):** Envío de las métricas de código, cobertura de tests y detección de vulnerabilidades (*code smells*, *security hotspots*) a la plataforma SonarCloud.
+4.  **Verificación de Frontend:** Instalación de dependencias de React (`npm install`) y comprobación de la compilación de producción (`npm run build`).
+
+## Ejecucción y Edición de Código 
+Esta sección detalla las instrucciones para clonar, configurar, ejecutar localmente y probar la aplicación **YoSoyTuPadel** partiendo desde el código fuente del repositorio.
+
+### Clonado del Repositorio
+Para obtener una copia local del proyecto, abre una terminal y ejecuta el siguiente comando:
+```bash
+git clone [https://github.com/tu-usuario/2026-YoSoyTuPadel.git](https://github.com/tu-usuario/2026-YoSoyTuPadel.git
+```
+
+### Instrucciones de Ejecución
+#### Requisitos Previos del Sistema
+- **Java JDK 21** o superior.
+- **Node.js** (v18+) y **npm**.
+- **Docker** y **Docker Compose** (para la gestión de servicios auxiliares).
+- Navegador **Google Chrome** (para pruebas de sistema con Selenium).
+
+#### Ejecución de la Base de Datos y Servicios Auxiliares
+El servidor backend requiere una base de datos **MySQL** para la persistencia de datos en entorno local.
+Inicia el contenedor de la base de datos mediante Docker Compose desde la raíz del proyecto:
+```bash
+docker-compose up -d
+```
+
+#### Comandos para Ejecutar las Partes de la Aplicación
+
+#### 1. Ejecución del Servidor Backend (Spring Boot)
+Abre una terminal en la carpeta backend del proyecto y ejecuta:
+```bash
+mvn spring-boot:run
+```
+
+#### 2. Ejecución del Cliente Frontend (React + Vite)
+En una segunda terminal, accede al directorio del frontend, instala las dependencias e inicia el servidor de desarrollo:
+```bash
+npm install
+npm run dev
+```
+
+#### Acceso a la Página Web Ejecutada en Local
+
+Una vez levantados ambos servicios (Backend en puerto 8080 y Frontend en el servidor de desarrollo de Vite), abre cualquier navegador e ingresa a la URL: http://localhost:5173
+
+### Uso de Herramientas
