@@ -15,6 +15,7 @@ Este proyecto es mi Trabajo de Fin de Grado (TFG). Se desarrolla siguiendo estri
 
 - [Fase 1: Definición de funcionalidades y pantallas](#fase-1-definición-de-funcionalidades-y-pantallas)
 - [Fase 2: Configuración del repositorio, pruebas unitarias y CI](#fase-2-configuración-del-repositorio-pruebas-unitarias-y-ci)
+- [Fase 3: Versión 0.1 - Funcionalidad básica y Docker](#fase-3-versión-01---funcionalidad-básica-y-docker)
 
 
 ## Entidades de la aplicación
@@ -205,7 +206,7 @@ La aplicación web **YoSoyTuPadel** sigue una arquitectura **SPA (Single Page Ap
 | **Tecnologías** | Java 21, Spring Boot 4.0.7, React, TypeScript, Node.js, MySQL |
 | **Herramientas** | IntelliJ IDEA, Docker Desktop, Postman, GitHub |
 | **Control de Calidad** | Tests unitarios (JUnit 5, Vitest), Testcontainers, Selenium, SonarCloud, GitHub Actions |
-| **Proceso de Desarrollo** | Iterativo e incremental apoyado en prácticas de Kanban, Git y CI/CD |
+| **Proceso de Desarrollo** | Iterativo e incremental apoyado en prácticas de Kanban y CI/CD |
 
 
 ## Tecnologías
@@ -243,7 +244,7 @@ La especificación técnica y documentación interactiva de la API REST se gener
 #### Servidor (Backend Java)
 * **Tipos de Pruebas:** Pruebas unitarias de controladores/servicios (JUnit 5, Mockito) e integración con base de datos mediante **Testcontainers** y **Selenium**.
 * **Funcionalidades Probadas:**
-  * **Entidad Racket (Palas):** Verificación de la consulta y obtención de la lista de palas desde la base de datos para su posterior renderizado en la interfaz gráfica.
+* **Entidad Racket (Palas):** Verificación de la consulta y obtención de la lista de palas desde la base de datos para su posterior renderizado en la interfaz gráfica.
 * **Captura del resumen de la ejecución de las pruebas del backend (Tras ejecutar `mvn clean test`):**
   <img width="1252" height="287" alt="image" src="https://github.com/user-attachments/assets/a67d7dad-7e0d-483e-9b55-3c80c29e3572" />
 
@@ -288,7 +289,7 @@ El control de versiones del software se ha gestionado mediante **GitHub**, aloja
 *   **Estrategia de Ramas:**
     *   `main`: Contiene el código en producción, siempre estable y listo para su despliegue.
     *   `develop`: Rama principal de integración donde se consolidan las nuevas funcionalidades probadas.
-    *   `feature/*`: Ramas efímeras creadas para desarrollar una funcionalidad o issue específica (ej. `feature/racket-management`, `feature/user-auth`). Tras ser completadas y verificadas, se integran en `develop` mediante *Pull Requests* (PR).
+    *   `feature/*`: Ramas efímeras creadas para desarrollar una funcionalidad o issue específica. Tras ser completadas y verificadas, se integran en `develop` mediante *Pull Requests* (PR).
     *   `fix/*`: Ramas destinadas a la corrección de errores.
 
 *   **Métricas de uso de Git:**
@@ -310,7 +311,7 @@ Esta sección detalla las instrucciones para clonar, configurar, ejecutar localm
 ### Clonado del Repositorio
 Para obtener una copia local del proyecto, abre una terminal y ejecuta el siguiente comando:
 ```bash
-git clone [https://github.com/tu-usuario/2026-YoSoyTuPadel.git](https://github.com/tu-usuario/2026-YoSoyTuPadel.git
+git clone https://github.com/codeurjc-students/2026-YoSoyTuPadel
 ```
 
 ### Instrucciones de Ejecución
@@ -347,3 +348,35 @@ npm run dev
 Una vez levantados ambos servicios (Backend en puerto 8080 y Frontend en el servidor de desarrollo de Vite), abre cualquier navegador e ingresa a la URL: http://localhost:5173
 
 ### Uso de Herramientas
+
+#### Entorno de Desarrollo Integrado (IDE)
+
+Tanto el desarrollo del **Backend** (Spring Boot / Java) como del **Frontend** (React + TypeScript) se han centralizado de forma integrada en **IntelliJ IDEA**:
+
+* **Gestión del Backend (Java 21 / Spring Boot):**
+  * **Lombok Plugin:** Requerido e instalado en IntelliJ para la generación automática de *getters*, *setters*, *constructores* y *builders* en los modelos de datos.
+  * **Soporte Maven:** Importación y sincronización automática de dependencias definidas en el archivo `pom.xml`.
+  * **Configuración del SDK:** JDK 21 seleccionado en la estructura del proyecto (*Project Structure > Project SDK*).
+  * **Ejecución del Servidor:** Ejecución nativa desde la configuración de ejecución *Spring Boot App* dentro del propio IDE.
+
+* **Gestión del Frontend (React + Vite + TypeScript):**
+  * Ejecución del cliente de desarrollo y gestión de paquetes `npm` integrada a través de la terminal y las configuraciones de ejecución de tareas de IntelliJ.
+  * Formateo e inspección de código habilitado mediante las herramientas nativas de TypeScript y ESLint integradas en el entorno.
+
+#### Herramientas Auxiliares
+
+* **Docker & Docker Compose:** Utilizado para la orquestación y despliegue del contenedor de la base de datos **MySQL** en el entorno local (`docker-compose up -d`).
+* **GitHub:** Plataforma centralizada para la gestión del repositorio de código fuente, seguimiento del proyecto, control de cambios y publicación de releases.
+
+#### Interacción con la API REST mediante Postman
+
+Para probar e interactuar de forma aislada con la API REST expuesta por el servidor backend, se incluye una colección completa de peticiones listas para importar en **Postman**.
+
+##### Fichero de Colección
+El fichero JSON con las peticiones y ejemplos se encuentra ubicado en la raíz del repositorio:
+[2026-YoSoyTuPadel.postman_collection.json](https://github.com/codeurjc-students/2026-YoSoyTuPadel/blob/main/2026-YoSoyTuPadel.postman_collection.json)
+
+---
+
+
+# Fase 3: Versión 0.1 - Funcionalidad básica y Docker
