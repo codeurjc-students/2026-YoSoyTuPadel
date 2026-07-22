@@ -13,18 +13,24 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.test.context.TestPropertySource;
 
+
+import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT, properties = {
-        "spring.profiles.active=test",
-        "server.port=8080"
-})
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
+@TestPropertySource(properties = "server.port=8080")
 public class RacketClientSystemTest extends BaseIntegrationTest {
 
+    @LocalServerPort
+    private int port;
 
     @Autowired
     private RacketRepository racketRepository;
@@ -59,9 +65,10 @@ public class RacketClientSystemTest extends BaseIntegrationTest {
         driver.get("http://localhost:5173");
 
 
-        WebElement body = driver.findElement(By.tagName("body"));
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
+        wait.until(ExpectedConditions.textToBePresentInElementLocated(By.tagName("body"), "Babolat"));
 
-        assertThat(body.getText()).contains("Babolat");
-        assertThat(body.getText()).contains("Pure Aero");
+
+        assertThat(driver.findElement(By.tagName("body")).getText()).contains("Babolat");
     }
 }

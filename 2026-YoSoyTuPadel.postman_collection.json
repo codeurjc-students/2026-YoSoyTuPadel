@@ -1,0 +1,90 @@
+{
+	"info": {
+		"_postman_id": "2390d6ac-071c-405c-b047-48772125a812",
+		"name": "2026-YoSoyTuPadel",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "33719582",
+		"_collection_link": "https://cloudy-crescent-391266.postman.co/workspace/New-Team-Workspace~dcd8ab54-2ae0-4204-8933-a72efcb2fb92/collection/33719582-2390d6ac-071c-405c-b047-48772125a812?action=share&source=collection_link&creator=33719582"
+	},
+	"item": [
+		{
+			"name": "GetAllRackets",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/api/rackets",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"rackets"
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "New Request",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/rackets",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"rackets"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Vary",
+							"value": "Origin"
+						},
+						{
+							"key": "Vary",
+							"value": "Access-Control-Request-Method"
+						},
+						{
+							"key": "Vary",
+							"value": "Access-Control-Request-Headers"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Content-Length",
+							"value": "602"
+						},
+						{
+							"key": "Date",
+							"value": "Wed, 22 Jul 2026 12:36:22 GMT"
+						},
+						{
+							"key": "Keep-Alive",
+							"value": "timeout=60"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						}
+					],
+					"cookie": [],
+					"body": "[\n    {\n        \"id\": 1,\n        \"brand\": \"Nox\",\n        \"name\": \"ML10 Pro Cup\",\n        \"description\": \"La mítica pala de Miguel Lamperti. Control absoluto y gran salida de bola.\",\n        \"pricePerDay\": 5\n    },\n    {\n        \"id\": 2,\n        \"brand\": \"Bullpadel\",\n        \"name\": \"Vertex 04\",\n        \"description\": \"Pala de potencia pura para jugadores agresivos. Superficie rugosa.\",\n        \"pricePerDay\": 7.5\n    },\n    {\n        \"id\": 3,\n        \"brand\": \"Adidas\",\n        \"name\": \"Metalbone HRD\",\n        \"description\": \"La pala de Ale Galán. Personalización de pesos y máxima rigidez.\",\n        \"pricePerDay\": 8\n    },\n    {\n        \"id\": 4,\n        \"brand\": \"Head\",\n        \"name\": \"Extreme Pro\",\n        \"description\": \"Pala de potencia con formato diamante. Actualmente en reparación.\",\n        \"pricePerDay\": 6\n    }\n]"
+				}
+			]
+		}
+	]
+}
