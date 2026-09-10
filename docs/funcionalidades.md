@@ -1,0 +1,92 @@
+# Funcionalidades y Roles de Usuario
+
+## Funcionalidad para Tipos de Usuario
+- Usuario No Registrado: Podrá entrar en la página principal de la aplicación y podrá ver tanto el catálogo de palas, la lista de entrenadores y la lista de pistas disponibles, pero no podrá hacer uso de los servicios de la academia. Es decir, no podrá alquilar palas, no podrá contratar entrenadores ni reservar pistas, y obviamente no podrá entrar en la pantalla de perfil de usuario.
+- Usuario Registrado (Alumno): Podrá hacer lo mismo que el usuario registrado pero teniendo acceso a los servicios de la plataforma tales como alquilar una pala, contratar a un entrenador, reservar una pista o entrar en su perfil, pudiendo modificarlo o incluso eliminar su cuenta.
+- Entrenador: El entrenador tendrá la capacidad para modificar el nivel de un alumno después de un entrenamiento con el mismo. De igual forma que el usuario, podrá entrar en su perfil con las mismas capacidades.
+- Administrador: El administrador podrá acceder a todas las pantallas de la aplicación y modificar el catálogo de palas y pistas. También tendrá la capacidad para modificar el nivel de un alumno o incluso eliminar su usuario.
+
+## 🔐 Permisos de usuario
+
+La siguiente tabla detalla los permisos de los usuarios para las acciones principales de la web. Cabe destacar que todas las transacciones financieras se gestionan físicamente en la sede de la academia. También cabe destacar que algunas acciones no estén disponibles porque no tienen sentido en el contexto del negocio, como por ejemplo que un administrador alquile una pala.
+
+| Acción | Anónimo | Registrado (Alumno) | Entrenador | Administrador |
+| :--- | :--- | :--- | :--- |:--- |
+| **Ver página de inicio / Info** | sí | sí | sí | sí |
+| **Ver página de palas, entrenadores o pistas** | sí | sí | sí | sí |
+| **Reservar pista / Alquilar pala / Contratar entrenador** | no | sí | no | no |
+| **Modificar nivel de un alumno** | no | no | sí | sí |
+| **Gestionar catálogo de palas y pistas (CRUD)**| no | no | no | sí |
+| **Ver / Modificar / Eliminar - Perfil** | no | sí | sí | no |
+
+## ⚙️ Funcionalidades 
+
+### Funcionalidades Básicas
+Todas las entidades tendrán operaciones CRUD. Aunque obviamente alguna de estas operaciones serán propias del administrador, como la creación de una entidad pala (Racket) o una entidad pista (Court).
+
+### Funcionalidades Intermedias
+* **Gestión de Nivel:** Permite a los usuarios con rol de **Entrenador** evaluar a los jugadores que han asistido a sus entrenamientos. El entrenador dispondrá de la capacidad de modificar el nivel del alumno para ajustarlo a su desempeño real, incluyendo la posibilidad de bajarle el nivel técnico en la plataforma si se considera necesario.
+* **Nivelación inicial:** Permite a los usuarios iniciantes o no registrados en la aplicación adquirir un nivel inicial al registrarse, asignándoles un nivel determinado dependiendo de las respuestas del mismo a una serie de preguntas.
+
+### Funcionalidades Avanzadas
+* **Sistema de Filtrado de Pistas:** Implementación de un filtro de búsqueda dinámico en la selección de pistas a reservar. Los usuarios podrán filtrar las pistas disponibles en tiempo real según distintos criterios como el precio o el tipo de pista (al aire libre o techado).
+
+## 💻 Boceto de pantallas
+
+### Pantalla de inicio de sesión o registro 
+En estas pantallas, los usuarios podrán iniciar sesión para hacer uso de los servicios que ofrece la aplicación de la academia o, por el contrario, registrarse si son usuarios no registrados: 
+- Para el inicio de sesión: 
+
+<img width="1912" height="855" alt="image" src="https://github.com/user-attachments/assets/fbeb4318-e6bd-4a72-95bb-54fadc8923dc" />
+
+- Para el registro: 
+
+<img width="1915" height="860" alt="image" src="https://github.com/user-attachments/assets/0d6f8fb5-9dd9-4ac1-ac0a-57d35a76b4e9" />
+
+Tras introducir los datos de registro el nuevo alumno responderá una serie de preguntas para determinar su nivel inicial. En dicho cuestionario también habrá la posibilidad de cancelar el registro, pasar a la siguiente pregunta o finalizar registro.
+A continuación se muestran dos bocestos de ejemplo: 
+
+<img width="596" height="817" alt="image" src="https://github.com/user-attachments/assets/9c081a32-bd78-46a5-b5c5-2edfc1cb5b3c" />
+
+<img width="598" height="775" alt="image" src="https://github.com/user-attachments/assets/2057478d-1b65-4d19-9520-19e97d21e2af" />
+
+### Pantalla del Menú Principal
+Desde esta pantalla se podrá acceder al catálogo de palas de alquiler, la lista de entrenadores para contratar y la reserva de pistas. De igual forma, si el usuario es un alumno o un profesor, se podrá acceder a la pantalla del perfil de usuario. Adicionalmente, se incluirá el nombre del usuario, la fecha actual y la fecha y hora del próximo entreno que haya contratado:
+
+<img width="1162" height="617" alt="image" src="https://github.com/user-attachments/assets/1ca33a11-987a-49e7-8cff-fd44069ed3ec" />
+
+### Pantalla de Perfil del Usuario
+En esta interfaz el usuario registrado podrá observar todos sus atributos como el nombre, el nickname, el peso, etc. También se encontrará aquí el número de partidos jugados, el número de entrenamientos realizados y la gráfica de líneas de la progresión del nivel del jugador. El usuario podrá también editar o eliminar su perfil desde esta pantalla. Donde se aprecia VC iría la foto de usuario: 
+
+<img width="537" height="803" alt="image" src="https://github.com/user-attachments/assets/9f5e5f68-b757-4411-a43b-3c8d89bf42ae" />
+
+### Pantalla de Catálogo de Palas
+En esta vista se mostrarán todas las palas disponibles con su correspondiente foto, nombre, marca, precio por uso y valoración. Además de poder volver al menú principal el usuario podrá ver detalles más precisos del producto antes de alquilarlo. En esta ventana el administrador podrá crear nuevas palas, o modificar o eliminar las existentes:
+
+<img width="1052" height="798" alt="image" src="https://github.com/user-attachments/assets/24e64c54-ee12-4c26-9bfb-5b62606402b5" />
+
+### Formulario de alta de una pala
+En este formulario accesible desde el catálogo de palas el administrador podrá completar los datos de una pala que desee dar de alta, también podrá cancelarlo o volver al catálogo de palas.
+
+<img width="690" height="833" alt="image" src="https://github.com/user-attachments/assets/a1dea2ea-5d24-48c2-aee1-bc15e79387d5" />
+
+### Pantalla de Lista de entrenadores 
+En esta pantalla se mostrará la lista de entrenadores disponibles con su respectiva imagen, nombre, especialidad de enseñanza, nivel de certificación de la FEP (Federación Española de Pádel), valoración y precios por sesión. Además se podrá volver al menú principal:
+
+<img width="932" height="868" alt="image" src="https://github.com/user-attachments/assets/918499cf-67a3-47c2-adbb-368dfa933f98" />
+
+### Pantalla de Lista de Pistas Para Reservar
+En esta vista se mostrarán todas las pistas disponibles con una vista previa de su ubicación (aunque en este caso se pone una foto genérica hasta su implementación), nombre, tipo, precio por hora y si hay destacadas. De forma similar a la pantalla del catálogo de palas, el usuario podrá ver sus detalles antes de reservarla. También se podrá volver al menú principal. En esta ventana el administrador podrá crear nuevas pistas, o modificar o eliminar las existentes:
+
+<img width="1073" height="863" alt="image" src="https://github.com/user-attachments/assets/f82ce3b9-d181-405a-8d62-cc3bff0142f8" />
+
+### Pantalla de disponibilidad, detalles y reserva de una pista
+Si un usuario quiere reservar una pista, tras clickar en el botón de disponibilidad de la pista correspondiente de la lista de pistas disponible podrá ver detalles más especificos de la pista. También podrá seleccionar una hora determinada de un día elegido a su elección y finalizar la reserva. De igual forma podrá cancelar y volver al catálogo de pistas. 
+
+<img width="547" height="840" alt="image" src="https://github.com/user-attachments/assets/6e85936c-818c-4a3f-9a27-13808cd01ad3" />
+
+Tras finalizar la reserva de la pista el usuario podrá ver un mensaje de confirmación si se ha reservado de forma correcta:
+
+<img width="435" height="508" alt="image" src="https://github.com/user-attachments/assets/04e1935b-38b7-47e5-9270-76fc4789c789" />
+
+> Cabe destacar que todas estas pantallas son bocetos y durante el desarrollo de este proyecto pueden tener variaciones, es decir, no son definitivas.
