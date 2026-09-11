@@ -35,10 +35,10 @@ jobs:
         run: mvn compile -DskipTests -B
 
       - name: Ejecutar Tests Unitarios del Backend
-        run: mvn test -Dtest="es/urjc/code/yosoytupadel/backend/unit/**, es/urjc/code/yosoytupadel/backend/integration/**" -B
+        run: mvn test -Dtest="!**/system/**" -B
 
       - name: Ejecutar Tests de Integración (Testcontainers / Failsafe)
-        run: mvn verify -Dsurefire.skip=true -B
+        run: mvn verify -Dsurefire.skip=true -Dtest="!**/system/**" -B
 
 
   # --- JOB 2: FRONTEND (Unitarios, Build y SonarCloud) ---
