@@ -1,12 +1,10 @@
 name: CI - Control de Calidad Completo
 
 on:
-  push:
-    branches: [ "add-ci-workflow" ]
-  workflow_dispatch:
+
   pull_request:
     branches: [ "main" ]
-
+  workflow_dispatch:
 jobs:
 
   # --- JOB 1: BACKEND (Unitarios, Integración y SonarCloud opcional) ---
