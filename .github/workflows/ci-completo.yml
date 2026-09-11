@@ -35,7 +35,7 @@ jobs:
         run: mvn compile -DskipTests -B
 
       - name: Ejecutar Tests Unitarios del Backend
-        run: mvn test -Dtest="!*SystemTest" -B
+        run: mvn test -Dtest=*Test -DexcludedGroups=system,integration -B
 
       - name: Ejecutar Tests de Integración (Testcontainers / Failsafe)
         run: mvn verify -Dsurefire.skip=true -B
