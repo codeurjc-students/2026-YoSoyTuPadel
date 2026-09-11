@@ -38,8 +38,7 @@ jobs:
         run: mvn test -Dtest=*UnitTest,*ControllerTest,*ServiceTest -B
 
       - name: Ejecutar Tests de Integración (Testcontainers / Failsafe)
-        # Maven Surefire ejecuta unitarios y Failsafe se encarga de la integración con 'verify'
-        run: mvn verify -DskipTests=false -B
+        run: mvn verify -Dsurefire.skip=true -B
 
 
   # --- JOB 2: FRONTEND (Unitarios, Build y SonarCloud) ---
