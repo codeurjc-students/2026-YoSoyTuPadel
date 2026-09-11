@@ -48,7 +48,7 @@ public class RacketClientSystemTest extends BaseIntegrationTest {
         racketRepository.save(new Racket(null, "Babolat", "Pure Aero", "Buen control", 13.5));
 
         ChromeOptions options = new ChromeOptions();
-        //options.addArguments("--headless");
+        options.addArguments("--headless", "--no-sandbox", "--disable-dev-shm-usage");
         driver = new ChromeDriver(options);
     }
 
