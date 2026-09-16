@@ -1,6 +1,8 @@
 package es.urjc.code.yosoytupadel.backend.unit.controller;
 
 import es.urjc.code.yosoytupadel.backend.controller.RacketController;
+import es.urjc.code.yosoytupadel.backend.dto.RacketDTO;
+import es.urjc.code.yosoytupadel.backend.dto.RacketMapper;
 import es.urjc.code.yosoytupadel.backend.entities.Racket;
 import es.urjc.code.yosoytupadel.backend.service.RacketService;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -22,6 +25,9 @@ class RacketControllerTest {
     @Mock
     private RacketService racketService;
 
+    @Mock
+    private RacketMapper racketMapper;
+
     @InjectMocks
     private RacketController racketController;
 
@@ -30,21 +36,30 @@ class RacketControllerTest {
 
     @BeforeEach
     void setUp() {
-            racket1 = new Racket(1L, "Babolat", "Pure Aero", "Buen control", 14.5);
-        racket2 = new Racket(2L, "Wilson", "Blade", "Mucha fuerza de golpeo", 15.0);
+        racket1 = new Racket( "Babolat", "Pure Aero", "Buen control", 14.5);
+        racket1.setId(1L);
+        racket2 = new Racket("Wilson", "Blade", "Mucha fuerza de golpeo", 15.0);
+        racket2.setId(2L);
     }
 
     @Test
     void getAllRackets_ShouldReturnListOfRackets() {
 
+        RacketDTO dto1 = new RacketDTO(1L, "Pure Aero", "Babolat", "Buen control", 14.5);
+        RacketDTO dto2 = new RacketDTO(2L, "Blade", "Wilson", "Mucha fuerza de golpeo", 15.0);
+
         when(racketService.getAllRackets()).thenReturn(Arrays.asList(racket1, racket2));
 
-        List<Racket> result = racketController.getAllRackets();
+        when(racketMapper.toDTOs(any())).thenReturn(Arrays.asList(dto1, dto2));
+
+        Collection<RacketDTO> result = racketController.getAllRackets();
 
         assertThat(result).hasSize(2);
-        assertThat(result).containsExactly(racket1, racket2);
-        assertThat(result.get(0).getBrand()).isEqualTo("Babolat");
-        assertThat(result.get(1).getBrand()).isEqualTo("Wilson");
+
+        RacketDTO dto = result.iterator().next();
+        assertThat(result)
+                .extracting(RacketDTO::brand)
+                .containsExactly("Babolat", "Wilson");
 
         verify(racketService, times(1)).getAllRackets();
     }
@@ -54,7 +69,7 @@ class RacketControllerTest {
 
         when(racketService.getAllRackets()).thenReturn(Arrays.asList());
 
-        List<Racket> result = racketController.getAllRackets();
+        Collection<RacketDTO> result = racketController.getAllRackets();
 
         assertThat(result).isEmpty();
         verify(racketService, times(1)).getAllRackets();

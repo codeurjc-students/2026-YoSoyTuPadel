@@ -1,14 +1,16 @@
 package es.urjc.code.yosoytupadel.backend.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+
+import java.sql.Blob;
+
 
 @Entity
 @Table(name = "rackets")
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
 public class Racket {
 
@@ -26,6 +28,38 @@ public class Racket {
     private String description;
 
     @Column(nullable = false)
-    private double pricePerDay; // Precio de alquiler por día
+    private double pricePerDay;
 
+    @Lob
+    @JsonIgnore
+    private Blob image;
+
+
+    @JsonIgnore
+    private String racketImagePath;
+
+    public Racket() {}
+
+    public Racket(String brand, String name, String description, double pricePerDay) {
+        this.brand = brand;
+        this.name = name;
+        this.description = description;
+        this.pricePerDay = pricePerDay;
+    }
+
+    // Getters y Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getBrand() { return brand; }
+    public void setBrand(String brand) { this.brand = brand; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+    public double getPricePerDay() { return pricePerDay; }
+    public void setPricePerDay(double pricePerDay) { this.pricePerDay = pricePerDay; }
+    public Blob getImage() { return image; }
+    public void setImage(Blob image) { this.image = image; }
+    public String getRacketImagePath() {return racketImagePath;}
+    public void setRacketImagePath(String racketImagePath) {this.racketImagePath = racketImagePath;}
 }

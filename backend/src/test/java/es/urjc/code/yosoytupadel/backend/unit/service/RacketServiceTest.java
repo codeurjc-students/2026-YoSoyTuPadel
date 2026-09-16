@@ -34,8 +34,10 @@ class RacketServiceTest {
     @BeforeEach
     void setUp() {
 
-        racket1 = new Racket(1L, "Babolat", "Pure Aero", "Buen control", 15.5);
-        racket2 = new Racket(2L, "Wilson", "Blade", "Mucha potencia de golpeo", 15.0);
+        racket1 = new Racket("Babolat", "Pure Aero", "Buen control", 15.5);
+        racket1.setId(1L);
+        racket2 = new Racket("Wilson", "Blade", "Mucha potencia de golpeo", 15.0);
+        racket2.setId(2L);
     }
 
     @Test
@@ -75,8 +77,9 @@ class RacketServiceTest {
 
     @Test
     void createRacket() {
-        Racket newRacket = new Racket(null, "Head", "Speed", "Lightweight", 18.0);
-        Racket savedRacket = new Racket(3L, "Head", "Speed", "Lightweight", 18.0);
+        Racket newRacket = new Racket( "Head", "Speed", "Lightweight", 18.0);
+        Racket savedRacket = new Racket("Head", "Speed", "Lightweight", 18.0);
+        savedRacket.setId(3L);
 
         when(racketRepository.save(any(Racket.class))).thenReturn(savedRacket);
 
