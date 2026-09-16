@@ -32,8 +32,8 @@ class RacketServerSystemTest extends BaseIntegrationTest {
         RestAssured.port = port;
         racketRepository.deleteAll();
 
-        Racket racket1 = new Racket(null, "Babolat", "Pure Aero", "Buen control", 11.5);
-        Racket racket2 = new Racket(null, "Wilson", "Blade", "Mucha fuerza de golpeo", 15.0);
+        Racket racket1 = new Racket( "Babolat", "Pure Aero", "Buen control", 11.5);
+        Racket racket2 = new Racket( "Wilson", "Blade", "Mucha fuerza de golpeo", 15.0);
 
         racketRepository.saveAll(List.of(racket1, racket2));
     }
@@ -43,7 +43,7 @@ class RacketServerSystemTest extends BaseIntegrationTest {
         given()
                 .contentType(ContentType.JSON)
                 .when()
-                .get("/api/rackets")
+                .get("/api/v1/rackets")
                 .then()
                 .statusCode(200)
                 .body("$", hasSize(2))

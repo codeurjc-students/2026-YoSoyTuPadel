@@ -15,7 +15,7 @@ function App() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        api.get<Racket[]>('/api/rackets')
+        api.get<Racket[]>('/api/v1/rackets')
             .then((response) => {
                 setRackets(response.data);
                 setLoading(false);

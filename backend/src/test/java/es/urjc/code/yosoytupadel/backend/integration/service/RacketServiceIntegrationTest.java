@@ -27,8 +27,8 @@ class RacketServiceIntegrationTest extends BaseIntegrationTest {
     void setUp() {
         racketRepository.deleteAll();
 
-        Racket racket1 = new Racket(null, "Babolat", "Pure Aero", "Buen control", 10.5);
-        Racket racket2 = new Racket(null, "Wilson", "Blade", "Mucha fuerza de golpeo", 15.0);
+        Racket racket1 = new Racket( "Babolat", "Pure Aero", "Buen control", 10.5);
+        Racket racket2 = new Racket( "Wilson", "Blade", "Mucha fuerza de golpeo", 15.0);
 
         racketRepository.saveAll(List.of(racket1, racket2));
     }
