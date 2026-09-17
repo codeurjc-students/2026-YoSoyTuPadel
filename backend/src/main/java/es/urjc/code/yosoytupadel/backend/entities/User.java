@@ -11,10 +11,9 @@ import java.sql.Blob;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @Column(nullable = false)
     private String name;
 
     @Column(nullable = false, unique = true)
@@ -23,8 +22,8 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
-    private String password;
+    @JsonIgnore
+    private String encodedPassword;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -48,13 +47,17 @@ public class User {
 
     public User() {}
 
-    public User(String name, String nickname, String email, String password, UserRole role, Double skillLevel) {
+    public User(String name, String nickname, String email, String encodedPassword, UserRole role) {
         this.name = name;
         this.nickname = nickname;
         this.email = email;
-        this.password = password;
+        this.encodedPassword = encodedPassword;
         this.role = role;
-        this.skillLevel = skillLevel != null ? skillLevel : 0.0;
+    }
+    public User(String email, String encodedPassword, UserRole role) {
+        this.email = email;
+        this.encodedPassword = encodedPassword;
+        this.role = role;
     }
 
     // Getters y Setters
@@ -66,8 +69,8 @@ public class User {
     public void setNickname(String nickname) { this.nickname = nickname; }
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
+    public String getEncodedPassword() { return this.encodedPassword; }
+    public void setEncodedPassword(String password) { this.encodedPassword = password; }
     public UserRole getRole() { return role; }
     public void setRole(UserRole role) { this.role = role; }
     public Double getSkillLevel() { return skillLevel; }

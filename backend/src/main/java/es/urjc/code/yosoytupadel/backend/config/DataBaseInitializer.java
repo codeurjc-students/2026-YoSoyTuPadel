@@ -8,6 +8,7 @@ import es.urjc.code.yosoytupadel.backend.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.sql.rowset.serial.SerialBlob;
@@ -22,17 +23,20 @@ import java.util.List;
 @Service
 public class DataBaseInitializer {
 
-    private final RacketRepository racketRepository;
+    @Autowired
+    private RacketRepository racketRepository;
+
+    @Autowired
     private CourtRepository courtRepository;
+
+    @Autowired
     private BookingRepository bookingRepository;
+
+    @Autowired
     private UserRepository userRepository;
 
-    public DataBaseInitializer(RacketRepository racketRepository, CourtRepository courtRepository, BookingRepository bookingRepository, UserRepository userRepository) {
-        this.racketRepository = racketRepository;
-        this.courtRepository = courtRepository;
-        this.bookingRepository = bookingRepository;
-        this.userRepository = userRepository;
-    }
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @PostConstruct
     public void init() throws IOException, SQLException {
@@ -40,30 +44,21 @@ public class DataBaseInitializer {
         if (userRepository.count() == 0) {
 
             User admin = new User(
-                    "Administrador",
-                    "admin",
                     "admin@yosoytupadel.com",
-                    "admin123",
-                    UserRole.ADMIN,
-                    7.0
+                    passwordEncoder.encode("admin"),
+                    UserRole.ADMIN
             );
 
             User student1 = new User(
-                    "Víctor Candel",
-                    "vcandel",
                     "victor@alumno.com",
-                    "padel2026",
-                    UserRole.STUDENT,
-                    2.5
+                    passwordEncoder.encode("pass"),
+                    UserRole.USER
             );
 
             User coach1 = new User(
-                    "Alejandro Galán",
-                    "alegalan",
                     "coach@yosoytupadel.com",
-                    "coach123",
-                    UserRole.COACH,
-                    7.0
+                    passwordEncoder.encode("coach"),
+                    UserRole.COACH
             );
 
             ClassPathResource imgFile = new ClassPathResource("static/images/profile-picture-default.jpg");

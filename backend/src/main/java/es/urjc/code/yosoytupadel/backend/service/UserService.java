@@ -1,10 +1,19 @@
 package es.urjc.code.yosoytupadel.backend.service;
 
+import es.urjc.code.yosoytupadel.backend.dto.UserDTO;
+import es.urjc.code.yosoytupadel.backend.dto.UserMapper;
 import es.urjc.code.yosoytupadel.backend.entities.Racket;
+import es.urjc.code.yosoytupadel.backend.entities.UserRole;
 import es.urjc.code.yosoytupadel.backend.repository.RacketRepository;
 import org.hibernate.engine.jdbc.proxy.BlobProxy;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import es.urjc.code.yosoytupadel.backend.entities.User;
@@ -17,14 +26,28 @@ import java.nio.file.Files;
 import java.sql.Blob;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @Service
 public class UserService {
 
-    private final UserRepository userRepository;
+    @Autowired
+    private UserRepository userRepository;
 
-    private final RacketRepository racketRepository;
+    @Autowired
+    private RacketRepository racketRepository;
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private UserMapper userMapper;
 
     public UserService(UserRepository userRepository, RacketRepository racketRepository) {
         this.userRepository = userRepository;
@@ -40,17 +63,26 @@ public class UserService {
     }
 
     @Transactional
-    public User createUser(User user) {
-        if (userRepository.existsByEmail(user.getEmail())) {
-            throw new IllegalArgumentException("This email already exists.");
+    public UserDTO createUser(UserDTO userDTO) {
+        User user = userMapper.toDomain(userDTO);
+        user.setEncodedPassword(passwordEncoder.encode(userDTO.password()));
+        user.setRole(UserRole.valueOf("USER"));
+
+        try {
+            ClassPathResource imgFileDefault = new ClassPathResource("static/images/emptyImage.png");
+            try (InputStream inputStream = imgFileDefault.getInputStream()) {
+                byte[] imageBytes = inputStream.readAllBytes();
+                Blob imageBlob = new SerialBlob(imageBytes);
+                user.setProfilePicture(imageBlob);
+
+            }
+        } catch (IOException | SQLException e) {
+
+            throw new RuntimeException("Error setting default image", e);
         }
 
-
-        if (user.getSkillLevel() == null) {
-            user.setSkillLevel(1.0); // Nivel base por defecto
-        }
-
-        return userRepository.save(user);
+        userRepository.save(user);
+        return userMapper.toDTO(user);
     }
 
     @Transactional
@@ -138,5 +170,45 @@ public class UserService {
         Blob imageBlobDefault = new SerialBlob(imageBytesDefault);
         user.setProfilePicture(imageBlobDefault);
         userRepository.save(user);
+    }
+
+    public Optional<UserDTO> getAuthenticatedUserDto() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null && authentication.getPrincipal() instanceof UserDetails userDetails) {
+            return userRepository.findByEmail(userDetails.getUsername())
+                    .map(userMapper::toDTO);
+        }
+
+        return Optional.empty();
+    }
+
+    public boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
+    }
+
+    public UserDTO updateUser(Long id, UserDTO userDTO) throws SQLException {
+        User user = userRepository.findById(id).orElseThrow();
+
+        String email = userDTO.email();
+        String name = userDTO.name();
+
+        if (email == null || email.trim().isEmpty()) {
+            throw new IllegalArgumentException("Email cannot be empty.");
+        }
+
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Name cannot be empty.");
+        }
+
+        Optional<User> existingUser = userRepository.findByEmail(email.trim());
+        if (existingUser.isPresent() && !existingUser.get().getId().equals(user.getId())) {
+            throw new IllegalArgumentException("Email is already in use.");
+        }
+
+        user.setEmail(email.trim());
+        user.setName(name.trim());
+
+        return userMapper.toDTO(userRepository.save(user));
     }
 }

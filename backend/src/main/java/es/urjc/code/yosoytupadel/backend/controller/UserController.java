@@ -3,7 +3,12 @@ package es.urjc.code.yosoytupadel.backend.controller;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -14,9 +19,10 @@ import es.urjc.code.yosoytupadel.backend.service.UserService;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.AccessDeniedException;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Map;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -38,19 +44,6 @@ public class UserController {
     @GetMapping("/{id}")
     public UserDTO getUser(@PathVariable long id) {
         return mapper.toDTO(userService.getUserById(id));
-    }
-
-    @PostMapping("")
-    public ResponseEntity<UserDTO> createUser(@RequestBody User user) {
-        User savedUser = userService.createUser(user);
-        UserDTO responseDTO = mapper.toDTO(savedUser);
-
-        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
-                .path("/{id}")
-                .buildAndExpand(responseDTO.id())
-                .toUri();
-
-        return ResponseEntity.created(location).body(responseDTO);
     }
 
 
@@ -104,9 +97,72 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}/image")
-    public ResponseEntity<Object> deletePostImage(@PathVariable long id) throws IOException, SQLException {
-        userService.deleteUserImage(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<String> deleteUserImage(@PathVariable long id) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
+            if (authentication != null && authentication.getAuthorities().stream()
+                    .anyMatch(grantedAuthority -> grantedAuthority.getAuthority()
+                            .equals("ROLE_ADMIN"))) {
+
+                userService.deleteUserImage(id);
+                return ResponseEntity.ok("User image deleted successfully");
+            } else {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body("Forbidden: You are not allowed to delete this user image.");
+            }
+
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("User image not found or user does not exist.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("An internal error occurred while trying to delete the user image.");
+        }
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserDTO> getAuthenticatedUser() {
+        return userService.getAuthenticatedUserDto()
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(401).build());
+    }
+
+    @PostMapping("/new")
+    public ResponseEntity<?> createUser(@RequestBody UserDTO userDTO) {
+        if (userService.existsByEmail(userDTO.email())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("error", "Email is already in use"));
+        }
+
+        userDTO = userService.createUser(userDTO);
+
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(userDTO.id())
+                .toUri();
+
+        return ResponseEntity.created(location).body(userDTO);
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @PutMapping("/{id}")
+    public UserDTO replaceUser(@RequestBody UserDTO userDTO, @PathVariable Long id) throws SQLException {
+
+        UserDTO authenticatedUser = userService.getAuthenticatedUserDto()
+                .orElseThrow(() -> new NoSuchElementException("User not authenticated"));
+
+        // if is admin, can edit any user
+        if (authenticatedUser.role().name().equals("ROLE_ADMIN")) {
+            return userService.updateUser(id, userDTO);
+        }
+
+        // if is user, can edit only his own user
+        if (authenticatedUser.id().equals(id) && userDTO.email() != null && !userDTO.email().trim().isEmpty()) {
+            return userService.updateUser(id, userDTO);
+        }
+
+        // If not achieve any condition, return error 403 (Forbidden)
+        throw new AccessDeniedException("You are not allowed to edit this user.");
     }
 }
