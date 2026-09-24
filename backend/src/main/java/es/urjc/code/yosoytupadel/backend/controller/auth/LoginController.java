@@ -15,7 +15,7 @@ import es.urjc.code.yosoytupadel.backend.security.jwt.UserLoginService;
 import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/v1/auth")
 public class LoginController {
     @Autowired
     private UserLoginService userService;

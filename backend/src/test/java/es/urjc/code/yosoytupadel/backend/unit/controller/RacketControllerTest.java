@@ -1,77 +1,86 @@
 package es.urjc.code.yosoytupadel.backend.unit.controller;
 
 import es.urjc.code.yosoytupadel.backend.controller.RacketController;
+import es.urjc.code.yosoytupadel.backend.dto.PreRacketDTO;
 import es.urjc.code.yosoytupadel.backend.dto.RacketDTO;
-import es.urjc.code.yosoytupadel.backend.dto.RacketMapper;
-import es.urjc.code.yosoytupadel.backend.entities.Racket;
 import es.urjc.code.yosoytupadel.backend.service.RacketService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.http.MediaType;
 
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.Collections;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
+
+@WebMvcTest(
+        controllers = RacketController.class,
+        excludeFilters = @ComponentScan.Filter(
+                type = FilterType.ASSIGNABLE_TYPE,
+                classes = { es.urjc.code.yosoytupadel.backend.security.WebSecurityConfig.class, es.urjc.code.yosoytupadel.backend.security.jwt.JwtRequestFilter.class }
+        )
+)
+@AutoConfigureMockMvc(addFilters = false)
 class RacketControllerTest {
 
-    @Mock
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockitoBean
     private RacketService racketService;
 
-    @Mock
-    private RacketMapper racketMapper;
 
-    @InjectMocks
-    private RacketController racketController;
+    private RacketDTO dto1;
+    private RacketDTO dto2;
 
-    private Racket racket1;
-    private Racket racket2;
+    private PreRacketDTO preDto1;
+    private PreRacketDTO preDto2;
 
     @BeforeEach
     void setUp() {
-        racket1 = new Racket( "Babolat", "Pure Aero", "Buen control", 14.5);
-        racket1.setId(1L);
-        racket2 = new Racket("Wilson", "Blade", "Mucha fuerza de golpeo", 15.0);
-        racket2.setId(2L);
+        dto1 = new RacketDTO(1L, "Babolat", "Pure Aero", "Buen control", 14.5, 3);
+        dto2 = new RacketDTO(2L, "Wilson", "Blade", "Mucha fuerza de golpeo", 15.0, 3);
+
+        preDto1 = new PreRacketDTO(1L,"Babolat", "Pure Aero",3);
+        preDto2 = new PreRacketDTO(2L, "Wilson", "Blade", 3);
     }
 
     @Test
-    void getAllRackets_ShouldReturnListOfRackets() {
+    void getAllRackets_ShouldReturnListOfRackets() throws Exception {
 
-        RacketDTO dto1 = new RacketDTO(1L, "Pure Aero", "Babolat", "Buen control", 14.5);
-        RacketDTO dto2 = new RacketDTO(2L, "Blade", "Wilson", "Mucha fuerza de golpeo", 15.0);
+        when(racketService.getAllRackets()).thenReturn(Arrays.asList(preDto1, preDto2));
 
-        when(racketService.getAllRackets()).thenReturn(Arrays.asList(racket1, racket2));
-
-        when(racketMapper.toDTOs(any())).thenReturn(Arrays.asList(dto1, dto2));
-
-        Collection<RacketDTO> result = racketController.getAllRackets();
-
-        assertThat(result).hasSize(2);
-
-        RacketDTO dto = result.iterator().next();
-        assertThat(result)
-                .extracting(RacketDTO::brand)
-                .containsExactly("Babolat", "Wilson");
+        mockMvc.perform(get("/api/v1/rackets")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].brand").value("Babolat"))
+                .andExpect(jsonPath("$[1].brand").value("Wilson"));
 
         verify(racketService, times(1)).getAllRackets();
     }
 
     @Test
-    void getAllRackets_WhenServiceReturnsEmptyList_ShouldReturnEmptyList() {
+    void getAllRackets_WhenServiceReturnsEmptyList_ShouldReturnEmptyList() throws Exception {
 
-        when(racketService.getAllRackets()).thenReturn(Arrays.asList());
+        when(racketService.getAllRackets()).thenReturn(Collections.emptyList());
 
-        Collection<RacketDTO> result = racketController.getAllRackets();
+        mockMvc.perform(get("/api/v1/rackets")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
 
-        assertThat(result).isEmpty();
         verify(racketService, times(1)).getAllRackets();
     }
 }

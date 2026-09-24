@@ -1,6 +1,5 @@
 package es.urjc.code.yosoytupadel.backend.security;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import es.urjc.code.yosoytupadel.backend.entities.User;

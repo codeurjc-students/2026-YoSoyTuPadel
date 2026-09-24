@@ -41,7 +41,7 @@ public class DataBaseInitializer {
     @PostConstruct
     public void init() throws IOException, SQLException {
 
-        if (userRepository.count() == 0) {
+        if (userRepository.findAll().isEmpty()) {
 
             User admin = new User(
                     "admin@yosoytupadel.com",
@@ -58,8 +58,18 @@ public class DataBaseInitializer {
             User coach1 = new User(
                     "coach@yosoytupadel.com",
                     passwordEncoder.encode("coach"),
-                    UserRole.COACH
+                    UserRole.COACH,
+                    "Juan"
             );
+            coach1.setSessionPrice(35.0);
+
+            ClassPathResource imgFileA = new ClassPathResource("static/images/adminProfilePicture.png");
+            byte[] imageBytesA;
+            try (InputStream inputStream = imgFileA.getInputStream()) {
+                imageBytesA = inputStream.readAllBytes();
+            }
+            Blob imageBlobA = new SerialBlob(imageBytesA);
+            admin.setProfilePicture(imageBlobA);
 
             ClassPathResource imgFile = new ClassPathResource("static/images/profile-picture-default.jpg");
             byte[] imageBytes;
@@ -183,14 +193,39 @@ public class DataBaseInitializer {
 
             LocalDate today = LocalDate.now();
 
-            Booking b1 = new Booking(today.plusDays(1), LocalTime.of(10, 0), LocalTime.of(11, 30), courtRepository.findById(1L).orElseThrow().getCourtPrice(), userRepository.getReferenceById(2L),courtRepository.findById(1L).orElseThrow());
+            Booking b1 = new Booking(
+                    today.plusDays(1),
+                    LocalTime.of(10, 0),
+                    LocalTime.of(11, 30),
+                    courtRepository.findById(1L).orElseThrow().getCourtPrice(),
+                    userRepository.getReferenceById(2L),
+                    courtRepository.findById(1L).orElseThrow()
+            );
 
-            Booking b2 = new Booking(today.plusDays(2), LocalTime.of(18, 0), LocalTime.of(19, 30),  courtRepository.findById(2L).orElseThrow().getCourtPrice(), userRepository.getReferenceById(2L), courtRepository.findById(2L).orElseThrow());
+            Booking b2 = new Booking(today.plusDays(2),
+                    LocalTime.of(18, 0),
+                    LocalTime.of(19, 30),
+                    courtRepository.findById(2L).orElseThrow().getCourtPrice(),
+                    userRepository.getReferenceById(2L),
+                    courtRepository.findById(2L).orElseThrow()
+            );
 
-            Booking b3 = new Booking(today.plusDays(5), LocalTime.of(20, 0), LocalTime.of(21, 30), courtRepository.findById(1L).orElseThrow().getCourtPrice(), userRepository.getReferenceById(2L),courtRepository.findById(1L).orElseThrow());
+            Booking b3 = new Booking(today.plusDays(5)
+                    , LocalTime.of(20, 0),
+                    LocalTime.of(21, 30),
+                    courtRepository.findById(1L).orElseThrow().getCourtPrice(),
+                    userRepository.getReferenceById(2L),
+                    courtRepository.findById(1L).orElseThrow()
+            );
 
-            Booking b4 = new Booking(today.plusDays(3), LocalTime.of(9, 0), LocalTime.of(10, 30), courtRepository.findById(2L).orElseThrow().getCourtPrice(),  userRepository.getReferenceById(2L),courtRepository.findById(2L).orElseThrow());
-            b4.setIsCancelled(true);
+            Booking b4 = new Booking(today.plusDays(3),
+                    LocalTime.of(9, 0),
+                    LocalTime.of(10, 30),
+                    courtRepository.findById(2L).orElseThrow().getCourtPrice(),
+                    userRepository.getReferenceById(2L),
+                    userRepository.getReferenceById(3L)
+            );
+
 
             bookingRepository.saveAll(List.of(b1, b2, b3, b4));
 

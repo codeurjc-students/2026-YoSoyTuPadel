@@ -16,7 +16,7 @@ public class User {
 
     private String name;
 
-    @Column(nullable = false, unique = true)
+    @Column(unique = true)
     private String nickname;
 
     @Column(nullable = false, unique = true)
@@ -45,6 +45,12 @@ public class User {
     @JoinColumn(name = "racket_id")
     private Racket racket;
 
+
+    @Column(nullable = false)
+    private Integer racketUsages = 0;
+
+    private Double sessionPrice;
+
     public User() {}
 
     public User(String name, String nickname, String email, String encodedPassword, UserRole role) {
@@ -58,6 +64,12 @@ public class User {
         this.email = email;
         this.encodedPassword = encodedPassword;
         this.role = role;
+    }
+    public User(String email, String encodedPassword, UserRole role, String name) {
+        this.email = email;
+        this.encodedPassword = encodedPassword;
+        this.role = role;
+        this.name = name;
     }
 
     // Getters y Setters
@@ -81,4 +93,8 @@ public class User {
     public void setRacket(Racket racket) { this.racket = racket; }
     public String getImgUserPath() {return imgUserPath;}
     public void setImgUserPath(String imgUserPath) {this.imgUserPath = imgUserPath;}
+    public Integer getRacketUsages() {return racketUsages;}
+    public void setRacketUsages(Integer racketUsages) {this.racketUsages = racketUsages;}
+    public Double getSessionPrice() {return sessionPrice;}
+    public void setSessionPrice(Double sessionPrice) {this.sessionPrice = sessionPrice;}
 }

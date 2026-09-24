@@ -1,90 +1,889 @@
 {
-	"info": {
-		"_postman_id": "2390d6ac-071c-405c-b047-48772125a812",
-		"name": "2026-YoSoyTuPadel",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "33719582",
-		"_collection_link": "https://cloudy-crescent-391266.postman.co/workspace/New-Team-Workspace~dcd8ab54-2ae0-4204-8933-a72efcb2fb92/collection/33719582-2390d6ac-071c-405c-b047-48772125a812?action=share&source=collection_link&creator=33719582"
-	},
-	"item": [
-		{
-			"name": "GetAllRackets",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "http://localhost:8080/api/rackets",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8080",
-					"path": [
-						"api",
-						"rackets"
-					]
-				}
-			},
-			"response": [
-				{
-					"name": "New Request",
-					"originalRequest": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "http://localhost:8080/api/rackets",
-							"protocol": "http",
-							"host": [
-								"localhost"
-							],
-							"port": "8080",
-							"path": [
-								"api",
-								"rackets"
-							]
-						}
-					},
-					"status": "OK",
-					"code": 200,
-					"_postman_previewlanguage": "json",
-					"header": [
-						{
-							"key": "Vary",
-							"value": "Origin"
-						},
-						{
-							"key": "Vary",
-							"value": "Access-Control-Request-Method"
-						},
-						{
-							"key": "Vary",
-							"value": "Access-Control-Request-Headers"
-						},
-						{
-							"key": "Content-Type",
-							"value": "application/json"
-						},
-						{
-							"key": "Content-Length",
-							"value": "602"
-						},
-						{
-							"key": "Date",
-							"value": "Wed, 22 Jul 2026 12:36:22 GMT"
-						},
-						{
-							"key": "Keep-Alive",
-							"value": "timeout=60"
-						},
-						{
-							"key": "Connection",
-							"value": "keep-alive"
-						}
-					],
-					"cookie": [],
-					"body": "[\n    {\n        \"id\": 1,\n        \"brand\": \"Nox\",\n        \"name\": \"ML10 Pro Cup\",\n        \"description\": \"La mítica pala de Miguel Lamperti. Control absoluto y gran salida de bola.\",\n        \"pricePerDay\": 5\n    },\n    {\n        \"id\": 2,\n        \"brand\": \"Bullpadel\",\n        \"name\": \"Vertex 04\",\n        \"description\": \"Pala de potencia pura para jugadores agresivos. Superficie rugosa.\",\n        \"pricePerDay\": 7.5\n    },\n    {\n        \"id\": 3,\n        \"brand\": \"Adidas\",\n        \"name\": \"Metalbone HRD\",\n        \"description\": \"La pala de Ale Galán. Personalización de pesos y máxima rigidez.\",\n        \"pricePerDay\": 8\n    },\n    {\n        \"id\": 4,\n        \"brand\": \"Head\",\n        \"name\": \"Extreme Pro\",\n        \"description\": \"Pala de potencia con formato diamante. Actualmente en reparación.\",\n        \"pricePerDay\": 6\n    }\n]"
-				}
-			]
-		}
-	]
+  "info": {
+    "_postman_id": "2390d6ac-071c-405c-b047-48772125a812",
+    "name": "2026-YoSoyTuPadel",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "33719582",
+    "_collection_link": "https://go.postman.co/collection/33719582-2390d6ac-071c-405c-b047-48772125a812?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Racket",
+      "item": [
+        {
+          "name": "GetAllRackets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8443/api/v1/rackets",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8443",
+              "path": [
+                "api",
+                "v1",
+                "rackets"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetRackectById",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8443/api/v1/rackets/2",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8443",
+              "path": [
+                "api",
+                "v1",
+                "rackets",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CreateRacket",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n        \"name\": \"Vertex 05\",\r\n        \"brand\": \"Bullpadel\",\r\n        \"description\": \"Pala de pura potencia. Superficie rugosa.\",\r\n        \"pricePerDay\": 11\r\n    }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8443/api/v1/rackets",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8443",
+              "path": [
+                "api",
+                "v1",
+                "rackets"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "EditRacket",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n        \"name\": \"Vertex 05\",\r\n        \"brand\": \"Bullpadel\",\r\n        \"description\": \"Pala de pura potencia. Superficie rugosa.\",\r\n        \"pricePerDay\": 11\r\n    }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8443/api/v1/rackets/2",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8443",
+              "path": [
+                "api",
+                "v1",
+                "rackets",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DeleteRacket",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8443/api/v1/rackets/5",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8443",
+              "path": [
+                "api",
+                "v1",
+                "rackets",
+                "5"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetRacketImage",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8443/api/v1/rackets/2/image",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8443",
+              "path": [
+                "api",
+                "v1",
+                "rackets",
+                "2",
+                "image"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "EditRacketImage",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "imageFile",
+                  "type": "file",
+                  "uuid": "127d46ab-2853-458a-973d-c392d779b882",
+                  "src": "/C:/Users/vcand/OneDrive - Universidad Rey Juan Carlos/Escritorio/URJC/TFG/2026-YoSoyTuPadel/backend/src/main/resources/static/images/profile-picture-default.jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "http://localhost:8443/api/v1/rackets/2/image",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8443",
+              "path": [
+                "api",
+                "v1",
+                "rackets",
+                "2",
+                "image"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DeleteRacketImage",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8443/api/v1/rackets/2/image",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8443",
+              "path": [
+                "api",
+                "v1",
+                "rackets",
+                "2",
+                "image"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Court",
+      "item": [
+        {
+          "name": "GetAllCourts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8443/api/v1/courts",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8443",
+              "path": [
+                "api",
+                "v1",
+                "courts"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetCourtById",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8443/api/v1/courts/2",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8443",
+              "path": [
+                "api",
+                "v1",
+                "courts",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CreateCourt",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n        \"name\": \"Mostoles\",\r\n        \"courtPrice\": 8.5,\r\n        \"type\": \"INDOOR\",\r\n        \"surface\": \"GLASS\",\r\n        \"qualification\":4.32\r\n\r\n    }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8443/api/v1/courts",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8443",
+              "path": [
+                "api",
+                "v1",
+                "courts"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "EditCourt",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n        \"name\": \"Mostoles\",\r\n        \"courtPrice\": 8.5,\r\n        \"type\": \"INDOOR\",\r\n        \"surface\": \"GLASS\",\r\n        \"qualification\":4.32,\r\n        \"is_available\": false\r\n\r\n    }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8443/api/v1/courts/2",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8443",
+              "path": [
+                "api",
+                "v1",
+                "courts",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DeleteCourt",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n        \"name\": \"Vertex 05\",\r\n        \"brand\": \"Bullpadel\",\r\n        \"description\": \"Pala de pura potencia. Superficie rugosa.\",\r\n        \"pricePerDay\": 11\r\n    }"
+            },
+            "url": {
+              "raw": "http://localhost:8443/api/v1/courts/2",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8443",
+              "path": [
+                "api",
+                "v1",
+                "courts",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Booking",
+      "item": [
+        {
+          "name": "GetAllBookings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8443/api/v1/bookings",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8443",
+              "path": [
+                "api",
+                "v1",
+                "bookings"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetBookingById",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8443/api/v1/bookings/2",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8443",
+              "path": [
+                "api",
+                "v1",
+                "bookings",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CreateBooking",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"bookingDate\": \"2026-09-22\",\r\n  \"startTime\": \"17:00:00\",\r\n  \"endTime\": \"18:30:00\",\r\n  \"bookingPrice\": 20.0,\r\n  \"courtId\": 1\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8443/api/v1/bookings",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8443",
+              "path": [
+                "api",
+                "v1",
+                "bookings"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CancelBooking",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8443/api/v1/bookings/2",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8443",
+              "path": [
+                "api",
+                "v1",
+                "bookings",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DeleteBooking",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n        \"name\": \"Vertex 05\",\r\n        \"brand\": \"Bullpadel\",\r\n        \"description\": \"Pala de pura potencia. Superficie rugosa.\",\r\n        \"pricePerDay\": 11\r\n    }"
+            },
+            "url": {
+              "raw": "http://localhost:8443/api/v1/bookings/5",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8443",
+              "path": [
+                "api",
+                "v1",
+                "bookings",
+                "5"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "User",
+      "item": [
+        {
+          "name": "me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://localhost:8443/api/v1/users/me",
+              "protocol": "https",
+              "host": [
+                "localhost"
+              ],
+              "port": "8443",
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetAllUsers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8443/api/v1/users",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8443",
+              "path": [
+                "api",
+                "v1",
+                "users"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetUserById",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8443/api/v1/users/2",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8443",
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n   \r\n    \"email\": \"beatriz@beatriz.com\",\r\n    \"password\": \"beatriz\",\r\n    \"role\": \"USER\"\r\n   \r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://localhost:8443/api/users/new",
+              "protocol": "https",
+              "host": [
+                "localhost"
+              ],
+              "port": "8443",
+              "path": [
+                "api",
+                "users",
+                "new"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "API REQUEST login",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"victor@alumno.com\",\r\n  \"password\": \"pass\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://localhost:8443/api/v1/auth/login",
+              "protocol": "https",
+              "host": [
+                "localhost"
+              ],
+              "port": "8443",
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "API REQUEST logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "https://localhost:8443/api/auth/logout",
+              "protocol": "https",
+              "host": [
+                "localhost"
+              ],
+              "port": "8443",
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "API REQUEST refresh",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://localhost:8443/api/v1/auth/refresh",
+              "protocol": "https",
+              "host": [
+                "localhost"
+              ],
+              "port": "8443",
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "UpdateSkillLevel",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"bookingDate\": \"2026-09-22\",\r\n  \"startTime\": \"17:00:00\",\r\n  \"endTime\": \"18:30:00\",\r\n  \"bookingPrice\": 20.0,\r\n  \"courtId\": 1\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8443/api/v1/users/4/skill-level?change=0.5",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8443",
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "4",
+                "skill-level"
+              ],
+              "query": [
+                {
+                  "key": "change",
+                  "value": "0.5"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "RentRacket",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"bookingDate\": \"2026-09-22\",\r\n  \"startTime\": \"17:00:00\",\r\n  \"endTime\": \"18:30:00\",\r\n  \"bookingPrice\": 20.0,\r\n  \"courtId\": 1\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/v1/users/2/racket?racketId=1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "2",
+                "racket"
+              ],
+              "query": [
+                {
+                  "key": "racketId",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ReturnRacket",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"bookingDate\": \"2026-09-22\",\r\n  \"startTime\": \"17:00:00\",\r\n  \"endTime\": \"18:30:00\",\r\n  \"bookingPrice\": 20.0,\r\n  \"courtId\": 1\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8443/api/v1/users/4/racket-returned",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8443",
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "4",
+                "racket-returned"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DeleteUser",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n        \"name\": \"Vertex 05\",\r\n        \"brand\": \"Bullpadel\",\r\n        \"description\": \"Pala de pura potencia. Superficie rugosa.\",\r\n        \"pricePerDay\": 11\r\n    }"
+            },
+            "url": {
+              "raw": "http://localhost:8443/api/v1/users/4",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8443",
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "4"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetProfilePicture",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8443/api/v1/users/2/image",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8443",
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "2",
+                "image"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "EditProfilePicture",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "imageFile",
+                  "type": "file",
+                  "uuid": "ea850575-0ce2-4344-8322-877a3711d8b7",
+                  "src": "/C:/Users/vcand/OneDrive - Universidad Rey Juan Carlos/Escritorio/URJC/TFG/2026-YoSoyTuPadel/backend/src/main/resources/static/images/AdidasMetalbone.jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "http://localhost:8443/api/v1/users/2/image",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8443",
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "2",
+                "image"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DeleteProfilePicture",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8443/api/v1/users/2/image",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8443",
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "2",
+                "image"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
 }

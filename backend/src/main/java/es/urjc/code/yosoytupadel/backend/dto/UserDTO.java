@@ -23,5 +23,6 @@ public record UserDTO(
 
         UserRole role,
         Double skillLevel,
-        Long racketId
+        Long racketId,
+        Integer racketUsages
 ) {}

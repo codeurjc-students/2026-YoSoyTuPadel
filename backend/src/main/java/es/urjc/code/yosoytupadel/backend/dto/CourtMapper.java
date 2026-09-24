@@ -11,4 +11,7 @@ public interface CourtMapper {
     CourtDTO toDTO(Court court);
     List<CourtDTO> toDTOs(Collection<Court> courts);
     Court toDomain(CourtDTO courtDTO);
+
+    PreCourtDTO toPreDTO(Court court);
+    Collection<PreCourtDTO> toPreDTOs(Collection<Court> courts);
 }

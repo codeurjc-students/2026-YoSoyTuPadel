@@ -1,6 +1,8 @@
 package es.urjc.code.yosoytupadel.backend.integration.service;
 
 import es.urjc.code.yosoytupadel.backend.BaseIntegrationTest;
+import es.urjc.code.yosoytupadel.backend.dto.PreRacketDTO;
+import es.urjc.code.yosoytupadel.backend.dto.RacketDTO;
 import es.urjc.code.yosoytupadel.backend.entities.Racket;
 import es.urjc.code.yosoytupadel.backend.repository.RacketRepository;
 import es.urjc.code.yosoytupadel.backend.service.RacketService;
@@ -10,7 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -36,11 +40,11 @@ class RacketServiceIntegrationTest extends BaseIntegrationTest {
     @Test
     void getAllRackets_ShouldReturnAllRacketsFromDatabase() {
 
-        List<Racket> result = racketService.getAllRackets();
+        Collection<PreRacketDTO> result = racketService.getAllRackets();
 
         assertThat(result).hasSize(2);
-        assertThat(result).extracting(Racket::getBrand)
-                .containsExactly("Babolat", "Wilson");
+        assertThat(result).extracting(PreRacketDTO::brand)
+                .containsExactlyInAnyOrder("Babolat", "Wilson");
     }
 
     @Test
@@ -49,9 +53,10 @@ class RacketServiceIntegrationTest extends BaseIntegrationTest {
         Racket saved = racketRepository.findAll().get(0);
         Long id = saved.getId();
 
-        Racket result = racketService.getRacketById(id);
+        Optional<RacketDTO> result = racketService.getRacketById(id);
 
-        assertThat(result.getBrand()).isEqualTo("Babolat");
-        assertThat(result.getName()).isEqualTo("Pure Aero");
+        assertThat(result).isPresent();
+        assertThat(result.get().brand()).isEqualTo(saved.getBrand());
+        assertThat(result.get().name()).isEqualTo(saved.getName());
     }
 }

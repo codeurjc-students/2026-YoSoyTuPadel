@@ -38,6 +38,10 @@ public class Racket {
     @JsonIgnore
     private String racketImagePath;
 
+
+    @Column(nullable = false)
+    private Integer stock = 3;
+
     public Racket() {}
 
     public Racket(String brand, String name, String description, double pricePerDay) {
@@ -62,4 +66,6 @@ public class Racket {
     public void setImage(Blob image) { this.image = image; }
     public String getRacketImagePath() {return racketImagePath;}
     public void setRacketImagePath(String racketImagePath) {this.racketImagePath = racketImagePath;}
+    public Integer getStock() {return stock;}
+    public void setStock(Integer stock) {this.stock = stock;}
 }

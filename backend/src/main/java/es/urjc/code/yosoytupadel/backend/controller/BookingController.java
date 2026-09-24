@@ -4,12 +4,14 @@ import java.net.URI;
 import java.util.Collection;
 
 import es.urjc.code.yosoytupadel.backend.dto.BookingDTO;
-import es.urjc.code.yosoytupadel.backend.dto.BookingMapper;
-import es.urjc.code.yosoytupadel.backend.entities.Booking;
 import es.urjc.code.yosoytupadel.backend.service.BookingService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
 import static org.springframework.web.servlet.support.ServletUriComponentsBuilder.fromCurrentRequest;
 
 
@@ -20,37 +22,38 @@ public class BookingController {
     @Autowired
     private BookingService bookingService;
 
-    @Autowired
-    private BookingMapper mapper;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("")
     public Collection<BookingDTO> getAllBookings() {
-        return mapper.toDTOs(bookingService.getAllBookings());
+        return bookingService.getAllBookings();
     }
 
+    @PreAuthorize("hasRole('ADMIN') or @userService.isMine(#id)")
     @GetMapping("/{id}")
     public BookingDTO getBooking(@PathVariable long id) {
-        return mapper.toDTO(bookingService.getBookingById(id));
+        return bookingService.getBookingById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found"));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("")
     public ResponseEntity<BookingDTO> createBooking(@RequestBody BookingDTO bookingDTO) {
-        Booking booking = mapper.toDomain(bookingDTO);
+        BookingDTO responseDTO = bookingService.createBooking(bookingDTO);
 
-        booking = bookingService.createBooking(booking);
-
-        BookingDTO responseDTO = mapper.toDTO(booking);
         URI location = fromCurrentRequest().path("/{id}").buildAndExpand(responseDTO.id()).toUri();
         return ResponseEntity.created(location).body(responseDTO);
     }
 
+    @PreAuthorize("hasRole('ADMIN') or @userService.isMine(#id)")
     @PatchMapping("/{id}")
     public BookingDTO cancelBooking(@PathVariable long id) {
-        return mapper.toDTO(bookingService.cancelBooking(id));
+        return bookingService.cancelBooking(id);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public BookingDTO deleteBooking(@PathVariable long id) {
-        return mapper.toDTO(bookingService.deleteBooking(id));
+        return bookingService.deleteBooking(id);
     }
 }
