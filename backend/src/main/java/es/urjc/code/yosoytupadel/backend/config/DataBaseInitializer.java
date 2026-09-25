@@ -8,6 +8,7 @@ import es.urjc.code.yosoytupadel.backend.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.sql.rowset.serial.SerialBlob;
@@ -22,49 +23,53 @@ import java.util.List;
 @Service
 public class DataBaseInitializer {
 
-    private final RacketRepository racketRepository;
+    @Autowired
+    private RacketRepository racketRepository;
+
+    @Autowired
     private CourtRepository courtRepository;
+
+    @Autowired
     private BookingRepository bookingRepository;
+
+    @Autowired
     private UserRepository userRepository;
 
-    public DataBaseInitializer(RacketRepository racketRepository, CourtRepository courtRepository, BookingRepository bookingRepository, UserRepository userRepository) {
-        this.racketRepository = racketRepository;
-        this.courtRepository = courtRepository;
-        this.bookingRepository = bookingRepository;
-        this.userRepository = userRepository;
-    }
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @PostConstruct
     public void init() throws IOException, SQLException {
 
-        if (userRepository.count() == 0) {
+        if (userRepository.findAll().isEmpty()) {
 
             User admin = new User(
-                    "Administrador",
-                    "admin",
                     "admin@yosoytupadel.com",
-                    "admin123",
-                    UserRole.ADMIN,
-                    7.0
+                    passwordEncoder.encode("admin"),
+                    UserRole.ADMIN
             );
 
             User student1 = new User(
-                    "Víctor Candel",
-                    "vcandel",
                     "victor@alumno.com",
-                    "padel2026",
-                    UserRole.STUDENT,
-                    2.5
+                    passwordEncoder.encode("pass"),
+                    UserRole.USER
             );
 
             User coach1 = new User(
-                    "Alejandro Galán",
-                    "alegalan",
                     "coach@yosoytupadel.com",
-                    "coach123",
+                    passwordEncoder.encode("coach"),
                     UserRole.COACH,
-                    7.0
+                    "Juan"
             );
+            coach1.setSessionPrice(35.0);
+
+            ClassPathResource imgFileA = new ClassPathResource("static/images/adminProfilePicture.png");
+            byte[] imageBytesA;
+            try (InputStream inputStream = imgFileA.getInputStream()) {
+                imageBytesA = inputStream.readAllBytes();
+            }
+            Blob imageBlobA = new SerialBlob(imageBytesA);
+            admin.setProfilePicture(imageBlobA);
 
             ClassPathResource imgFile = new ClassPathResource("static/images/profile-picture-default.jpg");
             byte[] imageBytes;
@@ -154,32 +159,28 @@ public class DataBaseInitializer {
                     "Alameda de Osuna",
                     8.0,
                     CourtType.INDOOR,
-                    SurfaceType.GLASS,
-                    5.0
+                    SurfaceType.GLASS
             );
 
             Court court2 = new Court(
                     "Coslada",
                     7.0,
                     CourtType.INDOOR,
-                    SurfaceType.WALL,
-                    5.0
+                    SurfaceType.WALL
             );
 
             Court court3 = new Court(
                     "Torrejon",
                     6.0,
                     CourtType.OUTDOOR,
-                    SurfaceType.WALL,
-                    5.0
+                    SurfaceType.WALL
             );
 
             Court court4 = new Court(
                     "Alcala",
                     9.0,
                     CourtType.INDOOR,
-                    SurfaceType.GLASS,
-                    5.0
+                    SurfaceType.GLASS
             );
 
             courtRepository.saveAll(List.of(court1, court2, court3, court4));
@@ -188,14 +189,39 @@ public class DataBaseInitializer {
 
             LocalDate today = LocalDate.now();
 
-            Booking b1 = new Booking(today.plusDays(1), LocalTime.of(10, 0), LocalTime.of(11, 30), courtRepository.findById(1L).orElseThrow().getCourtPrice(), userRepository.getReferenceById(2L),courtRepository.findById(1L).orElseThrow());
+            Booking b1 = new Booking(
+                    today.plusDays(0),
+                    LocalTime.of(10, 0),
+                    LocalTime.of(11, 30),
+                    courtRepository.findById(1L).orElseThrow().getCourtPrice(),
+                    userRepository.getReferenceById(2L),
+                    courtRepository.findById(1L).orElseThrow()
+            );
 
-            Booking b2 = new Booking(today.plusDays(2), LocalTime.of(18, 0), LocalTime.of(19, 30),  courtRepository.findById(2L).orElseThrow().getCourtPrice(), userRepository.getReferenceById(2L), courtRepository.findById(2L).orElseThrow());
+            Booking b2 = new Booking(today.plusDays(2),
+                    LocalTime.of(18, 0),
+                    LocalTime.of(19, 30),
+                    courtRepository.findById(2L).orElseThrow().getCourtPrice(),
+                    userRepository.getReferenceById(2L),
+                    courtRepository.findById(2L).orElseThrow()
+            );
 
-            Booking b3 = new Booking(today.plusDays(5), LocalTime.of(20, 0), LocalTime.of(21, 30), courtRepository.findById(1L).orElseThrow().getCourtPrice(), userRepository.getReferenceById(2L),courtRepository.findById(1L).orElseThrow());
+            Booking b3 = new Booking(today.plusDays(5)
+                    , LocalTime.of(20, 0),
+                    LocalTime.of(21, 30),
+                    courtRepository.findById(1L).orElseThrow().getCourtPrice(),
+                    userRepository.getReferenceById(2L),
+                    courtRepository.findById(1L).orElseThrow()
+            );
 
-            Booking b4 = new Booking(today.plusDays(3), LocalTime.of(9, 0), LocalTime.of(10, 30), courtRepository.findById(2L).orElseThrow().getCourtPrice(),  userRepository.getReferenceById(2L),courtRepository.findById(2L).orElseThrow());
-            b4.setIsCancelled(true);
+            Booking b4 = new Booking(today.plusDays(3),
+                    LocalTime.of(9, 0),
+                    LocalTime.of(10, 30),
+                    courtRepository.findById(2L).orElseThrow().getCourtPrice(),
+                    userRepository.getReferenceById(2L),
+                    userRepository.getReferenceById(3L)
+            );
+
 
             bookingRepository.saveAll(List.of(b1, b2, b3, b4));
 

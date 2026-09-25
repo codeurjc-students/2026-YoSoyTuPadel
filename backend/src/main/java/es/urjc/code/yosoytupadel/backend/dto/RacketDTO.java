@@ -2,8 +2,9 @@ package es.urjc.code.yosoytupadel.backend.dto;
 
 public record RacketDTO(
         Long id,
-        String name,
         String brand,
+        String name,
         String description,
-        double pricePerDay
+        double pricePerDay,
+        Integer stock
 ) {}

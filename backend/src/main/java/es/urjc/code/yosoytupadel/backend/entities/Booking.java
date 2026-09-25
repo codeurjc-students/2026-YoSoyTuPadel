@@ -1,6 +1,8 @@
 package es.urjc.code.yosoytupadel.backend.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -25,18 +27,45 @@ public class Booking {
     @Column(nullable = false)
     private Double bookingPrice;
 
-    @Column(nullable = false)
-    private Boolean isCancelled = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "court_id", nullable = false)
+    @JoinColumn(name = "court_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Court court;
 
+
+    @Enumerated(EnumType.STRING)
+    private BookingType type;
+
+
+
+    @Enumerated(EnumType.STRING)
+    private BookingStatus status;
+
+    private String score;
+
+    @ManyToOne
+    @JoinColumn(name = "coach_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private User coach;
+
+
     public Booking() {}
+
+    public Booking(LocalDate bookingDate, LocalTime startTime, LocalTime endTime, Double bookingPrice, User user, User coach) {
+        this.bookingDate = bookingDate;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.bookingPrice = bookingPrice;
+        this.user = user;
+        this.coach = coach;
+        this.status = BookingStatus.PENDING;
+        this.type = BookingType.TRAINING;
+    }
 
     public Booking(LocalDate bookingDate, LocalTime startTime, LocalTime endTime, Double bookingPrice, User user, Court court) {
         this.bookingDate = bookingDate;
@@ -45,7 +74,8 @@ public class Booking {
         this.bookingPrice = bookingPrice;
         this.user = user;
         this.court = court;
-        this.isCancelled = false;
+        this.status = BookingStatus.PENDING;
+        this.type = BookingType.MATCH;
     }
 
     // Getters y Setters
@@ -59,10 +89,16 @@ public class Booking {
     public void setEndTime(LocalTime endTime) { this.endTime = endTime; }
     public Double getBookingPrice() { return bookingPrice; }
     public void setBookingPrice(Double bookingPrice) { this.bookingPrice = bookingPrice; }
-    public Boolean getIsCancelled() { return isCancelled; }
-    public void setIsCancelled(Boolean isCancelled) { this.isCancelled = isCancelled; }
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
     public Court getCourt() { return court; }
     public void setCourt(Court court) { this.court = court; }
+    public BookingType getType() {return type;}
+    public void setType(BookingType type) {this.type = type;}
+    public String getScore() {return score;}
+    public void setScore(String score) {this.score = score;}
+    public BookingStatus getStatus() {return status;}
+    public void setStatus(BookingStatus status) {this.status = status;}
+    public User getCoach() {return coach;}
+    public void setCoach(User coach) {this.coach = coach;}
 }

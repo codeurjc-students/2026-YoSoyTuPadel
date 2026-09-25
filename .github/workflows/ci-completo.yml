@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 jobs:
 
-  # --- JOB 1: BACKEND (Unitarios, Integración y SonarCloud opcional) ---
+  # --- JOB 1: BACKEND (Unitarios, Integración y SonarCloud) ---
   backend-full-checks:
     name: Backend - Build, Unit & Integration Tests
     runs-on: ubuntu-latest

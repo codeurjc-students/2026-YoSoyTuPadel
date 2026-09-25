@@ -30,6 +30,9 @@ class RacketServerSystemTest extends BaseIntegrationTest {
     @BeforeEach
     void setUp() {
         RestAssured.port = port;
+        RestAssured.baseURI = "https://localhost";
+        RestAssured.useRelaxedHTTPSValidation();
+
         racketRepository.deleteAll();
 
         Racket racket1 = new Racket( "Babolat", "Pure Aero", "Buen control", 11.5);
@@ -47,7 +50,7 @@ class RacketServerSystemTest extends BaseIntegrationTest {
                 .then()
                 .statusCode(200)
                 .body("$", hasSize(2))
-                .body("[0].brand", equalTo("Babolat"))
-                .body("[1].brand", equalTo("Wilson"));
+                .body("brand", hasItems("Babolat", "Wilson"))
+                .body("name", hasItems("Pure Aero", "Blade"));
     }
 }

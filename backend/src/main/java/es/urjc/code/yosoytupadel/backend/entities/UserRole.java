@@ -1,7 +1,7 @@
 package es.urjc.code.yosoytupadel.backend.entities;
 
 public enum UserRole {
-    STUDENT,
+    USER,
     COACH,
     ADMIN
 }

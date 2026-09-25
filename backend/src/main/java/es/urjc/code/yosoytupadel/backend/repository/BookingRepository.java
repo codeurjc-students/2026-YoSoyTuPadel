@@ -15,16 +15,36 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByUserId(Long userId);
 
-    // Comprueba solapamientos: Dos reservas se solapan si Inicio A < Fin B y Fin A > Inicio B
+    List<Booking> findByUserIdAndType(Long userId, es.urjc.code.yosoytupadel.backend.entities.BookingType type);
+
+    // Comprueba solapamientos de horarios
     @Query("SELECT COUNT(b) > 0 FROM Booking b WHERE b.court.id = :courtId " +
             "AND b.bookingDate = :date " +
-            "AND b.isCancelled = false " + // Ignorar reservas canceladas
+            "AND b.status <> es.urjc.code.yosoytupadel.backend.entities.BookingStatus.CANCELLED " +
             "AND b.startTime < :end AND b.endTime > :start")
     boolean existsOverlappingBooking(
             @Param("courtId") Long courtId,
             @Param("date") LocalDate date,
             @Param("start") LocalTime start,
             @Param("end") LocalTime end
+    );
+
+    @Query("SELECT COUNT(b) > 0 FROM Booking b WHERE b.coach.id = :coachId " +
+            "AND b.bookingDate = :date " +
+            "AND b.status != 'CANCELLED' " +
+            "AND b.startTime < :endTime AND b.endTime > :startTime")
+    boolean existsOverlappingCoachBooking(
+            @Param("coachId") Long coachId,
+            @Param("date") LocalDate date,
+            @Param("startTime") LocalTime startTime,
+            @Param("endTime") LocalTime endTime
+    );
+
+    @Query("SELECT b FROM Booking b WHERE b.status = es.urjc.code.yosoytupadel.backend.entities.BookingStatus.PENDING " +
+            "AND (b.bookingDate < :currentDate OR (b.bookingDate = :currentDate AND b.endTime <= :currentTime))")
+    List<Booking> findFinishedPendingBookings(
+            @Param("currentDate") java.time.LocalDate currentDate,
+            @Param("currentTime") java.time.LocalTime currentTime
     );
 
     // Paginacion

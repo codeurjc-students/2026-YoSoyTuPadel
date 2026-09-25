@@ -28,17 +28,15 @@ public class Court {
 
     private Boolean isAvailable = true;
 
-    private Double qualification = Math.clamp(2.5, 0.0, 5.0);
 
 
     public Court() {}
 
-    public Court(String name, Double courtPrice, CourtType type, SurfaceType surface, Double qualification) {
+    public Court(String name, Double courtPrice, CourtType type, SurfaceType surface) {
         this.name = name;
         this.courtPrice = courtPrice;
         this.type = type;
         this.surface = surface;
-        this.qualification = qualification;
         this.isAvailable = true;
     }
 
@@ -55,7 +53,5 @@ public class Court {
     public void setSurface(SurfaceType surface) { this.surface = surface; }
     public Boolean getIsAvailable() { return isAvailable; }
     public void setIsAvailable(Boolean isAvailable) { this.isAvailable = isAvailable; }
-    public Double getQualification() { return qualification; }
-    public void setQualification(Double qualification) { this.qualification = qualification; }
 
 }

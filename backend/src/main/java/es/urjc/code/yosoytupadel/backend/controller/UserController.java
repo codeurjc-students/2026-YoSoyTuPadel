@@ -1,20 +1,24 @@
 package es.urjc.code.yosoytupadel.backend.controller;
 
-import org.springframework.core.io.InputStreamResource;
+import es.urjc.code.yosoytupadel.backend.dto.*;
+import es.urjc.code.yosoytupadel.backend.security.jwt.TokenType;
+import es.urjc.code.yosoytupadel.backend.service.BookingService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import es.urjc.code.yosoytupadel.backend.entities.User;
-import es.urjc.code.yosoytupadel.backend.dto.UserDTO;
-import es.urjc.code.yosoytupadel.backend.dto.UserMapper;
 import es.urjc.code.yosoytupadel.backend.service.UserService;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.AccessDeniedException;
 import java.sql.SQLException;
 import java.util.Collection;
 
@@ -22,28 +26,29 @@ import java.util.Collection;
 @RequestMapping("/api/v1/users")
 public class UserController {
 
-    private final UserService userService;
-    private final UserMapper mapper;
+    @Autowired
+    private UserService userService;
 
-    public UserController(UserService userService, UserMapper mapper) {
-        this.userService = userService;
-        this.mapper = mapper;
-    }
+    @Autowired
+    private BookingService bookingService;
 
+
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("")
     public Collection<UserDTO> getAllUsers() {
-        return mapper.toDTOs(userService.getAllUsers());
+        return userService.getAllUsers();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
     public UserDTO getUser(@PathVariable long id) {
-        return mapper.toDTO(userService.getUserById(id));
+        return userService.getUserById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
     }
 
-    @PostMapping("")
-    public ResponseEntity<UserDTO> createUser(@RequestBody User user) {
-        User savedUser = userService.createUser(user);
-        UserDTO responseDTO = mapper.toDTO(savedUser);
+    @PostMapping("/new")
+    public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO) {
+        UserDTO responseDTO = userService.createUser(userDTO);
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
@@ -53,29 +58,75 @@ public class UserController {
         return ResponseEntity.created(location).body(responseDTO);
     }
 
+    @PreAuthorize("hasRole('ADMIN') or @userService.isMe(#id)")
+    @PutMapping("/{id}")
+    public ResponseEntity<UserUpdateDTO> updateUser(
+            @PathVariable Long id,
+            @RequestBody UserUpdateDTO updateDTO,
+            HttpServletResponse response) {
 
+
+        String oldEmail = userService.getUserById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"))
+                .email();
+
+        UserUpdateDTO updatedUser = userService.updateUser(id, updateDTO);
+
+        Long authenticatedUserId = userService.getAuthenticatedUserDto()
+                .map(user -> user.id())
+                .orElse(-1L);
+
+        boolean emailChanged = updateDTO.email() != null && !oldEmail.equalsIgnoreCase(updateDTO.email().trim());
+        boolean isSelfEdit = id.equals(authenticatedUserId);
+
+        if (emailChanged && isSelfEdit) {
+
+            // BORRAR AUTH TOKEN
+            Cookie accessCookie = new Cookie(TokenType.ACCESS.cookieName, null);
+            accessCookie.setMaxAge(0);
+            accessCookie.setHttpOnly(true);
+            accessCookie.setPath("/");
+            response.addCookie(accessCookie);
+
+            // BORRAR REFRESH TOKEN
+            Cookie refreshCookie = new Cookie(TokenType.REFRESH.cookieName, null);
+            refreshCookie.setMaxAge(0); // Orden de destrucción
+            refreshCookie.setHttpOnly(true);
+            refreshCookie.setPath("/");
+            response.addCookie(refreshCookie);
+
+            response.addHeader("X-Email-Changed", "true");
+        }
+
+        return ResponseEntity.ok(updatedUser);
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN','COACH')")
     @PatchMapping("/{id}/skill-level")
     public UserDTO updateSkillLevel(@PathVariable long id, @RequestParam Double change) {
 
-        User updatedStudent = userService.updateSkillLevel(id, change);
-        return mapper.toDTO(updatedStudent);
+        return userService.updateSkillLevel(id, change);
     }
 
+    @PreAuthorize("@userService.isMe(#id)")
     @PatchMapping("/{id}/racket")
     public UserDTO rentRacket(@PathVariable long id, @RequestParam long racketId) {
-        return mapper.toDTO(userService.rentRacket(id, racketId));
+        return userService.rentRacket(id, racketId);
     }
 
+    @PreAuthorize("@userService.isMe(#id)")
     @PatchMapping("/{id}/racket-returned")
     public UserDTO returnRacket(@PathVariable long id) {
-        return mapper.toDTO(userService.returnRacket(id));
+        return userService.returnRacket(id);
     }
 
+    @PreAuthorize("hasRole('ADMIN') or @userService.isMe(#id)")
     @DeleteMapping("/{id}")
     public UserDTO deleteUser(@PathVariable long id) {
-        return mapper.toDTO(userService.deleteUser(id));
+        return userService.deleteUser(id);
     }
 
+    @PreAuthorize("hasRole('ADMIN') or @userService.isMe(#id)")
     @GetMapping("/{id}/image")
     public ResponseEntity<Object> getUserImage(@PathVariable long id) throws SQLException {
 
@@ -85,17 +136,8 @@ public class UserController {
                 .body(profilePicture);
     }
 
-//    @PostMapping("{id}/image")
-//    public ResponseEntity<Object> createUserImage(@PathVariable long id, @RequestParam MultipartFile imageFile)
-//            throws IOException {
-//
-//        URI location = ServletUriComponentsBuilder.fromCurrentRequest().build().toUri();
-//
-//        userService.createUserImage(id, location, imageFile.getInputStream(), imageFile.getSize());
-//
-//        return ResponseEntity.created(location).build();
-//    }
 
+    @PreAuthorize("hasRole('ADMIN') or @userService.isMe(#id)")
     @PutMapping("/{id}/image")
     public ResponseEntity<Object> replaceUserImage(@PathVariable long id, @RequestParam MultipartFile imageFile)
             throws IOException {
@@ -103,10 +145,56 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasRole('ADMIN') or @userService.isMe(#id)")
     @DeleteMapping("/{id}/image")
-    public ResponseEntity<Object> deletePostImage(@PathVariable long id) throws IOException, SQLException {
-        userService.deleteUserImage(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<String> deleteUserImage(@PathVariable long id) {
+            userService.deleteUserImage(id);
+            return ResponseEntity.ok("User image deleted successfully");
+    }
 
+    @GetMapping("/me")
+    public ResponseEntity<UserDTO> getAuthenticatedUser() {
+        return userService.getAuthenticatedUserDto()
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(401).build());
+    }
+
+
+    @GetMapping("/coachs")
+    public ResponseEntity<Collection<CoachDTO>> getAllCoachs() {
+        return ResponseEntity.ok(userService.getAllCoachs());
+    }
+
+    @PreAuthorize("@userService.isCoach(#id)")
+    @GetMapping("/coachs/{id}/image")
+    public ResponseEntity<Object> getImageCoach(@PathVariable long id) throws SQLException {
+        Resource profilePicture = userService.getUserImage(id);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, "image/jpeg")
+                .body(profilePicture);
+    }
+
+    @PreAuthorize("hasRole('ADMIN') or @userService.isMe(#id)")
+    @GetMapping("/{id}/bookings")
+    public Collection<BookingDTO> getAllBookingsByUserId(@PathVariable Long id) {
+        return bookingService.getAllBookingsByUserId(id);
+    }
+
+    @PreAuthorize("hasRole('ADMIN') or @userService.isMe(#id)")
+    @GetMapping("/{id}/bookings/matches")
+    public Collection<BookingDTO> getUserMatchBookings(@PathVariable Long id) {
+        userService.getUserById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        return bookingService.getMatchBookingsByUserId(id);
+    }
+
+    @PreAuthorize("hasRole('ADMIN') or @userService.isMe(#id)")
+    @GetMapping("/{id}/bookings/trainings")
+    public Collection<BookingDTO> getUserTrainingBookings(@PathVariable Long id) {
+        userService.getUserById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        return bookingService.getTrainingBookingsByUserId(id);
     }
 }
