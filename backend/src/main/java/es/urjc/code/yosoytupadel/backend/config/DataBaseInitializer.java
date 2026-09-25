@@ -159,32 +159,28 @@ public class DataBaseInitializer {
                     "Alameda de Osuna",
                     8.0,
                     CourtType.INDOOR,
-                    SurfaceType.GLASS,
-                    5.0
+                    SurfaceType.GLASS
             );
 
             Court court2 = new Court(
                     "Coslada",
                     7.0,
                     CourtType.INDOOR,
-                    SurfaceType.WALL,
-                    5.0
+                    SurfaceType.WALL
             );
 
             Court court3 = new Court(
                     "Torrejon",
                     6.0,
                     CourtType.OUTDOOR,
-                    SurfaceType.WALL,
-                    5.0
+                    SurfaceType.WALL
             );
 
             Court court4 = new Court(
                     "Alcala",
                     9.0,
                     CourtType.INDOOR,
-                    SurfaceType.GLASS,
-                    5.0
+                    SurfaceType.GLASS
             );
 
             courtRepository.saveAll(List.of(court1, court2, court3, court4));
@@ -194,7 +190,7 @@ public class DataBaseInitializer {
             LocalDate today = LocalDate.now();
 
             Booking b1 = new Booking(
-                    today.plusDays(1),
+                    today.plusDays(0),
                     LocalTime.of(10, 0),
                     LocalTime.of(11, 30),
                     courtRepository.findById(1L).orElseThrow().getCourtPrice(),

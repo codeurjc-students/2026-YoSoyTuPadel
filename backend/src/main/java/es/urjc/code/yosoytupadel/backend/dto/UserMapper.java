@@ -20,6 +20,7 @@ public interface UserMapper {
     @Mapping(target = "profilePicture", ignore = true)
     @Mapping(target = "imgUserPath", ignore = true)
     @Mapping(target = "racketUsages", ignore = true)
+    @Mapping(target = "sessionPrice", ignore = true)
     User toDomain(UserDTO userDTO);
 
     default CoachDTO toCoachDTO(User user) {
@@ -31,6 +32,17 @@ public interface UserMapper {
                 user.getName(),
                 user.getSkillLevel(),
                 user.getSessionPrice()
+        );
+    }
+
+    default UserUpdateDTO toUserUpdateDTO(User user) {
+        if (user == null) {
+            return null;
+        }
+        return new UserUpdateDTO(
+                user.getName(),
+                user.getNickname(),
+                user.getEmail()
         );
     }
 

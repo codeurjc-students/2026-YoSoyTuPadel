@@ -53,8 +53,8 @@ class CourtControllerTest {
     @BeforeEach
     void setUp() {
 
-        dto1 = new CourtDTO( 1L,"Alameda de Osuna", 8.0, CourtType.INDOOR, SurfaceType.GLASS, true, 5.0);
-        dto2 = new CourtDTO( 2L, "Coslada", 7.0, CourtType.INDOOR, SurfaceType.WALL, true, 5.0);
+        dto1 = new CourtDTO( 1L,"Alameda de Osuna", 8.0, CourtType.INDOOR, SurfaceType.GLASS, true);
+        dto2 = new CourtDTO( 2L, "Coslada", 7.0, CourtType.INDOOR, SurfaceType.WALL, true);
 
         preDto1 = new PreCourtDTO(1L,"Alameda de Osuna", true);
         preDto2 = new PreCourtDTO(2L, "Coslada", true );

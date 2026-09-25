@@ -94,13 +94,20 @@ public class UserService {
 
 
     @Transactional
-    public UserDTO updateUser(Long id, UserUpdateDTO updateDTO) {
+    public UserUpdateDTO updateUser(Long id, UserUpdateDTO updateDTO) {
         User existingUser = getUserEntityById(id);
+
+        if (updateDTO.email() != null && !updateDTO.email().isBlank()) {
+            Optional<User> existingUserByEmail = userRepository.findByEmail(updateDTO.email().trim());
+            if (existingUserByEmail.isPresent() && !existingUserByEmail.get().getId().equals(existingUser.getId())) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Email is already in use.");
+            }
+        }
 
         userMapper.updateUserFromDTO(updateDTO, existingUser);
         User savedUser = userRepository.save(existingUser);
 
-        return userMapper.toDTO(savedUser);
+        return userMapper.toUserUpdateDTO(savedUser);
     }
 
     @Transactional

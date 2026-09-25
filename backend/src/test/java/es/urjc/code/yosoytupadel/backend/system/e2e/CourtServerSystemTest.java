@@ -38,8 +38,8 @@ class CourtServerSystemTest extends BaseIntegrationTest {
 
         courtRepository.deleteAll();
 
-        Court court1 = new Court( "Alameda de Osuna", 8.0, CourtType.INDOOR, SurfaceType.GLASS, 5.0);
-        Court court2 = new Court( "Coslada", 7.0, CourtType.INDOOR, SurfaceType.WALL, 5.0);
+        Court court1 = new Court( "Alameda de Osuna", 8.0, CourtType.INDOOR, SurfaceType.GLASS);
+        Court court2 = new Court( "Coslada", 7.0, CourtType.INDOOR, SurfaceType.WALL);
 
         courtRepository.saveAll(List.of(court1, court2));
     }

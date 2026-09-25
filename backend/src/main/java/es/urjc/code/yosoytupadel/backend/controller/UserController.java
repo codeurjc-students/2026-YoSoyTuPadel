@@ -1,7 +1,10 @@
 package es.urjc.code.yosoytupadel.backend.controller;
 
 import es.urjc.code.yosoytupadel.backend.dto.*;
+import es.urjc.code.yosoytupadel.backend.security.jwt.TokenType;
 import es.urjc.code.yosoytupadel.backend.service.BookingService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -57,8 +60,45 @@ public class UserController {
 
     @PreAuthorize("hasRole('ADMIN') or @userService.isMe(#id)")
     @PutMapping("/{id}")
-    public UserDTO replaceUser(@RequestBody UserUpdateDTO userDTO, @PathVariable Long id) throws SQLException {
-        return userService.updateUser(id, userDTO);
+    public ResponseEntity<UserUpdateDTO> updateUser(
+            @PathVariable Long id,
+            @RequestBody UserUpdateDTO updateDTO,
+            HttpServletResponse response) {
+
+
+        String oldEmail = userService.getUserById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"))
+                .email();
+
+        UserUpdateDTO updatedUser = userService.updateUser(id, updateDTO);
+
+        Long authenticatedUserId = userService.getAuthenticatedUserDto()
+                .map(user -> user.id())
+                .orElse(-1L);
+
+        boolean emailChanged = updateDTO.email() != null && !oldEmail.equalsIgnoreCase(updateDTO.email().trim());
+        boolean isSelfEdit = id.equals(authenticatedUserId);
+
+        if (emailChanged && isSelfEdit) {
+
+            // BORRAR AUTH TOKEN
+            Cookie accessCookie = new Cookie(TokenType.ACCESS.cookieName, null);
+            accessCookie.setMaxAge(0);
+            accessCookie.setHttpOnly(true);
+            accessCookie.setPath("/");
+            response.addCookie(accessCookie);
+
+            // BORRAR REFRESH TOKEN
+            Cookie refreshCookie = new Cookie(TokenType.REFRESH.cookieName, null);
+            refreshCookie.setMaxAge(0); // Orden de destrucción
+            refreshCookie.setHttpOnly(true);
+            refreshCookie.setPath("/");
+            response.addCookie(refreshCookie);
+
+            response.addHeader("X-Email-Changed", "true");
+        }
+
+        return ResponseEntity.ok(updatedUser);
     }
 
     @PreAuthorize("hasAnyRole('ADMIN','COACH')")

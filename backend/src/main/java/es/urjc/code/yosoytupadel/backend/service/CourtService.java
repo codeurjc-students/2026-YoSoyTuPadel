@@ -32,7 +32,6 @@ public class CourtService {
     public CourtDTO createCourt(CourtDTO courtDTO) {
         Court court = mapper.toDomain(courtDTO);
         court.setIsAvailable(true);
-        court.setQualification(0.0);
         Court savedCourt = courtRepository.save(court);
         return mapper.toDTO(savedCourt);
     }

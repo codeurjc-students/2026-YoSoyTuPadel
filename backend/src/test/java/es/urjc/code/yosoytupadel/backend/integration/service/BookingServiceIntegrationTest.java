@@ -39,7 +39,7 @@ class BookingServiceIntegrationTest extends BaseIntegrationTest {
         courtRepository.deleteAll();
         userRepository.deleteAll();
 
-        Court court = new Court("Pista Central", 8.0, CourtType.INDOOR, SurfaceType.GLASS, 5.0);
+        Court court = new Court("Pista Central", 8.0, CourtType.INDOOR, SurfaceType.GLASS);
         court.setIsAvailable(true);
         court = courtRepository.save(court);
 

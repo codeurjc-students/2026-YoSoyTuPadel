@@ -52,7 +52,7 @@ class BookingServiceTest {
 
     @BeforeEach
     void setUp() {
-        court = new Court("Alameda de Osuna", 8.0, CourtType.INDOOR, SurfaceType.GLASS, 5.0);
+        court = new Court("Alameda de Osuna", 8.0, CourtType.INDOOR, SurfaceType.GLASS);
         court.setId(1L);
         court.setIsAvailable(true);
 

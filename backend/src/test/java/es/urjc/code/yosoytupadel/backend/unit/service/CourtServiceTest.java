@@ -48,13 +48,13 @@ class CourtServiceTest {
     @BeforeEach
     void setUp() {
 
-        court1 = new Court( "Alameda de Osuna", 8.0, CourtType.INDOOR, SurfaceType.GLASS, 5.0);
+        court1 = new Court( "Alameda de Osuna", 8.0, CourtType.INDOOR, SurfaceType.GLASS);
         court1.setId(1L);
-        court2 = new Court( "Coslada", 7.0, CourtType.INDOOR, SurfaceType.WALL, 5.0);
+        court2 = new Court( "Coslada", 7.0, CourtType.INDOOR, SurfaceType.WALL);
         court2.setId(2L);
 
-        courtDTO1 = new CourtDTO( 1L,"Alameda de Osuna", 8.0, CourtType.INDOOR, SurfaceType.GLASS, true, 5.0);
-        courtDTO2 = new CourtDTO( 2L, "Coslada", 7.0, CourtType.INDOOR, SurfaceType.WALL, true, 5.0);
+        courtDTO1 = new CourtDTO( 1L,"Alameda de Osuna", 8.0, CourtType.INDOOR, SurfaceType.GLASS, true);
+        courtDTO2 = new CourtDTO( 2L, "Coslada", 7.0, CourtType.INDOOR, SurfaceType.WALL, true);
 
         preCourtDTO1 = new PreCourtDTO(1L,"Alameda de Osuna", true);
         preCourtDTO2 = new PreCourtDTO(2L, "Coslada", true );
@@ -101,12 +101,12 @@ class CourtServiceTest {
 
     @Test
     void createCourt() throws SQLException, IOException {
-        CourtDTO newCourtDTO = new CourtDTO(null, "Coslada", 8.0, CourtType.INDOOR, SurfaceType.GLASS, true, 5.0);
-        Court newCourt = new Court("Alameda de Osuna", 8.0, CourtType.INDOOR, SurfaceType.GLASS, 5.0);
+        CourtDTO newCourtDTO = new CourtDTO(null, "Coslada", 8.0, CourtType.INDOOR, SurfaceType.GLASS, true);
+        Court newCourt = new Court("Alameda de Osuna", 8.0, CourtType.INDOOR, SurfaceType.GLASS);
 
-        Court savedCourt = new Court("Coslada", 8.0, CourtType.INDOOR, SurfaceType.GLASS,  5.0);
+        Court savedCourt = new Court("Coslada", 8.0, CourtType.INDOOR, SurfaceType.GLASS);
         savedCourt.setId(3L);
-        CourtDTO savedCourtDTO = new CourtDTO(3L, "Coslada", 8.0, CourtType.INDOOR, SurfaceType.GLASS,true,   5.0);
+        CourtDTO savedCourtDTO = new CourtDTO(3L, "Coslada", 8.0, CourtType.INDOOR, SurfaceType.GLASS,true);
 
         // Simulamos el flujo completo: DTO -> Entidad -> Repo -> Entidad guardada -> DTO guardado
         when(mapper.toDomain(newCourtDTO)).thenReturn(newCourt);
