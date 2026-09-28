@@ -4,9 +4,11 @@ import es.urjc.code.yosoytupadel.backend.dto.CoachDTO;
 import es.urjc.code.yosoytupadel.backend.dto.UserDTO;
 import es.urjc.code.yosoytupadel.backend.dto.UserMapper;
 import es.urjc.code.yosoytupadel.backend.dto.UserUpdateDTO;
+import es.urjc.code.yosoytupadel.backend.entities.Booking;
 import es.urjc.code.yosoytupadel.backend.entities.Racket;
 import es.urjc.code.yosoytupadel.backend.entities.User;
 import es.urjc.code.yosoytupadel.backend.entities.UserRole;
+import es.urjc.code.yosoytupadel.backend.repository.BookingRepository;
 import es.urjc.code.yosoytupadel.backend.repository.RacketRepository;
 import es.urjc.code.yosoytupadel.backend.repository.UserRepository;
 import es.urjc.code.yosoytupadel.backend.service.UserService;
@@ -16,6 +18,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -36,6 +42,9 @@ class UserServiceTest {
 
     @Mock
     private RacketRepository racketRepository;
+
+    @Mock
+    private BookingRepository bookingRepository;
 
     @Mock
     private UserMapper userMapper;
@@ -277,5 +286,63 @@ class UserServiceTest {
         assertThatThrownBy(() -> userService.deleteUserImage(2L))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("User image not found");
+    }
+
+    @Test
+    void getAuthenticatedUserDto_WhenAuthenticated_ShouldReturnUserDTO() {
+        // Simulamos el contexto de seguridad de Spring
+        Authentication authentication = mock(Authentication.class);
+        SecurityContext securityContext = mock(SecurityContext.class);
+        UserDetails userDetails = mock(UserDetails.class);
+
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        when(authentication.getPrincipal()).thenReturn(userDetails);
+        when(userDetails.getUsername()).thenReturn("juan@test.com");
+
+        when(userRepository.findByEmail("juan@test.com")).thenReturn(Optional.of(student));
+        when(userMapper.toDTO(student)).thenReturn(studentDTO);
+
+        Optional<UserDTO> result = userService.getAuthenticatedUserDto();
+
+        assertThat(result).isPresent();
+        assertThat(result.get()).isEqualTo(studentDTO);
+
+        // Limpiamos el contexto tras el test
+        SecurityContextHolder.clearContext();
+    }
+
+    @Test
+    void isCoach_WhenUserIsCoach_ShouldReturnTrue() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(coach)); // coach tiene UserRole.COACH
+
+        boolean result = userService.isCoach(1L);
+
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    void isMine_WhenBookingBelongsToUser_ShouldReturnTrue() {
+        // Simulamos la autenticación
+        Authentication authentication = mock(Authentication.class);
+        SecurityContext securityContext = mock(SecurityContext.class);
+        UserDetails userDetails = mock(UserDetails.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        when(authentication.getPrincipal()).thenReturn(userDetails);
+        when(userDetails.getUsername()).thenReturn("juan@test.com");
+
+        when(userRepository.findByEmail("juan@test.com")).thenReturn(Optional.of(student)); // student tiene ID 2
+        when(userMapper.toDTO(student)).thenReturn(new UserDTO(2L, "Juan", "ElJUan", "juan@test.com", "pass", UserRole.USER, 1.0, null, 0));
+
+        Booking booking = new Booking();
+        booking.setUser(student);
+        when(bookingRepository.findById(10L)).thenReturn(Optional.of(booking));
+
+        boolean result = userService.isMine(10L);
+
+        assertThat(result).isTrue();
+        SecurityContextHolder.clearContext();
     }
 }
