@@ -1,7 +1,9 @@
 name: CI - Control de Calidad Completo
 
 on:
-
+  push:
+    branches:
+      - '**'
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
@@ -36,7 +38,7 @@ jobs:
         run: mvn test -Dtest="!**/system/**" -B
 
       - name: Ejecutar Tests de Integración (Testcontainers / Failsafe) y JaCoCo
-        run: mvn verify -Dsurefire.skip=true -Dtest="!**/system/**" -B
+        run: mvn verify jacoco:report -Dsurefire.skip=true -Dtest="!**/system/**" -B
 
       - name: Análisis de Código Estático del Backend con SonarCloud
         env:

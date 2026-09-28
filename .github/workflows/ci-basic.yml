@@ -36,8 +36,8 @@ jobs:
       - name: Compilar el proyecto
         run: mvn compile -DskipTests -B
 
-      - name: Ejecutar Tests Unitarios del Backend y JaCoCo
-        run: mvn test -Dtest=*UnitTest,*ControllerTest,*ServiceTest -B
+      - name: Ejecutar Tests Unitarios y Generar Reporte JaCoCo
+        run: mvn test jacoco:report -Dtest=*UnitTest,*ControllerTest,*ServiceTest -B
 
       - name: Análisis de Código Estático del Backend
         env:
