@@ -29,6 +29,8 @@
 	<properties>
 		<java.version>21</java.version>
 		<sonar.coverage.exclusions>**/entities/**,**/dto/**,**/config/**,**/security/jwt/AuthResponse.java,**/security/jwt/LoginRequest.java,**/*Application.java,**/*Exception.java</sonar.coverage.exclusions>
+
+		<sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 	</properties>
 	<dependencies>
 		<dependency>

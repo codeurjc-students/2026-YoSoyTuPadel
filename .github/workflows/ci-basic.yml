@@ -34,30 +34,8 @@ jobs:
           distribution: 'temurin'
 
 
-      - name: Ejecutar Tests Unitarios
-        run: mvn clean test -Dtest="**/unit/**/*Test" -B
-
-      - name: Comprobar datos JaCoCo
-        run: |
-          echo "=== target ==="
-          ls -la target
-
-          echo "=== jacoco.exec ==="
-          ls -la target/jacoco.exec
-
-      - name: Generar reporte JaCoCo
-        run: mvn jacoco:report -B
-
-      - name: Comprobar informe JaCoCo
-        run: |
-          echo "=== target/site ==="
-          ls -la target/site || true
-
-          echo "=== target/site/jacoco ==="
-          ls -la target/site/jacoco || true
-
-          echo "=== jacoco.xml ==="
-          find target -name "jacoco.xml"
+      - name: Compilar y Ejecutar Tests Unitarios con Cobertura
+        run: mvn clean jacoco:prepare-agent test jacoco:report -Dtest="**/unit/**" -B
 
       - name: Análisis de Código Estático del Backend
         env:
