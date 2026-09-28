@@ -113,4 +113,13 @@ class UserServiceTest {
         verify(racketRepository, never()).save(racket);
         verify(userRepository, never()).save(student);
     }
+
+    @Test
+    void rentRacket_WhenUserNotFound_ShouldThrowNotFound() {
+        when(userRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.rentRacket(99L, 1L))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("User not found");
+    }
 }

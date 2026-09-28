@@ -128,4 +128,13 @@ class CourtServiceTest {
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Court not found");
     }
+
+    @Test
+    void deleteCourt_WhenCourtExists_ShouldDeleteSuccessfully() {
+        when(courtRepository.findById(1L)).thenReturn(Optional.of(court1));
+
+        courtService.deleteCourt(1L);
+
+        verify(courtRepository, times(1)).deleteById(1L);
+    }
 }
