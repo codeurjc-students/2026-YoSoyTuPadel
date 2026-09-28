@@ -37,7 +37,7 @@ jobs:
         run: mvn compile -DskipTests -B
 
       - name: Ejecutar Tests Unitarios y Generar Reporte JaCoCo
-        run: mvn clean test jacoco:report -B
+        run: mvn clean test jacoco:report -Dtest="**/unit/**" -B
 
       - name: Análisis de Código Estático del Backend
         env:
