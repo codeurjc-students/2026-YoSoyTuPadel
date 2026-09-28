@@ -3,6 +3,7 @@ package es.urjc.code.yosoytupadel.backend.unit.service;
 import es.urjc.code.yosoytupadel.backend.dto.CoachDTO;
 import es.urjc.code.yosoytupadel.backend.dto.UserDTO;
 import es.urjc.code.yosoytupadel.backend.dto.UserMapper;
+import es.urjc.code.yosoytupadel.backend.dto.UserUpdateDTO;
 import es.urjc.code.yosoytupadel.backend.entities.Racket;
 import es.urjc.code.yosoytupadel.backend.entities.User;
 import es.urjc.code.yosoytupadel.backend.entities.UserRole;
@@ -176,7 +177,7 @@ class UserServiceTest {
 
     @Test
     void rentRacket_WhenUserAlreadyHasRacket_ShouldThrowBadRequest() {
-        student.setRacket(racket); 
+        student.setRacket(racket);
         when(userRepository.findById(2L)).thenReturn(Optional.of(student));
 
         assertThatThrownBy(() -> userService.rentRacket(2L, 1L))
@@ -206,6 +207,74 @@ class UserServiceTest {
         when(userRepository.findById(2L)).thenReturn(Optional.of(student));
 
         assertThatThrownBy(() -> userService.getUserImage(2L))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("User image not found");
+    }
+
+    @Test
+    void updateUser_WhenEmailBelongsToAnotherUser_ShouldThrowConflict() {
+        // El usuario 2 intenta ponerse el email del usuario 1
+        UserUpdateDTO updateDTO = new UserUpdateDTO("Juan", "ElJuan", "pepe@test.com");
+        when(userRepository.findById(2L)).thenReturn(Optional.of(student));
+
+        User existingOtherUser = new User();
+        existingOtherUser.setId(1L); // ID distinto al del estudiante (2L)
+
+        when(userRepository.findByEmail("pepe@test.com")).thenReturn(Optional.of(existingOtherUser));
+
+        assertThatThrownBy(() -> userService.updateUser(2L, updateDTO))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Email is already in use.");
+
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void updateUser_WhenValidData_ShouldUpdateSuccessfully() {
+        UserUpdateDTO updateDTO = new UserUpdateDTO("Juan Actualizado", "ElJuan", "juan.nuevo@test.com");
+        when(userRepository.findById(2L)).thenReturn(Optional.of(student));
+        when(userRepository.findByEmail("juan.nuevo@test.com")).thenReturn(Optional.empty()); // Email libre
+        when(userRepository.save(student)).thenReturn(student);
+        when(userMapper.toUserUpdateDTO(student)).thenReturn(updateDTO);
+
+        UserUpdateDTO result = userService.updateUser(2L, updateDTO);
+
+        verify(userMapper, times(1)).updateUserFromDTO(updateDTO, student);
+        verify(userRepository, times(1)).save(student);
+        assertThat(result.name()).isEqualTo("Juan Actualizado");
+    }
+
+    @Test
+    void returnRacket_WhenUserHasNoRacket_ShouldDoNothingAndReturnUser() {
+        student.setRacket(null);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(student));
+        when(userMapper.toDTO(student)).thenReturn(studentDTO);
+
+        UserDTO result = userService.returnRacket(2L);
+
+        verify(racketRepository, never()).save(any());
+        assertThat(result).isEqualTo(studentDTO);
+    }
+
+    @Test
+    void processRacketUsageForUser_WhenFirstUsage_ShouldIncrementUsageButNotReturn() {
+        student.setRacket(racket);
+        student.setRacketUsages(0); // Cero usos
+        when(userRepository.findById(2L)).thenReturn(Optional.of(student));
+
+        userService.processRacketUsageForUser(2L);
+
+        assertThat(student.getRacketUsages()).isEqualTo(1);
+        assertThat(student.getRacket()).isNotNull(); // Aún conserva la raqueta
+        verify(userRepository, times(1)).save(student);
+    }
+
+    @Test
+    void deleteUserImage_WhenImageIsNull_ShouldThrowNotFound() {
+        student.setProfilePicture(null);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(student));
+
+        assertThatThrownBy(() -> userService.deleteUserImage(2L))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("User image not found");
     }
