@@ -34,19 +34,15 @@ jobs:
           distribution: 'temurin'
 
 
-      - name: Ejecutar Tests y Generar Reporte JaCoCo
-        run: mvn clean test -B
+      - name: Ejecutar Tests Unitarios y Generar Reporte JaCoCo
+        run: mvn clean test jacoco:report -Dtest="**/unit/**" -B
 
       - name: Comprobar informe JaCoCo
         run: |
-          echo "Contenido de target:"
-          ls -la target
-
-          echo "Contenido de target/site:"
-          ls -la target/site || true
-
-          echo "Buscando archivos JaCoCo:"
-          find target -name "jacoco.xml" -o -name "jacoco.exec"
+          echo "Contenido de target/site/jacoco:"
+          ls -la target/site/jacoco
+          echo "Buscando jacoco.xml:"
+          find target -name "jacoco.xml"
 
       - name: Análisis de Código Estático del Backend
         env:
