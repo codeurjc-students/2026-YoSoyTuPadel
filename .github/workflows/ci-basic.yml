@@ -45,22 +45,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ -n "${{ github.event.pull_request.number }}" ]; then
-            mvn org.sonarsource.scanner.maven:sonar-maven-plugin:4.0.0.4121:sonar \
-              -Dsonar.projectKey=urjc-yosoytupadel-backend \
-              -Dsonar.organization=victorcc02 \
-              -Dsonar.host.url=https://sonarcloud.io \
-              "-Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml" \
-              -Dsonar.pullrequest.key=${{ github.event.pull_request.number }} \
-              -Dsonar.pullrequest.branch=${{ github.head_ref }} \
-              -Dsonar.pullrequest.base=${{ github.base_ref }}
+            mvn org.sonarsource.scanner.maven:sonar-maven-plugin:4.0.0.4121:sonar -Dsonar.projectKey=urjc-yosoytupadel-backend -Dsonar.organization=victorcc02 -Dsonar.host.url=https://sonarcloud.io -Dsonar.pullrequest.key=${{ github.event.pull_request.number }} -Dsonar.pullrequest.branch=${{ github.head_ref }} -Dsonar.pullrequest.base=${{ github.base_ref }}
           else
-            mvn org.sonarsource.scanner.maven:sonar-maven-plugin:4.0.0.4121:sonar \
-              -Dsonar.projectKey=urjc-yosoytupadel-backend \
-              -Dsonar.organization=victorcc02 \
-              -Dsonar.host.url=https://sonarcloud.io
-              "-Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml"
+            mvn org.sonarsource.scanner.maven:sonar-maven-plugin:4.0.0.4121:sonar -Dsonar.projectKey=urjc-yosoytupadel-backend -Dsonar.organization=victorcc02 -Dsonar.host.url=https://sonarcloud.io
           fi
-
+          
+          
   # JOB 2: CONTROL DE CALIDAD DEL CLIENTE (REACT) + SONARCLOUD
 
   frontend-checks:
