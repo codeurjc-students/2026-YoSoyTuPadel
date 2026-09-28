@@ -34,15 +34,20 @@ jobs:
           distribution: 'temurin'
 
 
-      - name: Ejecutar Tests Unitarios y Generar Reporte JaCoCo
-        run: mvn clean test jacoco:report -Dtest="**/unit/**" -B
+      - name: Ejecutar Tests y Generar Reporte JaCoCo
+        run: mvn clean test -B
 
       - name: Comprobar informe JaCoCo
         run: |
-          ls -la target/site/jacoco
-          echo "Número de líneas del XML:"
-          grep -o "<line " target/site/jacoco/jacoco.xml | wc -l
-          
+          echo "Contenido de target:"
+          ls -la target
+
+          echo "Contenido de target/site:"
+          ls -la target/site || true
+
+          echo "Buscando archivos JaCoCo:"
+          find target -name "jacoco.xml" -o -name "jacoco.exec"
+
       - name: Análisis de Código Estático del Backend
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
