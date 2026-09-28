@@ -37,7 +37,7 @@ jobs:
         run: mvn compile -DskipTests -B
 
       - name: Ejecutar Tests Unitarios y Generar Reporte JaCoCo
-        run: mvn test jacoco:report -Dtest=*UnitTest,*ControllerTest,*ServiceTest -B
+        run: mvn clean test jacoco:report -B
 
       - name: Análisis de Código Estático del Backend
         env:
@@ -49,6 +49,7 @@ jobs:
               -Dsonar.projectKey=urjc-yosoytupadel-backend \
               -Dsonar.organization=victorcc02 \
               -Dsonar.host.url=https://sonarcloud.io \
+          -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
               -Dsonar.pullrequest.key=${{ github.event.pull_request.number }} \
               -Dsonar.pullrequest.branch=${{ github.head_ref }} \
               -Dsonar.pullrequest.base=${{ github.base_ref }}
@@ -57,6 +58,7 @@ jobs:
               -Dsonar.projectKey=urjc-yosoytupadel-backend \
               -Dsonar.organization=victorcc02 \
               -Dsonar.host.url=https://sonarcloud.io
+              -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
           fi
 
   # JOB 2: CONTROL DE CALIDAD DEL CLIENTE (REACT) + SONARCLOUD
