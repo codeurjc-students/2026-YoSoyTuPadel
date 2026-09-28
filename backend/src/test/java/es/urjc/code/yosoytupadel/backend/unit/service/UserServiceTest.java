@@ -15,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Arrays;
@@ -37,6 +38,9 @@ class UserServiceTest {
 
     @Mock
     private UserMapper userMapper;
+
+    @Mock
+    PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private UserService userService;
@@ -121,5 +125,88 @@ class UserServiceTest {
         assertThatThrownBy(() -> userService.rentRacket(99L, 1L))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("User not found");
+    }
+
+    @Test
+    void createUser_WhenEmailExists_ShouldThrowConflict() {
+        UserDTO newUserDTO = new UserDTO(null, "Pepe", "Pepe", "pepe@test.com", "pass", UserRole.USER, 1.0, null, 0);
+        when(userRepository.existsByEmail(newUserDTO.email())).thenReturn(true);
+
+        assertThatThrownBy(() -> userService.createUser(newUserDTO))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Email is already in use");
+
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void createUser_WhenEmailIsNew_ShouldCreateUserSuccessfully() {
+        UserDTO newUserDTO = new UserDTO(null, "Pepe", "Pepe", "pepe@test.com", "pass", UserRole.USER, 1.0, null, 0);
+        User mappedUser = new User();
+        mappedUser.setEmail("pepe@test.com");
+
+        when(userRepository.existsByEmail(newUserDTO.email())).thenReturn(false);
+        when(userMapper.toDomain(newUserDTO)).thenReturn(mappedUser);
+        when(passwordEncoder.encode(newUserDTO.password())).thenReturn("encoded_pass");
+        when(userRepository.save(any(User.class))).thenReturn(mappedUser);
+        when(userMapper.toDTO(mappedUser)).thenReturn(newUserDTO);
+
+        UserDTO result = userService.createUser(newUserDTO);
+
+        assertThat(result).isNotNull();
+
+        assertThat(mappedUser.getSkillLevel()).isEqualTo(1.0);
+        verify(userRepository, times(1)).save(mappedUser);
+    }
+
+    @Test
+    void updateSkillLevel_ShouldKeepLevelWithinBounds() {
+        student.setSkillLevel(4.5);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(student));
+        when(userRepository.save(student)).thenReturn(student);
+        when(userMapper.toDTO(student)).thenReturn(studentDTO);
+
+        userService.updateSkillLevel(2L, 1.0);
+        assertThat(student.getSkillLevel()).isEqualTo(5.0);
+
+        student.setSkillLevel(1.5);
+        userService.updateSkillLevel(2L, -2.0);
+        assertThat(student.getSkillLevel()).isEqualTo(1.0);
+    }
+
+    @Test
+    void rentRacket_WhenUserAlreadyHasRacket_ShouldThrowBadRequest() {
+        student.setRacket(racket); 
+        when(userRepository.findById(2L)).thenReturn(Optional.of(student));
+
+        assertThatThrownBy(() -> userService.rentRacket(2L, 1L))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("You already have a rented racket.");
+    }
+
+    @Test
+    void processRacketUsageForUser_WhenThirdUsage_ShouldAutoReturnRacket() {
+        student.setRacket(racket);
+        student.setRacketUsages(2);
+        int initialStock = racket.getStock();
+
+        when(userRepository.findById(2L)).thenReturn(Optional.of(student));
+
+        userService.processRacketUsageForUser(2L);
+
+        assertThat(student.getRacket()).isNull();
+        assertThat(student.getRacketUsages()).isEqualTo(0);
+        assertThat(racket.getStock()).isEqualTo(initialStock + 1);
+        verify(racketRepository, times(1)).save(racket);
+    }
+
+    @Test
+    void getUserImage_WhenNoImageExists_ShouldThrowNotFound() {
+        student.setProfilePicture(null);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(student));
+
+        assertThatThrownBy(() -> userService.getUserImage(2L))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("User image not found");
     }
 }
