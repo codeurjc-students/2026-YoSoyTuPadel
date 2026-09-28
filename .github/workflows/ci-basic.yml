@@ -35,7 +35,7 @@ jobs:
 
 
       - name: Ejecutar Tests Unitarios y Generar Reporte JaCoCo
-        run: mvn clean test jacoco:report -Dtest="**/unit/**" -B
+        run: mvn clean test jacoco:report -Dtest="**/unit/**/*Test" -B
 
       - name: Comprobar informe JaCoCo
         run: |
