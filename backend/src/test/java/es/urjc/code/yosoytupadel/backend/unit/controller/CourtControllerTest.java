@@ -23,6 +23,8 @@ import static org.hamcrest.Matchers.hasSize;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Optional;
+
 import static org.mockito.Mockito.*;
 
 @WebMvcTest(
@@ -86,5 +88,33 @@ class CourtControllerTest {
                 .andExpect(jsonPath("$", hasSize(0)));
 
         verify(courtService, times(1)).getAllCourts();
+    }
+
+    @Test
+    void getCourtById_ShouldReturnCourt() throws Exception {
+        when(courtService.getCourtById(1L)).thenReturn(Optional.of(dto1));
+
+        mockMvc.perform(get("/api/v1/courts/1")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Alameda de Osuna"));
+    }
+
+    @Test
+    void createCourt_ShouldReturnCreated() throws Exception {
+        when(courtService.createCourt(any(CourtDTO.class))).thenReturn(dto1);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/v1/courts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\": \"Alameda de Osuna\", \"pricePerHour\": 8.0, \"courtType\": \"INDOOR\", \"surfaceType\": \"GLASS\", \"isAvailable\": true}"))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void deleteCourt_ShouldReturnNoContent() throws Exception {
+        when(courtService.deleteCourt(1L)).thenReturn(dto1);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/api/v1/courts/1"))
+                .andExpect(status().isOk());
     }
 }

@@ -127,4 +127,13 @@ class RacketServiceTest {
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Racket not found");
     }
+
+    @Test
+    void deleteRacket_WhenRacketExists_ShouldDeleteSuccessfully() {
+        when(racketRepository.findById(1L)).thenReturn(Optional.of(racket1));
+
+        racketService.deleteRacket(1L);
+
+        verify(racketRepository, times(1)).delete(racket1);
+    }
 }

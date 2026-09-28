@@ -188,4 +188,38 @@ class BookingServiceTest {
 
         verify(bookingRepository, never()).save(any());
     }
+
+    @Test
+    void createBooking_WhenUserNotFound_ShouldThrowNotFound() {
+        when(bookingDTO1.bookingDate()).thenReturn(LocalDate.now().plusDays(2));
+
+        when(bookingDTO1.startTime()).thenReturn(LocalTime.of(10, 0));
+        when(bookingDTO1.endTime()).thenReturn(LocalTime.of(11, 0));
+
+        when(bookingDTO1.coachId()).thenReturn(null);
+        when(bookingDTO1.courtId()).thenReturn(1L);
+        when(courtRepository.findById(1L)).thenReturn(Optional.of(court));
+        when(bookingRepository.existsOverlappingBooking(eq(1L), any(), any(), any())).thenReturn(false);
+
+        when(bookingDTO1.userId()).thenReturn(99L);
+        when(userRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> bookingService.createBooking(bookingDTO1))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("User not found");
+    }
+
+    @Test
+    void createBooking_WhenCourtNotFound_ShouldThrowNotFound() {
+        when(bookingDTO1.bookingDate()).thenReturn(LocalDate.now().plusDays(2));
+
+        when(bookingDTO1.coachId()).thenReturn(null);
+        when(bookingDTO1.courtId()).thenReturn(99L);
+
+        when(courtRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> bookingService.createBooking(bookingDTO1))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Court not found");
+    }
 }

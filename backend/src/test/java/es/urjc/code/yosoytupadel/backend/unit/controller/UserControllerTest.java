@@ -93,4 +93,14 @@ class UserControllerTest {
 
         verify(userService, times(1)).getUserById(99L);
     }
+
+    @Test
+    void rentRacket_ShouldReturnOk() throws Exception {
+        when(userService.rentRacket(1L, 1L)).thenReturn(userDTO);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch("/api/v1/users/1/racket")
+                        .param("racketId", "1")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
 }
