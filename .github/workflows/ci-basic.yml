@@ -14,7 +14,7 @@ jobs:
   # JOB 1: CONTROL DE CALIDAD DEL BACKEND.
 
   backend-checks:
-    name: Backend - Build & Unit Tests
+    name: Backend - Build, Unit Tests & SonarCloud
     runs-on: ubuntu-latest
 
     defaults:
@@ -24,6 +24,8 @@ jobs:
     steps:
       - name: Checkout del código
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - name: Configurar JDK 21 (Temurin)
         uses: actions/setup-java@v5
@@ -34,8 +36,21 @@ jobs:
       - name: Compilar el proyecto
         run: mvn compile -DskipTests -B
 
-      - name: Ejecutar Tests Unitarios del Backend
+      - name: Ejecutar Tests Unitarios del Backend y JaCoCo
         run: mvn test -Dtest=*UnitTest,*ControllerTest,*ServiceTest -B
+
+      - name: Análisis de Código Estático del Backend
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          mvn sonar:sonar 
+          -Dsonar.projectKey=urjc-yosoytupadel-backend 
+          -Dsonar.organization=victorcc02 
+          -Dsonar.host.url=https://sonarcloud.io 
+          -Dsonar.pullrequest.key=${{ github.event.pull_request.number }} 
+          -Dsonar.pullrequest.branch=${{ github.head_ref }} 
+          -Dsonar.pullrequest.base=${{ github.base_ref }}
 
   # JOB 2: CONTROL DE CALIDAD DEL CLIENTE (REACT) + SONARCLOUD
 

@@ -35,9 +35,18 @@ jobs:
       - name: Ejecutar Tests Unitarios del Backend
         run: mvn test -Dtest="!**/system/**" -B
 
-      - name: Ejecutar Tests de Integración (Testcontainers / Failsafe)
+      - name: Ejecutar Tests de Integración (Testcontainers / Failsafe) y JaCoCo
         run: mvn verify -Dsurefire.skip=true -Dtest="!**/system/**" -B
 
+      - name: Análisis de Código Estático del Backend con SonarCloud
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          mvn sonar:sonar 
+          -Dsonar.projectKey=urjc-yosoytupadel-backend 
+          -Dsonar.organization=victorcc02 
+          -Dsonar.host.url=https://sonarcloud.io
 
   # --- JOB 2: FRONTEND (Unitarios, Build y SonarCloud) ---
   frontend-full-checks:
