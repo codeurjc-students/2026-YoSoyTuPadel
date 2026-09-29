@@ -2,11 +2,13 @@ package es.urjc.code.yosoytupadel.backend.unit.service;
 
 import es.urjc.code.yosoytupadel.backend.dto.BookingDTO;
 import es.urjc.code.yosoytupadel.backend.dto.BookingMapper;
+import es.urjc.code.yosoytupadel.backend.dto.UserDTO;
 import es.urjc.code.yosoytupadel.backend.entities.*;
 import es.urjc.code.yosoytupadel.backend.repository.BookingRepository;
 import es.urjc.code.yosoytupadel.backend.repository.CourtRepository;
 import es.urjc.code.yosoytupadel.backend.repository.UserRepository;
 import es.urjc.code.yosoytupadel.backend.service.BookingService;
+import es.urjc.code.yosoytupadel.backend.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,6 +27,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
 class BookingServiceTest {
@@ -40,6 +43,9 @@ class BookingServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private UserService userService;
 
     @InjectMocks
     private BookingService bookingService;
@@ -221,5 +227,310 @@ class BookingServiceTest {
         assertThatThrownBy(() -> bookingService.createBooking(bookingDTO1))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Court not found");
+    }
+
+    @Test
+    void getAllBookingsByUserIdMapsRepositoryResults() {
+        List<Booking> bookings = List.of(booking1);
+        when(bookingRepository.findByUserId(2L)).thenReturn(bookings);
+        when(mapper.toDTOs(bookings)).thenReturn(List.of(bookingDTO1));
+
+        assertThat(bookingService.getAllBookingsByUserId(2L)).containsExactly(bookingDTO1);
+
+        verify(bookingRepository).findByUserId(2L);
+        verify(mapper).toDTOs(bookings);
+    }
+
+    @Test
+    void getBookingByIdReturnsMappedBookingWhenFound() {
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking1));
+        when(mapper.toDTO(booking1)).thenReturn(bookingDTO1);
+
+        assertThat(bookingService.getBookingById(1L)).contains(bookingDTO1);
+    }
+
+    @Test
+    void getBookingByIdReturnsEmptyWhenMissing() {
+        when(bookingRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThat(bookingService.getBookingById(99L)).isEmpty();
+        verify(mapper, never()).toDTO(any(Booking.class));
+    }
+
+    @Test
+    void createBookingRejectsNullDateAndDateBeyondTwoWeeks() {
+        BookingDTO noDate = mock(BookingDTO.class);
+        when(noDate.bookingDate()).thenReturn(null);
+        assertThatThrownBy(() -> bookingService.createBooking(noDate))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("past");
+
+        BookingDTO tooFarAhead = mock(BookingDTO.class);
+        when(tooFarAhead.bookingDate()).thenReturn(LocalDate.now().plusDays(15));
+        assertThatThrownBy(() -> bookingService.createBooking(tooFarAhead))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("14 days");
+
+        verifyNoInteractions(courtRepository, userRepository);
+    }
+
+    @Test
+    void createBookingRejectsBothOrNeitherCourtAndCoach() {
+        BookingDTO both = mock(BookingDTO.class);
+        when(both.bookingDate()).thenReturn(LocalDate.now());
+        when(both.courtId()).thenReturn(1L);
+        when(both.coachId()).thenReturn(3L);
+        assertThatThrownBy(() -> bookingService.createBooking(both))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("both a court and a coach");
+
+        BookingDTO neither = mock(BookingDTO.class);
+        when(neither.bookingDate()).thenReturn(LocalDate.now());
+        when(neither.courtId()).thenReturn(null);
+        when(neither.coachId()).thenReturn(null);
+        assertThatThrownBy(() -> bookingService.createBooking(neither))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("must have either");
+
+        verifyNoInteractions(courtRepository, userRepository);
+    }
+
+    @Test
+    void createBookingRejectsCourtClosedForMaintenance() {
+        court.setIsAvailable(false);
+        BookingDTO dto = courtBookingDTO(1L, 2L, null);
+        when(courtRepository.findById(1L)).thenReturn(Optional.of(court));
+
+        assertThatThrownBy(() -> bookingService.createBooking(dto))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("closed for maintenance");
+
+        verifyNoInteractions(userRepository);
+        verify(bookingRepository, never()).save(any(Booking.class));
+    }
+
+    @Test
+    void createBookingRejectsCoachNotFound() {
+        BookingDTO dto = coachBookingDTO(3L, 2L, null);
+        when(userRepository.findById(3L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> bookingService.createBooking(dto))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Coach not found");
+
+        verify(bookingRepository, never()).save(any(Booking.class));
+    }
+
+    @Test
+    void createCourtBookingSetsMatchStatusAndCourtPrice() {
+        User student = new User();
+        student.setId(2L);
+        BookingDTO dto = courtBookingDTO(1L, 2L, null);
+        Booking created = new Booking();
+        when(courtRepository.findById(1L)).thenReturn(Optional.of(court));
+        when(bookingRepository.existsOverlappingBooking(eq(1L), any(LocalDate.class), any(LocalTime.class), any(LocalTime.class)))
+                .thenReturn(false);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(student));
+        when(mapper.toDomain(dto)).thenReturn(created);
+        when(bookingRepository.save(created)).thenReturn(created);
+        when(mapper.toDTO(created)).thenReturn(bookingDTO1);
+
+        assertThat(bookingService.createBooking(dto)).isEqualTo(bookingDTO1);
+
+        assertThat(created.getCourt()).isSameAs(court);
+        assertThat(created.getUser()).isSameAs(student);
+        assertThat(created.getCoach()).isNull();
+        assertThat(created.getType()).isEqualTo(BookingType.MATCH);
+        assertThat(created.getStatus()).isEqualTo(BookingStatus.PENDING);
+        assertThat(created.getBookingPrice()).isEqualTo(court.getCourtPrice());
+    }
+
+    @Test
+    void createTrainingBookingUsesAuthenticatedUserAndCoachPrice() {
+        User coach = new User();
+        coach.setId(3L);
+        coach.setSessionPrice(35.0);
+        User student = new User();
+        student.setId(2L);
+        UserDTO authenticatedUser = mock(UserDTO.class);
+        when(authenticatedUser.id()).thenReturn(2L);
+        BookingDTO dto = coachBookingDTO(3L, null, null);
+        Booking created = new Booking();
+        when(userRepository.findById(3L)).thenReturn(Optional.of(coach));
+        when(bookingRepository.existsOverlappingCoachBooking(
+                eq(3L), any(LocalDate.class), any(LocalTime.class), any(LocalTime.class)))
+                .thenReturn(false);
+        when(userService.getAuthenticatedUserDto()).thenReturn(Optional.of(authenticatedUser));
+        when(userService.getUserEntityById(2L)).thenReturn(student);
+        when(mapper.toDomain(dto)).thenReturn(created);
+        when(bookingRepository.save(created)).thenReturn(created);
+        when(mapper.toDTO(created)).thenReturn(bookingDTO1);
+
+        bookingService.createBooking(dto);
+
+        assertThat(created.getCourt()).isNull();
+        assertThat(created.getCoach()).isSameAs(coach);
+        assertThat(created.getUser()).isSameAs(student);
+        assertThat(created.getType()).isEqualTo(BookingType.TRAINING);
+        assertThat(created.getStatus()).isEqualTo(BookingStatus.PENDING);
+        assertThat(created.getBookingPrice()).isEqualTo(35.0);
+    }
+
+    @Test
+    void createTrainingBookingUsesZeroPriceWhenCoachHasNoSessionPrice() {
+        User coach = new User();
+        coach.setId(3L);
+        User student = new User();
+        student.setId(2L);
+        BookingDTO dto = coachBookingDTO(3L, 2L, null);
+        Booking created = new Booking();
+        when(userRepository.findById(3L)).thenReturn(Optional.of(coach));
+        when(bookingRepository.existsOverlappingCoachBooking(
+                eq(3L), any(LocalDate.class), any(LocalTime.class), any(LocalTime.class)))
+                .thenReturn(false);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(student));
+        when(mapper.toDomain(dto)).thenReturn(created);
+        when(bookingRepository.save(created)).thenReturn(created);
+        when(mapper.toDTO(created)).thenReturn(bookingDTO1);
+
+        bookingService.createBooking(dto);
+
+        assertThat(created.getBookingPrice()).isEqualTo(0.0);
+    }
+
+    @Test
+    void createBookingRejectsMissingAuthenticatedUser() {
+        User coach = new User();
+        coach.setId(3L);
+        BookingDTO dto = coachBookingDTO(3L, null, null);
+        when(userRepository.findById(3L)).thenReturn(Optional.of(coach));
+        when(bookingRepository.existsOverlappingCoachBooking(
+                eq(3L), any(LocalDate.class), any(LocalTime.class), any(LocalTime.class)))
+                .thenReturn(false);
+        when(userService.getAuthenticatedUserDto()).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> bookingService.createBooking(dto))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("User not authenticated");
+    }
+
+    @Test
+    void createBookingPreservesExplicitPrice() {
+        User student = new User();
+        student.setId(2L);
+        BookingDTO dto = courtBookingDTO(1L, 2L, 50.0);
+        Booking created = new Booking();
+        created.setBookingPrice(dto.bookingPrice());
+        when(courtRepository.findById(1L)).thenReturn(Optional.of(court));
+        when(bookingRepository.existsOverlappingBooking(eq(1L), any(LocalDate.class), any(LocalTime.class), any(LocalTime.class)))
+                .thenReturn(false);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(student));
+        when(mapper.toDomain(dto)).thenReturn(created);
+        when(bookingRepository.save(created)).thenReturn(created);
+        when(mapper.toDTO(created)).thenReturn(bookingDTO1);
+
+        bookingService.createBooking(dto);
+
+        assertThat(created.getBookingPrice()).isEqualTo(50.0);
+    }
+
+    @Test
+    void cancelBookingRejectsMissingBookingAndAlreadyCancelledBooking() {
+        when(bookingRepository.findById(99L)).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> bookingService.cancelBooking(99L))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Booking not found");
+
+        booking1.setStatus(BookingStatus.CANCELLED);
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking1));
+        assertThatThrownBy(() -> bookingService.cancelBooking(1L))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("already been cancelled");
+
+        verify(bookingRepository, never()).save(any(Booking.class));
+    }
+
+    @Test
+    void cancelBookingRejectsCompletedBooking() {
+        booking1.setStatus(BookingStatus.COMPLETED);
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking1));
+
+        assertThatThrownBy(() -> bookingService.cancelBooking(1L))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("already finished");
+
+        verify(bookingRepository, never()).save(any(Booking.class));
+    }
+
+    @Test
+    void deleteBookingDeletesAndReturnsMappedBooking() {
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking1));
+        when(mapper.toDTO(booking1)).thenReturn(bookingDTO1);
+
+        assertThat(bookingService.deleteBooking(1L)).isEqualTo(bookingDTO1);
+
+        verify(bookingRepository).delete(booking1);
+    }
+
+    @Test
+    void deleteBookingRejectsMissingBooking() {
+        when(bookingRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> bookingService.deleteBooking(99L))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Booking not found");
+
+        verify(bookingRepository, never()).delete(any(Booking.class));
+    }
+
+    @Test
+    void matchAndTrainingBookingsUseTheirCorrespondingTypes() {
+        List<Booking> bookings = List.of(booking1);
+        when(bookingRepository.findByUserIdAndType(2L, BookingType.MATCH)).thenReturn(bookings);
+        when(bookingRepository.findByUserIdAndType(2L, BookingType.TRAINING)).thenReturn(bookings);
+        when(mapper.toDTOs(bookings)).thenReturn(List.of(bookingDTO1));
+
+        assertThat(bookingService.getMatchBookingsByUserId(2L)).containsExactly(bookingDTO1);
+        assertThat(bookingService.getTrainingBookingsByUserId(2L)).containsExactly(bookingDTO1);
+
+        verify(bookingRepository).findByUserIdAndType(2L, BookingType.MATCH);
+        verify(bookingRepository).findByUserIdAndType(2L, BookingType.TRAINING);
+    }
+
+    @Test
+    void autoCompleteFinishedBookingsDoesNotSaveWhenThereAreNoFinishedBookings() {
+        when(bookingRepository.findFinishedPendingBookings(any(LocalDate.class), any(LocalTime.class)))
+                .thenReturn(List.of());
+
+        bookingService.autoCompleteFinishedBookings();
+
+        verify(bookingRepository, never()).saveAll(any());
+        verifyNoInteractions(userService);
+    }
+
+    @Test
+    void autoCompleteFinishedBookingsCompletesBookingsAndProcessesRacketUsage() {
+        User student = new User();
+        student.setId(2L);
+        booking1.setUser(student);
+        List<Booking> finished = List.of(booking1);
+        when(bookingRepository.findFinishedPendingBookings(any(LocalDate.class), any(LocalTime.class)))
+                .thenReturn(finished);
+
+        bookingService.autoCompleteFinishedBookings();
+
+        assertThat(booking1.getStatus()).isEqualTo(BookingStatus.COMPLETED);
+        verify(userService).processRacketUsageForUser(2L);
+        verify(bookingRepository).saveAll(finished);
+    }
+
+    private BookingDTO courtBookingDTO(Long courtId, Long userId, Double price) {
+        return new BookingDTO(null, LocalDate.now().plusDays(1), LocalTime.of(10, 0), LocalTime.of(11, 0),
+                price, null, null, null, userId, courtId, null);
+    }
+
+    private BookingDTO coachBookingDTO(Long coachId, Long userId, Double price) {
+        return new BookingDTO(null, LocalDate.now().plusDays(1), LocalTime.of(10, 0), LocalTime.of(11, 0),
+                price, null, null, null, userId, null, coachId);
     }
 }
