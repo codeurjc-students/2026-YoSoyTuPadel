@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.IOException;
 import java.net.URI;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Collection;
 
 
@@ -64,13 +66,35 @@ public class RacketController {
     }
 
 
-    @PreAuthorize("isAuthenticated()")
     @GetMapping("/{id}/image")
-    public ResponseEntity<Object> getRacketImage(@PathVariable long id) throws SQLException {
+    public ResponseEntity<byte[]> getRacketImage(@PathVariable long id) throws SQLException, IOException {
 
         Resource racketImage = racketService.getRacketImage(id);
+        byte[] imageBytes = racketImage.getContentAsByteArray();
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_TYPE, "image/jpeg").body(racketImage);
+                .header(HttpHeaders.CONTENT_TYPE, getImageMediaType(imageBytes))
+                .body(imageBytes);
+    }
+
+    private String getImageMediaType(byte[] image) {
+        if (image.length >= 8 && Arrays.equals(Arrays.copyOf(image, 8),
+                new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A})) {
+            return MediaType.IMAGE_PNG_VALUE;
+        }
+        if (image.length >= 3 && (image[0] & 0xFF) == 0xFF
+                && (image[1] & 0xFF) == 0xD8 && (image[2] & 0xFF) == 0xFF) {
+            return MediaType.IMAGE_JPEG_VALUE;
+        }
+        if (image.length >= 6 && (new String(image, 0, 6, java.nio.charset.StandardCharsets.US_ASCII)
+                .startsWith("GIF87a") || new String(image, 0, 6, java.nio.charset.StandardCharsets.US_ASCII)
+                .startsWith("GIF89a"))) {
+            return MediaType.IMAGE_GIF_VALUE;
+        }
+        if (image.length >= 12 && new String(image, 0, 4, java.nio.charset.StandardCharsets.US_ASCII).equals("RIFF")
+                && new String(image, 8, 4, java.nio.charset.StandardCharsets.US_ASCII).equals("WEBP")) {
+            return "image/webp";
+        }
+        return MediaType.APPLICATION_OCTET_STREAM_VALUE;
     }
 
 

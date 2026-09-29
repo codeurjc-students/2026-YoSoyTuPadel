@@ -1,20 +1,10 @@
-import { render, screen } from '@testing-library/react';
-import App from './App';
+import { fireEvent, render, screen } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
+import { MemoryRouter } from 'react-router-dom';
+import RacketsPage from './modules/rackets/pages/RacketsPage';
 import api from './service/api';
 import { vi, describe, beforeEach, test, expect } from 'vitest';
 import type { Mock } from 'vitest';
-
-interface CustomMatchers<R = unknown> {
-    toBeInTheDocument(): R;
-    toBeVisible(): R;
-    toHaveTextContent(text: string | RegExp): R;
-
-}
-
-declare module 'vitest' {
-    interface Assertion<T = any> extends CustomMatchers<T> {}
-    interface AsymmetricMatchersContaining extends CustomMatchers {}
-}
 
 vi.mock('./service/api', () => ({
     default: {
@@ -28,15 +18,13 @@ const mockRackets = [
         id: 1,
         brand: 'Bullpadel',
         name: 'Hack 03',
-        description: 'Pala de potencia para jugadores avanzados.',
-        pricePerDay: 15,
+        stock: 3,
     },
     {
         id: 2,
         brand: 'Adidas',
         name: 'Metalbone 3.2',
-        description: 'Pala con balance personalizable.',
-        pricePerDay: 18,
+        stock: 0,
     },
 ];
 
@@ -49,7 +37,7 @@ describe('Componente App - Catálogo de Palas', () => {
     test('1. Debería mostrar el estado de carga inicial', () => {
         (api.get as Mock).mockReturnValue(new Promise(() => {}));
 
-        render(<App />);
+        render(<MemoryRouter><RacketsPage /></MemoryRouter>);
 
         expect(screen.getByText(/cargando palas de la base de datos.../i)).toBeInTheDocument();
     });
@@ -58,15 +46,28 @@ describe('Componente App - Catálogo de Palas', () => {
 
         (api.get as Mock).mockResolvedValue({ data: mockRackets });
 
-        render(<App />);
+        render(<MemoryRouter><RacketsPage /></MemoryRouter>);
 
         const titleBullpadel = await screen.findByText('Bullpadel - Hack 03');
         expect(titleBullpadel).toBeInTheDocument();
 
         expect(screen.getByText('Adidas - Metalbone 3.2')).toBeInTheDocument();
-        expect(screen.getByText('Precio de Alquiler: 15 € por sesión')).toBeInTheDocument();
+        expect(screen.getByText('3 palas disponibles')).toBeInTheDocument();
+        expect(screen.getByText('Agotada')).toBeInTheDocument();
+        expect(screen.getByRole('img', { name: 'Bullpadel Hack 03' }))
+            .toHaveAttribute('src', '/api/v1/rackets/1/image');
 
         expect(screen.queryByText(/cargando palas/i)).not.toBeInTheDocument();
+    });
+
+    test('muestra un fallback cuando no se puede cargar una imagen', async () => {
+        (api.get as Mock).mockResolvedValue({ data: mockRackets });
+        render(<MemoryRouter><RacketsPage /></MemoryRouter>);
+
+        fireEvent.error(await screen.findByRole('img', { name: 'Bullpadel Hack 03' }));
+
+        expect(screen.queryByRole('img', { name: 'Bullpadel Hack 03' })).not.toBeInTheDocument();
+        expect(screen.getAllByText('Bullpadel').length).toBeGreaterThan(0);
     });
 
     test('3. Debería mostrar un mensaje de error si la API falla', async () => {
@@ -74,7 +75,7 @@ describe('Componente App - Catálogo de Palas', () => {
         // Simulamos un fallo en la petición
         (api.get as Mock).mockRejectedValue(new Error('Network Error'));
 
-        render(<App />);
+        render(<MemoryRouter><RacketsPage /></MemoryRouter>);
 
         const errorMessage = await screen.findByText('No se ha podido conectar con el servidor.');
         expect(errorMessage).toBeInTheDocument();

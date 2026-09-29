@@ -1,61 +1,24 @@
-import { useEffect, useState } from 'react';
-import api from './service/api';
-
-interface Racket {
-    id: number;
-    brand: string;
-    name: string;
-    description: string;
-    pricePerDay: number;
-}
+import { Route, Routes } from 'react-router-dom';
+import Layout from './modules/core/components/Layout';
+import ComingSoonPage from './modules/core/pages/ComingSoonPage';
+import HomePage from './modules/core/pages/HomePage';
+import RacketsPage from './modules/rackets/pages/RacketsPage';
 
 function App() {
-    const [rackets, setRackets] = useState<Racket[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        api.get<Racket[]>('/api/v1/rackets')
-            .then((response) => {
-                setRackets(response.data);
-                setLoading(false);
-            })
-            .catch((err) => {
-                console.error('Error al conectar con la base de datos:', err);
-                setError('No se ha podido conectar con el servidor.');
-                setLoading(false);
-            });
-    }, []);
-
-    return (
-        <div>
-            <h1>YoSoyTuPadel </h1>
-            <hr />
-
-            <h2>Catálogo de Palas</h2>
-
-            {loading && <p>Cargando palas de la base de datos...</p>}
-
-            {error && (
-                <div>
-                    <p><strong>Error:</strong> {error}</p>
-                </div>
-            )}
-
-            {!loading && !error && (
-                <ul>
-                    {rackets.map((racket) => (
-                        <li key={racket.id}>
-                            <h3>{racket.brand} - {racket.name}</h3>
-                            <p>{racket.description}</p>
-                            <p>Precio de Alquiler: {racket.pricePerDay} € por sesión</p>
-                            <hr />
-                        </li>
-                    ))}
-                </ul>
-            )}
-        </div>
-    );
+  return (
+    <Routes>
+      <Route element={<Layout />}>
+        <Route index element={<HomePage />} />
+        <Route path="rackets" element={<RacketsPage />} />
+        <Route path="courts" element={<ComingSoonPage title="Reserva de pistas" />} />
+        <Route path="coaches" element={<ComingSoonPage title="Nuestros entrenadores" />} />
+        <Route path="bookings" element={<ComingSoonPage title="Mis reservas" />} />
+        <Route path="profile" element={<ComingSoonPage title="Mi perfil" />} />
+        <Route path="login" element={<ComingSoonPage title="Iniciar sesión" />} />
+        <Route path="*" element={<ComingSoonPage title="Página no encontrada" />} />
+      </Route>
+    </Routes>
+  );
 }
 
 export default App;
