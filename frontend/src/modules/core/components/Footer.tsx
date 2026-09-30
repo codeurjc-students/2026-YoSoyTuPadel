@@ -1,6 +1,11 @@
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../auth/hooks/useAuth';
 
 function Footer() {
+  const { user, isAuthenticated } = useAuth();
+  const role = user?.role.toUpperCase().replace(/^ROLE_/, '');
+  const canViewBookings = isAuthenticated && (role === 'USER' || role === 'COACH');
+
   return (
     <footer className="bg-brand-dark text-white">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.5fr_1fr_1fr] lg:px-8">
@@ -26,7 +31,7 @@ function Footer() {
         <div>
           <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Tu cuenta</h2>
           <div className="mt-4 flex flex-col items-start gap-3 text-sm text-slate-300">
-            <Link className="transition hover:text-white" to="/bookings">Mis reservas</Link>
+            {canViewBookings && <Link className="transition hover:text-white" to="/bookings">Mis reservas</Link>}
             <Link className="transition hover:text-white" to="/profile">Mi perfil</Link>
           </div>
         </div>
