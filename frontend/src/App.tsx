@@ -3,8 +3,8 @@ import Layout from './modules/core/components/Layout';
 import ComingSoonPage from './modules/core/pages/ComingSoonPage';
 import HomePage from './modules/core/pages/HomePage';
 import RacketsPage from './modules/rackets/pages/RacketsPage';
+import { AuthProvider } from './modules/auth/context/AuthProvider';
 import AuthPage from './modules/auth/pages/AuthPage';
-import { AuthProvider } from './modules/auth/context/AuthProvider.tsx';
 
 function App() {
   return (

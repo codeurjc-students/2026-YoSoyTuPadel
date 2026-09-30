@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
@@ -22,7 +22,7 @@ describe('Navbar logout confirmation', () => {
     authMocks.logout.mockResolvedValue(true);
   });
 
-  test('cancelling confirmation does not log out', () => {
+  test('cancelling confirmation does not log out', async () => {
     render(
       <MemoryRouter>
         <Navbar />
@@ -33,7 +33,7 @@ describe('Navbar logout confirmation', () => {
     expect(screen.getByRole('dialog')).toHaveTextContent('¿Estás seguro de que deseas cerrar sesión?');
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
 
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(authMocks.logout).not.toHaveBeenCalled();
   });
 

@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { createPortal } from 'react-dom';
-import { Link, NavLink } from 'react-router-dom';
+import { Button as MuiButton, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/hooks/useAuth';
+import type { AuthUser } from '../../auth/services/authService';
 
 const links = [
   { to: '/courts', label: 'Pistas' },
@@ -10,16 +11,25 @@ const links = [
   { to: '/bookings', label: 'Mis reservas' },
 ];
 
+function canAccessBookings(user: AuthUser | null, isAuthenticated: boolean) {
+  const role = user?.role.toUpperCase().replace(/^ROLE_/, '');
+  return isAuthenticated && (role === 'USER' || role === 'COACH');
+}
+
 function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [logoutConfirmationOpen, setLogoutConfirmationOpen] = useState(false);
-  const { isAuthenticated, isLoading, logout } = useAuth();
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const navigate = useNavigate();
+  const visibleLinks = canAccessBookings(user, isAuthenticated)
+    ? links
+    : links.filter((link) => link.to !== '/bookings');
 
   const confirmLogout = async () => {
-    const loggedOut = await logout();
-    if (loggedOut) {
-      setLogoutConfirmationOpen(false);
+    if (await logout()) {
+      setLogoutDialogOpen(false);
       setMenuOpen(false);
+      navigate('/', { replace: true });
     }
   };
 
@@ -43,7 +53,7 @@ function Navbar() {
         </Link>
 
         <nav aria-label="Navegación principal" className="hidden items-center gap-1 lg:flex">
-          {links.map((link) => (
+          {visibleLinks.map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
@@ -61,30 +71,43 @@ function Navbar() {
         <div className="hidden items-center gap-3 lg:flex">
           {isAuthenticated ? (
             <>
+              <Link
+                to="/profile"
+                aria-label="Ir a mi perfil"
+                className="grid h-11 w-11 place-items-center rounded-2xl bg-brand-ink text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-brand-red hover:shadow-red active:scale-95"
+              >
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="h-5 w-5">
+                  <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.8" />
+                  <path d="M5.5 20c.7-3.2 3-5 6.5-5s5.8 1.8 6.5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                </svg>
+              </Link>
               <button
                 type="button"
-                disabled
-                aria-label="Perfil próximamente"
-                className="rounded-xl border border-brand-line px-4 py-2.5 text-sm font-semibold text-brand-ink opacity-70"
+                aria-label="Cerrar sesión"
+                title="Cerrar sesión"
+                onClick={() => setLogoutDialogOpen(true)}
+                className="grid h-11 w-11 place-items-center rounded-2xl bg-brand-red text-white shadow-red transition duration-200 hover:-translate-y-0.5 hover:bg-red-700 active:scale-95"
               >
-                Perfil
-              </button>
-              <button
-                type="button"
-                disabled={isLoading}
-                onClick={() => setLogoutConfirmationOpen(true)}
-                className="rounded-xl bg-brand-ink px-4 py-2.5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-brand-red active:scale-95 disabled:cursor-wait disabled:opacity-70"
-              >
-                Cerrar sesión
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="h-5 w-5">
+                  <path d="M10 5H5v14h5M14 8l4 4-4 4m4-4H9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               </button>
             </>
           ) : (
-            <Link
-              to="/login"
-              className="rounded-xl bg-brand-red px-5 py-2.5 text-sm font-bold text-white shadow-red transition duration-200 hover:-translate-y-0.5 hover:bg-red-600 active:scale-95"
-            >
-              Iniciar sesión
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                to="/login?mode=register"
+                className="rounded-xl px-4 py-2.5 text-sm font-bold text-brand-dark transition-colors hover:bg-red-50 hover:text-brand-red"
+              >
+                Crear cuenta
+              </Link>
+              <Link
+                to="/login"
+                className="rounded-xl bg-brand-red px-4 py-2.5 text-sm font-bold text-white shadow-red transition hover:-translate-y-0.5 hover:bg-red-600 active:scale-95"
+              >
+                Iniciar sesión
+              </Link>
+            </div>
           )}
         </div>
 
@@ -113,7 +136,7 @@ function Navbar() {
           className="border-t border-brand-line bg-white px-4 py-3 shadow-soft lg:hidden"
         >
           <div className="mx-auto flex max-w-7xl flex-col gap-1">
-            {links.map((link) => (
+            {visibleLinks.map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}
@@ -129,81 +152,67 @@ function Navbar() {
             ))}
             {isAuthenticated ? (
               <>
-                <button
-                  type="button"
-                  disabled
-                  className="rounded-xl px-4 py-3 text-left text-sm font-semibold text-brand-muted opacity-70"
+                <Link
+                  to="/profile"
+                  onClick={() => setMenuOpen(false)}
+                  className="rounded-xl px-4 py-3 text-sm font-semibold text-brand-muted transition-colors hover:bg-red-50 hover:text-brand-red"
                 >
-                  Perfil (próximamente)
-                </button>
+                  Mi perfil
+                </Link>
                 <button
                   type="button"
-                  disabled={isLoading}
-                  onClick={() => {
-                    setLogoutConfirmationOpen(true);
-                  }}
-                  className="rounded-xl px-4 py-3 text-left text-sm font-semibold text-brand-muted transition-colors hover:bg-red-50 hover:text-brand-red disabled:opacity-70"
+                  onClick={() => setLogoutDialogOpen(true)}
+                  className="rounded-xl px-4 py-3 text-left text-sm font-bold text-brand-red transition-colors hover:bg-red-50"
                 >
                   Cerrar sesión
                 </button>
               </>
             ) : (
-              <Link
-                to="/login"
-                onClick={() => setMenuOpen(false)}
-                className="mt-1 rounded-xl bg-brand-red px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-red-600"
-              >
-                Iniciar sesión
-              </Link>
+              <>
+                <Link
+                  to="/login"
+                  onClick={() => setMenuOpen(false)}
+                  className="rounded-xl px-4 py-3 text-sm font-bold text-brand-red transition-colors hover:bg-red-50"
+                >
+                  Iniciar sesión
+                </Link>
+                <Link
+                  to="/login?mode=register"
+                  onClick={() => setMenuOpen(false)}
+                  className="rounded-xl px-4 py-3 text-sm font-semibold text-brand-muted transition-colors hover:bg-red-50 hover:text-brand-red"
+                >
+                  Crear cuenta
+                </Link>
+              </>
             )}
           </div>
         </nav>
       )}
-
-      </header>
-      {logoutConfirmationOpen && createPortal(
-      <div
-        className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/55 p-4 backdrop-blur-sm"
-        onMouseDown={(event) => {
-          if (event.target === event.currentTarget && !isLoading) {
-            setLogoutConfirmationOpen(false);
-          }
-        }}
+      <Dialog
+        open={logoutDialogOpen}
+        onClose={() => setLogoutDialogOpen(false)}
+        aria-labelledby="logout-dialog-title"
+        aria-describedby="logout-dialog-description"
+        slotProps={{ paper: { sx: { width: '100%', maxWidth: 420, m: 2, borderRadius: 3 } } }}
       >
-        <section
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="logout-confirmation-title"
-          className="my-auto max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-brand-line bg-white p-6 shadow-2xl sm:p-8"
-        >
-          <h2 id="logout-confirmation-title" className="text-xl font-black text-brand-ink">
+        <DialogTitle id="logout-dialog-title" sx={{ fontWeight: 800 }}>
+          ¿Cerrar sesión?
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="logout-dialog-description">
             ¿Estás seguro de que deseas cerrar sesión?
-          </h2>
-          <p className="mt-2 text-sm leading-6 text-brand-muted">
-            Tendrás que iniciar sesión de nuevo para acceder a tu cuenta.
-          </p>
-          <div className="mt-6 flex flex-wrap justify-end gap-3">
-            <button
-              type="button"
-              disabled={isLoading}
-              onClick={() => setLogoutConfirmationOpen(false)}
-              className="rounded-xl border border-brand-line px-4 py-2.5 text-sm font-bold text-brand-ink transition hover:bg-slate-50 disabled:opacity-60"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              disabled={isLoading}
-              onClick={() => void confirmLogout()}
-              className="rounded-xl bg-brand-red px-4 py-2.5 text-sm font-bold text-white shadow-red transition hover:bg-red-600 disabled:cursor-wait disabled:opacity-60"
-            >
-              {isLoading ? 'Cerrando sesión…' : 'Sí, cerrar sesión'}
-            </button>
-          </div>
-        </section>
-      </div>,
-      document.body,
-      )}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+          <MuiButton onClick={() => setLogoutDialogOpen(false)} disabled={isLoading} color="inherit">
+            Cancelar
+          </MuiButton>
+          <MuiButton onClick={() => void confirmLogout()} disabled={isLoading} variant="contained" color="error">
+            {isLoading ? 'Cerrando…' : 'Sí, cerrar sesión'}
+          </MuiButton>
+        </DialogActions>
+      </Dialog>
+    </header>
     </>
   );
 }

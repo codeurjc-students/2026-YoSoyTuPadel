@@ -1,14 +1,14 @@
 import axios from 'axios';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { AuthContext, type AuthContextValue } from './authContext.ts';
+import { AuthContext, type AuthContextValue } from './authContext';
 import {
   authService,
   type AuthUser,
   type LoginCredentials,
   type RegistrationDetails,
-} from '../services/authService.ts';
-import { getWelcomeMessage } from '../utils/welcomeMessage.ts';
+} from '../services/authService';
+import { getWelcomeMessage } from '../utils/welcomeMessage';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(() => authService.readStoredUser());

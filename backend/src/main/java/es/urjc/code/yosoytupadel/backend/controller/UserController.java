@@ -2,6 +2,7 @@ package es.urjc.code.yosoytupadel.backend.controller;
 
 import es.urjc.code.yosoytupadel.backend.dto.*;
 import es.urjc.code.yosoytupadel.backend.security.jwt.TokenType;
+import es.urjc.code.yosoytupadel.backend.entities.BookingType;
 import es.urjc.code.yosoytupadel.backend.service.BookingService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -50,8 +51,12 @@ public class UserController {
     public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO) {
         UserDTO responseDTO = userService.createUser(userDTO);
 
-        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
-                .path("/{id}")
+        String collectionPath = ServletUriComponentsBuilder.fromCurrentRequestUri()
+                .build()
+                .getPath()
+                .replaceFirst("/new$", "");
+        URI location = ServletUriComponentsBuilder.fromCurrentRequestUri()
+                .replacePath(collectionPath + "/{id}")
                 .buildAndExpand(responseDTO.id())
                 .toUri();
 
@@ -176,25 +181,19 @@ public class UserController {
 
     @PreAuthorize("hasRole('ADMIN') or @userService.isMe(#id)")
     @GetMapping("/{id}/bookings")
-    public Collection<BookingDTO> getAllBookingsByUserId(@PathVariable Long id) {
+    public Collection<BookingDTO> getAllBookingsByUserId(
+            @PathVariable Long id,
+            @RequestParam(required = false) BookingType type
+    ) {
+        userService.getUserById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        if (type == BookingType.MATCH) {
+            return bookingService.getMatchBookingsByUserId(id);
+        }
+        if (type == BookingType.TRAINING) {
+            return bookingService.getTrainingBookingsByUserId(id);
+        }
         return bookingService.getAllBookingsByUserId(id);
-    }
-
-    @PreAuthorize("hasRole('ADMIN') or @userService.isMe(#id)")
-    @GetMapping("/{id}/bookings/matches")
-    public Collection<BookingDTO> getUserMatchBookings(@PathVariable Long id) {
-        userService.getUserById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-
-        return bookingService.getMatchBookingsByUserId(id);
-    }
-
-    @PreAuthorize("hasRole('ADMIN') or @userService.isMe(#id)")
-    @GetMapping("/{id}/bookings/trainings")
-    public Collection<BookingDTO> getUserTrainingBookings(@PathVariable Long id) {
-        userService.getUserById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-
-        return bookingService.getTrainingBookingsByUserId(id);
     }
 }

@@ -5,6 +5,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import type { Mock } from 'vitest';
 import App from '../../App';
 import api from '../../service/api';
+import { AuthContext, type AuthContextValue } from '../auth/context/authContext';
+import Navbar from './components/Navbar';
 
 vi.mock('../../service/api', () => ({
   default: {
@@ -17,13 +19,13 @@ describe('Core layout', () => {
     vi.clearAllMocks();
     (api.get as Mock).mockImplementation((url: string) => {
       if (url === '/api/v1/courts') {
-        return Promise.resolve({ data: Array.from({ length: 12 }, (_, id) => ({ id })) });
+        return Promise.resolve({ data: Array.from({ length: 20 }, (_, id) => ({ id })) });
       }
       if (url === '/api/v1/users/coachs') {
-        return Promise.resolve({ data: Array.from({ length: 8 }, (_, id) => ({ id })) });
+        return Promise.resolve({ data: Array.from({ length: 9 }, (_, id) => ({ id })) });
       }
       if (url === '/api/v1/rackets') {
-        return Promise.resolve({ data: [{ stock: 3 }, { stock: 0 }] });
+        return Promise.resolve({ data: [{ stock: 90 }] });
       }
       return Promise.resolve({ data: [] });
     });
@@ -39,6 +41,30 @@ describe('Core layout', () => {
     expect(screen.getByRole('navigation', { name: 'Navegación principal' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '¿Qué necesitas hoy?' })).toBeInTheDocument();
     expect(screen.getByRole('contentinfo')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Mis reservas' })).not.toBeInTheDocument();
+  });
+
+  test.each(['USER', 'COACH'])('shows bookings navigation to authenticated %s accounts', (role) => {
+    const authValue: AuthContextValue = {
+      user: { id: 1, name: 'Test', nickname: null, email: 'test@example.com', role },
+      isAuthenticated: true,
+      isLoading: false,
+      error: null,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      clearError: vi.fn(),
+    };
+
+    render(
+      <MemoryRouter>
+        <AuthContext.Provider value={authValue}>
+          <Navbar />
+        </AuthContext.Provider>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('link', { name: 'Mis reservas' })).toBeInTheDocument();
   });
 
   test('renders the authentication page at /login', () => {
@@ -59,13 +85,26 @@ describe('Core layout', () => {
       </MemoryRouter>,
     );
 
-    expect(await screen.findByLabelText('12 pistas')).toBeInTheDocument();
-    expect(screen.getByLabelText('8 entrenadores')).toBeInTheDocument();
-    expect(screen.getByLabelText('3 palas disponibles')).toBeInTheDocument();
+    expect(await screen.findByLabelText('20 pistas')).toBeInTheDocument();
+    expect(screen.getByLabelText('9 entrenadores')).toBeInTheDocument();
+    expect(screen.getByLabelText('90 palas disponibles')).toBeInTheDocument();
     expect(document.querySelector('img[src="/images/padel-court-overhead.jpg"]')).toBeInTheDocument();
     expect(document.querySelector('img[src="/images/coach-training.jpg"]')).toBeInTheDocument();
     expect(document.querySelector('img[src="/images/racket-collection.jpg"]')).toBeInTheDocument();
     expect(screen.getAllByRole('time')[0].textContent).toMatch(/^\d{1,2} de [a-záéíóú]+$/);
+  });
+
+  test('provides direct links from home to login and registration', async () => {
+    render(
+      <MemoryRouter>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/login');
+    fireEvent.click(screen.getByRole('link', { name: 'Crear cuenta' }));
+
+    expect(await screen.findByRole('heading', { name: 'Crea tu cuenta' })).toBeInTheDocument();
   });
 
   test('opens the mobile menu and navigates to the rackets page', async () => {

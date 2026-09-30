@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-import { isLoginForbidden } from '../modules/auth/constants/authErrors.ts';
+import { isLoginForbidden } from '../modules/auth/constants/authErrors';
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL || '/',

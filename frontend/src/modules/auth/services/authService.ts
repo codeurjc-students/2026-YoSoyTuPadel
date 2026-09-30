@@ -1,6 +1,6 @@
 import axios from 'axios';
 import api from '../../../service/api';
-import { isLoginForbidden } from '../constants/authErrors.ts';
+import { isLoginForbidden } from '../constants/authErrors';
 
 export interface AuthUser {
   id: number;
@@ -109,13 +109,11 @@ export const authService = {
     if (isLoginForbidden(error)) {
       return 'El correo o la contraseña son incorrectos.';
     }
-
     if (axios.isAxiosError<{ message?: string; error?: string }>(error)) {
       return error.response?.data?.message
         ?? error.response?.data?.error
         ?? 'No se pudo conectar con el servidor. Inténtalo de nuevo.';
     }
-
     return error instanceof Error ? error.message : 'Se ha producido un error inesperado.';
   },
 };

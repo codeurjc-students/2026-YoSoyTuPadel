@@ -134,6 +134,7 @@ class RacketControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(newRacket))) // <--- Conversión automática a JSON
                 .andExpect(status().isCreated())
+                .andExpect(header().string(HttpHeaders.LOCATION, org.hamcrest.Matchers.endsWith("/api/v1/rackets/1")))
                 .andExpect(jsonPath("$.id").value(1L));
     }
 
