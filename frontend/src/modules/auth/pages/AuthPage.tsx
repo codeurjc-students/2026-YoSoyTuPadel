@@ -18,98 +18,170 @@ import { useAuth } from '../hooks/useAuth';
 
 type AuthMode = 'login' | 'register';
 
-const PADEL_BALLS = [
-  { id: 0, startX: 0.12, startY: 0.2, vx: 95, vy: 70 },
-  { id: 1, startX: 0.72, startY: 0.3, vx: -80, vy: 105 },
-  { id: 2, startX: 0.36, startY: 0.78, vx: 115, vy: -75 },
-];
+const BALL_SIZE = 56;
+const BALL_VISUAL_SIZE = 44;
+const BOOST_DURATION = 2;
 
-function BouncingBall({
-  containerRef,
-  ball,
+interface BallPhysics {
+  velocityX: number;
+  velocityY: number;
+  speed: number;
+  currentSpeed: number;
+  boostStartSpeed: number;
+  boostElapsed: number;
+  directionChanges: number;
+  initialized: boolean;
+}
+
+function PadelBall({
+  index,
+  width,
+  height,
 }: {
-  containerRef: React.RefObject<HTMLElement | null>;
-  ball: (typeof PADEL_BALLS)[number];
+  index: number;
+  width: number;
+  height: number;
 }) {
-  const size = 64;
   const x = useMotionValue(0);
   const y = useMotionValue(0);
-  const physics = useRef({
-    x: 0,
-    y: 0,
-    vx: ball.vx,
-    vy: ball.vy,
+  const rotate = useMotionValue(0);
+  const physics = useRef<BallPhysics>({
+    velocityX: 0,
+    velocityY: 0,
+    speed: 90 + index * 22,
+    currentSpeed: 90 + index * 22,
+    boostStartSpeed: 90 + index * 22,
+    boostElapsed: BOOST_DURATION,
+    directionChanges: 0,
     initialized: false,
-    boostElapsed: 5,
   });
 
-  useAnimationFrame((_, delta) => {
-    const bounds = containerRef.current?.getBoundingClientRect();
-    if (!bounds || bounds.width <= size || bounds.height <= size) return;
-
+  useEffect(() => {
     const state = physics.current;
-    const maxX = bounds.width - size;
-    const maxY = bounds.height - size;
+    const maxX = Math.max(0, width - BALL_SIZE);
+    const maxY = Math.max(0, height - BALL_SIZE);
+
     if (!state.initialized) {
-      state.x = maxX * ball.startX;
-      state.y = maxY * ball.startY;
+      x.set(maxX * ((index + 1) / 4));
+      y.set(maxY * ((index + 1) / 4));
+      const angle = Math.random() * Math.PI * 2;
+      state.velocityX = Math.cos(angle) * state.speed;
+      state.velocityY = Math.sin(angle) * state.speed;
+      state.currentSpeed = state.speed;
       state.initialized = true;
-      x.set(state.x);
-      y.set(state.y);
       return;
     }
 
-    const seconds = Math.min(delta, 40) / 1000;
-    state.boostElapsed += seconds;
-    const speedMultiplier = 1 + 1.8 * Math.exp(-state.boostElapsed / 0.9);
-    state.x += state.vx * speedMultiplier * seconds;
-    state.y += state.vy * speedMultiplier * seconds;
+    x.set(Math.min(x.get(), maxX));
+    y.set(Math.min(y.get(), maxY));
+  }, [height, index, width, x, y]);
 
-    if (state.x <= 0 || state.x >= maxX) {
-      state.x = Math.max(0, Math.min(state.x, maxX));
-      state.vx *= -1;
+  useAnimationFrame((_, delta) => {
+    if (!physics.current.initialized || width <= 0 || height <= 0) {
+      return;
     }
-    if (state.y <= 0 || state.y >= maxY) {
-      state.y = Math.max(0, Math.min(state.y, maxY));
-      state.vy *= -1;
+
+    const state = physics.current;
+    const maxX = Math.max(0, width - BALL_SIZE);
+    const maxY = Math.max(0, height - BALL_SIZE);
+    const elapsed = Math.min(delta, 32) / 1000;
+    let nextX = x.get() + state.velocityX * elapsed;
+    let nextY = y.get() + state.velocityY * elapsed;
+
+    if (nextX < 0 || nextX > maxX) {
+      nextX = Math.max(0, Math.min(nextX, maxX));
+      state.velocityX *= -1;
+      state.velocityY += (Math.random() - 0.5) * state.speed * 0.08;
     }
-    x.set(state.x);
-    y.set(state.y);
+    if (nextY < 0 || nextY > maxY) {
+      nextY = Math.max(0, Math.min(nextY, maxY));
+      state.velocityY *= -1;
+      state.velocityX += (Math.random() - 0.5) * state.speed * 0.08;
+    }
+
+    state.boostElapsed = Math.min(BOOST_DURATION, state.boostElapsed + elapsed);
+    const boostProgress = state.boostElapsed / BOOST_DURATION;
+    state.currentSpeed = state.speed + (state.boostStartSpeed - state.speed) * boostProgress;
+    const velocityMagnitude = Math.hypot(state.velocityX, state.velocityY) || 1;
+    state.velocityX = (state.velocityX / velocityMagnitude) * state.currentSpeed;
+    state.velocityY = (state.velocityY / velocityMagnitude) * state.currentSpeed;
+
+    x.set(nextX);
+    y.set(nextY);
+    rotate.set(rotate.get() + state.currentSpeed * elapsed * 2);
   });
 
   const changeDirection = () => {
     const state = physics.current;
-    state.vx *= -1.65;
-    state.vy *= -1.65;
+    const currentAngle = Math.atan2(state.velocityY, state.velocityX);
+    const turnDirection = (index + state.directionChanges) % 2 === 0 ? 1 : -1;
+    const newAngle = currentAngle + turnDirection * (Math.PI * 0.75);
+    state.directionChanges += 1;
+    state.boostStartSpeed = state.speed * 3;
+    state.currentSpeed = state.boostStartSpeed;
     state.boostElapsed = 0;
-  };
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      changeDirection();
-    }
+    state.velocityX = Math.cos(newAngle) * state.currentSpeed;
+    state.velocityY = Math.sin(newAngle) * state.currentSpeed;
   };
 
   return (
-    <motion.div
-      role="button"
-      tabIndex={0}
-      aria-label={`Pelota de pádel ${ball.id + 1}: cambiar dirección`}
-      onClick={changeDirection}
-      onKeyDown={handleKeyDown}
-      style={{ x, y, width: size, height: size }}
-      className="absolute left-0 top-0 z-0 cursor-pointer rounded-full outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+    <motion.button
+      type="button"
+      aria-label={`Cambiar dirección de la pelota ${index + 1}`}
+      onPointerDown={changeDirection}
+      onClick={(event) => {
+        if (event.detail === 0) {
+          changeDirection();
+        }
+      }}
+      className="pointer-events-auto absolute left-0 top-0 grid h-14 w-14 cursor-pointer place-items-center rounded-full border-0 bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-200"
+      style={{ x, y, rotate }}
     >
       <span
-        aria-hidden="true"
-        className="absolute inset-0 rounded-full border border-lime-200/80 shadow-[inset_-7px_-8px_12px_rgba(35,55,6,.42),inset_5px_5px_10px_rgba(255,255,200,.32),0_8px_20px_rgba(0,0,0,.3)]"
-        style={{
-          background: 'radial-gradient(circle at 32% 27%, #e3f78a 0%, #b4d83d 42%, #719b17 100%)',
-        }}
-      />
-      <span aria-hidden="true" className="absolute -left-1 top-[27px] h-3 w-[74px] rotate-[-42deg] rounded-full border-y border-white/80 opacity-80" />
-    </motion.div>
+        className="relative block rounded-full border border-lime-200/70 bg-[radial-gradient(circle_at_30%_28%,#efffa8,#b8e650_58%,#70982c)] shadow-[0_0_28px_rgba(190,242,100,0.48)]"
+        style={{ width: BALL_VISUAL_SIZE, height: BALL_VISUAL_SIZE }}
+      >
+        <span className="absolute left-[13px] top-0 h-full w-3 rotate-45 rounded-full border-r border-white/70" />
+        <span className="absolute left-0 top-3 h-3 w-full rotate-[-35deg] rounded-full border-t border-white/70" />
+      </span>
+    </motion.button>
+  );
+}
+
+function PadelBallField() {
+  const fieldRef = useRef<HTMLDivElement>(null);
+  const [bounds, setBounds] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    const field = fieldRef.current;
+    if (!field) {
+      return;
+    }
+
+    const measure = () => {
+      const { width, height } = field.getBoundingClientRect();
+      setBounds({ width, height });
+    };
+
+    measure();
+    if (typeof ResizeObserver === 'undefined') {
+      return;
+    }
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(field);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={fieldRef}
+      className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
+    >
+      {[0, 1, 2].map((index) => (
+        <PadelBall key={index} index={index} width={bounds.width} height={bounds.height} />
+      ))}
+    </div>
   );
 }
 

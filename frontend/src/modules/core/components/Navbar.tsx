@@ -34,7 +34,8 @@ function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-brand-line/80 bg-white/95 shadow-sm backdrop-blur">
+    <>
+      <header className="sticky top-0 z-40 border-b border-brand-line/80 bg-white/95 shadow-sm backdrop-blur">
       <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link
           to="/"
