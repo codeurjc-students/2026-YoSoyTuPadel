@@ -10,7 +10,6 @@ const activities = [
     description: 'Encuentra un horario disponible y céntrate en el juego.',
     to: '/courts',
     action: 'Ver pistas',
-    symbol: '01',
     image: '/images/padel-court-overhead.jpg',
     visual: 'from-slate-700 via-slate-900 to-black',
   },
@@ -20,7 +19,6 @@ const activities = [
     description: 'Descubre entrenadores certificados para todos los niveles.',
     to: '/coaches',
     action: 'Ver entrenadores',
-    symbol: '02',
     image: '/images/coach-training.jpg',
     visual: 'from-red-950 via-brand-dark to-black',
   },
@@ -30,7 +28,6 @@ const activities = [
     description: 'Explora el catálogo y encuentra tu próxima compañera de pista.',
     to: '/rackets',
     action: 'Explorar palas',
-    symbol: '03',
     image: '/images/racket-collection.jpg',
     visual: 'from-zinc-700 via-brand-dark to-black',
   },
@@ -186,7 +183,6 @@ function HomePage() {
               <span aria-hidden="true" className="absolute -right-9 -top-10 -z-10 h-44 w-44 rounded-full border-[30px] border-brand-red/15 transition-transform duration-500 group-hover:scale-110" />
               <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-300">{activity.eyebrow}</span>
               <div>
-                <span className="mb-3 block text-xs font-black tracking-[0.2em] text-brand-red">{activity.symbol}</span>
                 <h3 className="text-2xl font-black">{activity.title}</h3>
                 <p className="mt-2 max-w-xs text-sm leading-6 text-slate-300">{activity.description}</p>
                 <Link

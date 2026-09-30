@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { isLoginForbidden } from '../modules/auth/constants/authErrors.ts';
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL || '/',
@@ -25,7 +26,9 @@ api.interceptors.response.use(
         }
 
         if (axios.isAxiosError<{ message?: string; error?: string }>(error)) {
-            const message = error.response?.data?.message
+            const message = isLoginForbidden(error)
+                ? 'El correo o la contraseña son incorrectos.'
+                : error.response?.data?.message
                 ?? error.response?.data?.error
                 ?? (error.response
                     ? `No se pudo completar la petición (${error.response.status}).`

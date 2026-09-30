@@ -41,6 +41,17 @@ describe('Core layout', () => {
     expect(screen.getByRole('contentinfo')).toBeInTheDocument();
   });
 
+  test('renders the authentication page at /login', () => {
+    render(
+      <MemoryRouter initialEntries={['/login']}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Inicia sesión' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Iniciar sesión' })).toBeInTheDocument();
+  });
+
   test('shows the current Spanish date and counts from the API', async () => {
     render(
       <MemoryRouter>
