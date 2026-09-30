@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, NavLink } from 'react-router-dom';
+import { useAuth } from '../../auth/hooks/useAuth';
 
 const links = [
   { to: '/courts', label: 'Pistas' },
@@ -10,9 +12,20 @@ const links = [
 
 function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [logoutConfirmationOpen, setLogoutConfirmationOpen] = useState(false);
+  const { isAuthenticated, isLoading, logout } = useAuth();
+
+  const confirmLogout = async () => {
+    const loggedOut = await logout();
+    if (loggedOut) {
+      setLogoutConfirmationOpen(false);
+      setMenuOpen(false);
+    }
+  };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-brand-line/80 bg-white/95 shadow-sm backdrop-blur">
+    <>
+      <header className="sticky top-0 z-40 border-b border-brand-line/80 bg-white/95 shadow-sm backdrop-blur">
       <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link
           to="/"
@@ -46,16 +59,33 @@ function Navbar() {
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
-          <Link
-            to="/profile"
-            aria-label="Ir a mi perfil"
-            className="grid h-11 w-11 place-items-center rounded-2xl bg-brand-ink text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-brand-red hover:shadow-red active:scale-95"
-          >
-            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="h-5 w-5">
-              <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.8" />
-              <path d="M5.5 20c.7-3.2 3-5 6.5-5s5.8 1.8 6.5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-            </svg>
-          </Link>
+          {isAuthenticated ? (
+            <>
+              <button
+                type="button"
+                disabled
+                aria-label="Perfil próximamente"
+                className="rounded-xl border border-brand-line px-4 py-2.5 text-sm font-semibold text-brand-ink opacity-70"
+              >
+                Perfil
+              </button>
+              <button
+                type="button"
+                disabled={isLoading}
+                onClick={() => setLogoutConfirmationOpen(true)}
+                className="rounded-xl bg-brand-ink px-4 py-2.5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-brand-red active:scale-95 disabled:cursor-wait disabled:opacity-70"
+              >
+                Cerrar sesión
+              </button>
+            </>
+          ) : (
+            <Link
+              to="/login"
+              className="rounded-xl bg-brand-red px-5 py-2.5 text-sm font-bold text-white shadow-red transition duration-200 hover:-translate-y-0.5 hover:bg-red-600 active:scale-95"
+            >
+              Iniciar sesión
+            </Link>
+          )}
         </div>
 
         <button
@@ -97,17 +127,84 @@ function Navbar() {
                 {link.label}
               </NavLink>
             ))}
-            <Link
-              to="/profile"
-              onClick={() => setMenuOpen(false)}
-              className="rounded-xl px-4 py-3 text-sm font-semibold text-brand-muted transition-colors hover:bg-red-50 hover:text-brand-red"
-            >
-              Mi perfil
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <button
+                  type="button"
+                  disabled
+                  className="rounded-xl px-4 py-3 text-left text-sm font-semibold text-brand-muted opacity-70"
+                >
+                  Perfil (próximamente)
+                </button>
+                <button
+                  type="button"
+                  disabled={isLoading}
+                  onClick={() => {
+                    setLogoutConfirmationOpen(true);
+                  }}
+                  className="rounded-xl px-4 py-3 text-left text-sm font-semibold text-brand-muted transition-colors hover:bg-red-50 hover:text-brand-red disabled:opacity-70"
+                >
+                  Cerrar sesión
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/login"
+                onClick={() => setMenuOpen(false)}
+                className="mt-1 rounded-xl bg-brand-red px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-red-600"
+              >
+                Iniciar sesión
+              </Link>
+            )}
           </div>
         </nav>
       )}
-    </header>
+
+      </header>
+      {logoutConfirmationOpen && createPortal(
+      <div
+        className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/55 p-4 backdrop-blur-sm"
+        onMouseDown={(event) => {
+          if (event.target === event.currentTarget && !isLoading) {
+            setLogoutConfirmationOpen(false);
+          }
+        }}
+      >
+        <section
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="logout-confirmation-title"
+          className="my-auto max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-brand-line bg-white p-6 shadow-2xl sm:p-8"
+        >
+          <h2 id="logout-confirmation-title" className="text-xl font-black text-brand-ink">
+            ¿Estás seguro de que deseas cerrar sesión?
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-brand-muted">
+            Tendrás que iniciar sesión de nuevo para acceder a tu cuenta.
+          </p>
+          <div className="mt-6 flex flex-wrap justify-end gap-3">
+            <button
+              type="button"
+              disabled={isLoading}
+              onClick={() => setLogoutConfirmationOpen(false)}
+              className="rounded-xl border border-brand-line px-4 py-2.5 text-sm font-bold text-brand-ink transition hover:bg-slate-50 disabled:opacity-60"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              disabled={isLoading}
+              onClick={() => void confirmLogout()}
+              className="rounded-xl bg-brand-red px-4 py-2.5 text-sm font-bold text-white shadow-red transition hover:bg-red-600 disabled:cursor-wait disabled:opacity-60"
+            >
+              {isLoading ? 'Cerrando sesión…' : 'Sí, cerrar sesión'}
+            </button>
+          </div>
+        </section>
+      </div>,
+      document.body,
+      )}
+    </>
   );
 }
 
