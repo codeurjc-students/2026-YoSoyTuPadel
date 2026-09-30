@@ -38,13 +38,13 @@ describe('AuthPage', () => {
   test('switches between login and registration forms', () => {
     renderAuthPage();
 
-    expect(screen.getByLabelText('Email')).toBeInTheDocument();
-    expect(screen.queryByLabelText('Nombre completo')).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/^Email/)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Nombre completo/)).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Registrarse' }));
 
-    expect(screen.getByLabelText('Nombre completo')).toBeInTheDocument();
-    expect(screen.getByLabelText('Nombre de usuario')).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Nombre completo/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Nombre de usuario/)).toBeInTheDocument();
     expect(screen.getByRole('checkbox')).toBeInTheDocument();
   });
 
@@ -58,8 +58,8 @@ describe('AuthPage', () => {
     });
     renderAuthPage();
 
-    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'ana@example.com' } });
-    fireEvent.change(screen.getByLabelText('Contraseña'), { target: { value: 'secure-password' } });
+    fireEvent.change(screen.getByLabelText(/^Email/), { target: { value: 'ana@example.com' } });
+    fireEvent.change(screen.getByLabelText(/^Contraseña/), { target: { value: 'secure-password' } });
     fireEvent.click(screen.getAllByRole('button', { name: 'Iniciar sesión' })[1]);
 
     await waitFor(() => {

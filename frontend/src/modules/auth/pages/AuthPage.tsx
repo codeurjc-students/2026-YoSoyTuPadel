@@ -12,7 +12,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
@@ -196,7 +196,6 @@ function AuthPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const animationAreaRef = useRef<HTMLElement | null>(null);
   const { login, register, isLoading, error, clearError } = useAuth();
   const navigate = useNavigate();
   const isRegistering = mode === 'register';
@@ -227,7 +226,6 @@ function AuthPage() {
   return (
     <Box
       component="section"
-      ref={animationAreaRef}
       sx={{
         position: 'relative',
         overflow: 'hidden',
@@ -239,9 +237,7 @@ function AuthPage() {
         px: { xs: 2, sm: 3 },
       }}
     >
-      {PADEL_BALLS.map((ball) => (
-        <BouncingBall key={ball.id} ball={ball} containerRef={animationAreaRef} />
-      ))}
+      <PadelBallField />
       <Grid
         container
         component="div"
@@ -380,6 +376,7 @@ function AuthPage() {
                     {isRegistering && (
                       <>
                         <TextField
+                          id="auth-name"
                           label="Nombre completo"
                           name="name"
                           autoComplete="name"
@@ -390,6 +387,7 @@ function AuthPage() {
                           onChange={(event) => setName(event.target.value)}
                         />
                         <TextField
+                          id="auth-nickname"
                           label="Nombre de usuario"
                           name="nickname"
                           autoComplete="nickname"
@@ -402,6 +400,7 @@ function AuthPage() {
                       </>
                     )}
                     <TextField
+                      id="auth-email"
                       label="Email"
                       name="email"
                       type="email"
@@ -413,6 +412,7 @@ function AuthPage() {
                       onChange={(event) => setEmail(event.target.value)}
                     />
                     <TextField
+                      id="auth-password"
                       label="Contraseña"
                       name="password"
                       type={showPassword ? 'text' : 'password'}

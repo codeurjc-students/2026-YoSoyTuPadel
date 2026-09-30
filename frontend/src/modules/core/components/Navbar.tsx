@@ -213,6 +213,7 @@ function Navbar() {
         </DialogActions>
       </Dialog>
     </header>
+    </>
   );
 }
 
