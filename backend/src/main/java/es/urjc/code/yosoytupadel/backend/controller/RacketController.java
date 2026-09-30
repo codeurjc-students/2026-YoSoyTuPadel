@@ -13,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException;
 import java.net.URI;
@@ -20,8 +21,6 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
 
-
-import static org.springframework.web.servlet.support.ServletUriComponentsBuilder.fromCurrentRequest;
 
 @RestController
 @RequestMapping("/api/v1/rackets")
@@ -47,7 +46,10 @@ public class RacketController {
     public ResponseEntity<RacketDTO> createRacket(@RequestBody RacketDTO racketDTO) throws SQLException, IOException {
         RacketDTO responseDTO = racketService.createRacket(racketDTO);
 
-        URI location = fromCurrentRequest().path("/{id}").buildAndExpand(responseDTO.id()).toUri();
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(responseDTO.id())
+                .toUri();
         return ResponseEntity.created(location).body(responseDTO);
     }
 

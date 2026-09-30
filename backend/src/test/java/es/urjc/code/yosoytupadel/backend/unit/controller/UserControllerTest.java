@@ -3,16 +3,20 @@ package es.urjc.code.yosoytupadel.backend.unit.controller;
 import es.urjc.code.yosoytupadel.backend.controller.UserController;
 import es.urjc.code.yosoytupadel.backend.dto.CoachDTO;
 import es.urjc.code.yosoytupadel.backend.dto.UserDTO;
+import es.urjc.code.yosoytupadel.backend.dto.BookingDTO;
+import es.urjc.code.yosoytupadel.backend.entities.BookingType;
 import es.urjc.code.yosoytupadel.backend.service.BookingService;
 import es.urjc.code.yosoytupadel.backend.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.http.MediaType;
+import org.springframework.http.HttpHeaders;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -22,6 +26,7 @@ import java.util.Optional;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -40,6 +45,8 @@ class UserControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @MockitoBean
     private UserService userService;
@@ -92,5 +99,33 @@ class UserControllerTest {
                 .andExpect(status().isNotFound());
 
         verify(userService, times(1)).getUserById(99L);
+    }
+
+    @Test
+    void createUser_ShouldReturnLocationHeader() throws Exception {
+        UserDTO newUser = new UserDTO(null, "Test User", "test-user", "test@example.com",
+                "password", null, null, null, 0);
+        UserDTO savedUser = new UserDTO(5L, "Test User", "test-user", "test@example.com",
+                null, null, null, null, 0);
+        when(userService.createUser(any(UserDTO.class))).thenReturn(savedUser);
+
+        mockMvc.perform(post("/api/v1/users/new")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(newUser)))
+                .andExpect(status().isCreated())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header()
+                        .string(HttpHeaders.LOCATION, org.hamcrest.Matchers.endsWith("/api/v1/users/5")));
+    }
+
+    @Test
+    void getUserBookings_ShouldAcceptTypeAsQueryParameter() throws Exception {
+        when(userService.getUserById(1L)).thenReturn(Optional.of(userDTO));
+        when(bookingService.getMatchBookingsByUserId(1L)).thenReturn(java.util.List.<BookingDTO>of());
+
+        mockMvc.perform(get("/api/v1/users/1/bookings").param("type", BookingType.MATCH.name()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+
+        verify(bookingService).getMatchBookingsByUserId(1L);
     }
 }

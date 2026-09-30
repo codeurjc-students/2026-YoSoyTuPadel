@@ -108,7 +108,7 @@ public class WebSecurityConfig {
                 .requestMatchers(HttpMethod.PATCH, "/api/v1/users/*/skill-level").hasAnyRole("COACH", "ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/me").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/v1/users").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.GET, "/api/v1/users/*/bookings/matches", "/api/v1/users/*/bookings/trainings").hasAnyRole("USER", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/v1/users/*/bookings").hasAnyRole("USER", "ADMIN")
                 .requestMatchers("/api/v1/users/**").hasAnyRole("USER", "ADMIN")
 
                 .anyRequest().authenticated()

@@ -9,12 +9,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.Collection;
-
-import static org.springframework.web.servlet.support.ServletUriComponentsBuilder.fromCurrentRequest;
-
 
 @RestController
 @RequestMapping("/api/v1/courts")
@@ -40,7 +38,10 @@ public class CourtController {
     public ResponseEntity<CourtDTO> createCourt(@RequestBody CourtDTO courtDTO) {
         CourtDTO responseDTO = courtService.createCourt(courtDTO);
 
-        URI location = fromCurrentRequest().path("/{id}").buildAndExpand(responseDTO.id()).toUri();
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(responseDTO.id())
+                .toUri();
         return ResponseEntity.created(location).body(responseDTO);
     }
 

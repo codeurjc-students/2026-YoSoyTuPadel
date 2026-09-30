@@ -8,15 +8,18 @@ import es.urjc.code.yosoytupadel.backend.entities.SurfaceType;
 import es.urjc.code.yosoytupadel.backend.service.CourtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.http.MediaType;
+import org.springframework.http.HttpHeaders;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.hamcrest.Matchers.hasSize;
@@ -37,6 +40,8 @@ class CourtControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @MockitoBean
     private CourtService courtService;
@@ -86,5 +91,18 @@ class CourtControllerTest {
                 .andExpect(jsonPath("$", hasSize(0)));
 
         verify(courtService, times(1)).getAllCourts();
+    }
+
+    @Test
+    void createCourt_ShouldReturnLocationHeader() throws Exception {
+        CourtDTO newCourt = new CourtDTO(null, "Alameda de Osuna", 8.0, CourtType.INDOOR, SurfaceType.GLASS, true);
+        when(courtService.createCourt(any(CourtDTO.class))).thenReturn(dto1);
+
+        mockMvc.perform(post("/api/v1/courts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(newCourt)))
+                .andExpect(status().isCreated())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header()
+                        .string(HttpHeaders.LOCATION, org.hamcrest.Matchers.endsWith("/api/v1/courts/1")));
     }
 }
