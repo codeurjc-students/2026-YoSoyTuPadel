@@ -1,17 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../../../service/api';
+import { Button, CircularProgress } from '@mui/material';
+import { useAuth } from '../../auth/hooks/useAuth';
+import { racketService, type RacketListDTO } from '../services/racketService';
 
-interface Racket {
-  id: number;
-  brand: string;
-  name: string;
-  stock: number | null;
-}
-
-function fetchRackets(signal?: AbortSignal) {
-  return api.get<Racket[]>('/api/v1/rackets', { signal }).then((response) => response.data);
-}
+const PAGE_SIZE = 10;
 
 function RacketSkeleton() {
   return (
@@ -27,7 +20,7 @@ function RacketSkeleton() {
   );
 }
 
-function RacketImage({ racket }: { racket: Racket }) {
+function RacketImage({ racket }: { racket: RacketListDTO }) {
   const [failed, setFailed] = useState(false);
 
   if (failed) {
@@ -54,14 +47,25 @@ function RacketImage({ racket }: { racket: Racket }) {
 }
 
 function RacketsPage() {
-  const [rackets, setRackets] = useState<Racket[]>([]);
+  const { isAuthenticated } = useAuth();
+  const [rackets, setRackets] = useState<RacketListDTO[]>([]);
+  const [totalModels, setTotalModels] = useState(0);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [moreError, setMoreError] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
-    void fetchRackets(controller.signal)
-      .then(setRackets)
+    void racketService.getRackets(0, PAGE_SIZE, controller.signal)
+      .then((result) => {
+        setRackets(result.content);
+        setTotalModels(result.totalElements);
+        setPage(result.number);
+        setHasMore(!result.last && result.content.length === PAGE_SIZE);
+      })
       .catch(() => {
         if (!controller.signal.aborted) {
           setError('No se ha podido conectar con el servidor.');
@@ -74,6 +78,22 @@ function RacketsPage() {
       });
     return () => controller.abort();
   }, []);
+
+  const loadMore = async () => {
+    setLoadingMore(true);
+    setMoreError(null);
+    try {
+      const nextPage = page + 1;
+      const result = await racketService.getRackets(nextPage, PAGE_SIZE);
+      setRackets((current) => [...current, ...result.content]);
+      setPage(result.number);
+      setHasMore(!result.last && result.content.length === PAGE_SIZE);
+    } catch {
+      setMoreError('No se han podido cargar más palas.');
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
@@ -88,7 +108,7 @@ function RacketsPage() {
         </div>
         {!loading && !error && (
           <span className="w-fit rounded-full border border-white/10 bg-white/[0.08] px-4 py-2 text-sm font-semibold text-slate-200 shadow-sm backdrop-blur">
-            {rackets.length} {rackets.length === 1 ? 'modelo' : 'modelos'}
+            {totalModels} {totalModels === 1 ? 'modelo' : 'modelos'}
           </span>
         )}
       </div>
@@ -108,8 +128,13 @@ function RacketsPage() {
             onClick={() => {
               setLoading(true);
               setError(null);
-              void fetchRackets()
-                .then(setRackets)
+              void racketService.getRackets(0, PAGE_SIZE)
+                .then((result) => {
+                  setRackets(result.content);
+                  setTotalModels(result.totalElements);
+                  setPage(result.number);
+                  setHasMore(!result.last && result.content.length === PAGE_SIZE);
+                })
                 .catch(() => setError('No se ha podido conectar con el servidor.'))
                 .finally(() => setLoading(false));
             }}
@@ -143,19 +168,46 @@ function RacketsPage() {
                         : 'Agotada'}
                     </span>
                   </p>
-                  <button
-                    type="button"
-                    disabled
-                    title="La reserva de palas estará disponible próximamente"
-                    className="cursor-not-allowed rounded-xl bg-slate-100 px-4 py-2.5 text-xs font-bold text-brand-muted"
-                  >
-                    Próximamente
-                  </button>
+                  {isAuthenticated ? (
+                    <Link
+                      to={`/rackets/${racket.id}`}
+                      aria-label={`Ver detalles de ${racket.brand} ${racket.name}`}
+                      className="rounded-xl bg-brand-red px-4 py-2.5 text-xs font-bold text-white transition hover:bg-red-600"
+                    >
+                      Ver detalles
+                    </Link>
+                  ) : (
+                    <Link
+                      to="/login"
+                      className="rounded-xl bg-brand-red px-4 py-2.5 text-center text-xs font-bold text-white transition hover:bg-red-600"
+                    >
+                      Inicia sesión para reservar
+                    </Link>
+                  )}
                 </div>
               </div>
             </li>
           ))}
         </ul>
+      )}
+
+      {!loading && !error && rackets.length > 0 && hasMore && (
+        <div className="mt-8 flex flex-col items-center gap-3">
+          {moreError && <p role="alert" className="text-sm font-semibold text-red-300">{moreError}</p>}
+          <Button
+            variant="outlined"
+            onClick={() => void loadMore()}
+            disabled={loadingMore}
+            startIcon={loadingMore ? <CircularProgress size={18} color="inherit" /> : undefined}
+            sx={{
+              borderColor: 'rgba(255,255,255,0.35)',
+              color: 'white',
+              '&:hover': { borderColor: 'white', backgroundColor: 'rgba(255,255,255,0.08)' },
+            }}
+          >
+            Más resultados
+          </Button>
+        </div>
       )}
     </section>
   );

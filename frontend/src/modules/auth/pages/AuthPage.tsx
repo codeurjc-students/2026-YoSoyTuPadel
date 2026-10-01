@@ -455,11 +455,13 @@ function AuthPage() {
                           />
                         }
                         label={
-                          <Typography sx={{ fontSize: 12, lineHeight: 1.5, color: 'text.secondary' }}>
+                          <Typography
+                              component="span"
+                              sx={{ fontSize: 12, lineHeight: 1.5, color: 'text.secondary' }}>
                             Acepto los términos del servicio y la política de privacidad.
                           </Typography>
                         }
-                        sx={{ alignItems: 'flex-start', ml: 0 }}
+                        sx={{ alignItems: 'center', ml: 0 }}
                       />
                     )}
 

@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -36,6 +38,10 @@ public class RacketService {
 
     public Collection<PreRacketDTO> getAllRackets() {
         return mapper.toPreDTOs(racketRepository.findAll());
+    }
+
+    public Page<PreRacketDTO> getRackets(Pageable pageable) {
+        return racketRepository.findAll(pageable).map(mapper::toPreDTO);
     }
 
     public Optional<RacketDTO> getRacketById(long id) {

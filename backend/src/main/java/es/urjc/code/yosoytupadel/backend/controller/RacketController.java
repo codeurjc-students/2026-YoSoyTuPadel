@@ -5,6 +5,9 @@ import es.urjc.code.yosoytupadel.backend.dto.RacketDTO;
 import es.urjc.code.yosoytupadel.backend.service.RacketService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -19,7 +22,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.sql.SQLException;
 import java.util.Arrays;
-import java.util.Collection;
 
 
 @RestController
@@ -31,8 +33,8 @@ public class RacketController {
 
 
     @GetMapping("")
-    public Collection<PreRacketDTO> getAllRackets() {
-        return racketService.getAllRackets();
+    public Page<PreRacketDTO> getAllRackets(@PageableDefault(size = 10) Pageable pageable) {
+        return racketService.getRackets(pageable);
     }
 
     @GetMapping("/{id}")

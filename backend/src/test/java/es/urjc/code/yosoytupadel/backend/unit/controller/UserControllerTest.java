@@ -27,6 +27,8 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -127,5 +129,25 @@ class UserControllerTest {
                 .andExpect(jsonPath("$", hasSize(0)));
 
         verify(bookingService).getMatchBookingsByUserId(1L);
+    }
+
+    @Test
+    void rentRacket_ShouldUseUserAndRacketPathVariables() throws Exception {
+        when(userService.rentRacket(1L, 2L)).thenReturn(userDTO);
+
+        mockMvc.perform(patch("/api/v1/users/1/racket/2"))
+                .andExpect(status().isOk());
+
+        verify(userService).rentRacket(1L, 2L);
+    }
+
+    @Test
+    void returnRacket_ShouldDeleteRacketAssignment() throws Exception {
+        when(userService.returnRacket(1L)).thenReturn(userDTO);
+
+        mockMvc.perform(delete("/api/v1/users/1/racket"))
+                .andExpect(status().isOk());
+
+        verify(userService).returnRacket(1L);
     }
 }

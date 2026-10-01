@@ -26,14 +26,20 @@ api.interceptors.response.use(
         }
 
         if (axios.isAxiosError<{ message?: string; error?: string }>(error)) {
+            const fallbackMessage = error.response
+                ? `No se pudo completar la petición (${error.response.status}).`
+                : 'No se pudo conectar con el servidor.';
+            const backendMessage = error.response?.data?.message ?? error.response?.data?.error;
+            const isAlreadyRentedRacket = error.config?.method?.toLowerCase() === 'patch'
+                && /^\/api\/v1\/users\/\d+\/racket\/\d+$/.test(error.config.url ?? '')
+                && backendMessage?.toLowerCase().includes('already have a rented racket') === true;
             const message = isLoginForbidden(error)
                 ? 'El correo o la contraseña son incorrectos.'
-                : error.response?.data?.message
-                ?? error.response?.data?.error
-                ?? (error.response
-                    ? `No se pudo completar la petición (${error.response.status}).`
-                    : 'No se pudo conectar con el servidor.');
-            toast.error(message);
+                : backendMessage
+                ?? fallbackMessage;
+            if (!isAlreadyRentedRacket) {
+                toast.error(message);
+            }
         } else {
             toast.error('Se ha producido un error inesperado.');
         }

@@ -13,6 +13,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
@@ -74,6 +76,23 @@ class RacketServiceTest {
         assertThat(result).hasSize(2);
         assertThat(result).containsExactly(preRacketDTO1, preRacketDTO2);
         verify(racketRepository, times(1)).findAll();
+    }
+
+    @Test
+    void getRackets_ShouldReturnRequestedPageMappedToPreRacketDtos() {
+        var pageable = PageRequest.of(1, 10);
+        when(racketRepository.findAll(pageable))
+                .thenReturn(new PageImpl<>(List.of(racket2), pageable, 11));
+        when(mapper.toPreDTO(racket2)).thenReturn(preRacketDTO2);
+
+        var result = racketService.getRackets(pageable);
+
+        assertThat(result.getContent()).containsExactly(preRacketDTO2);
+        assertThat(result.getNumber()).isEqualTo(1);
+        assertThat(result.getSize()).isEqualTo(10);
+        assertThat(result.isLast()).isTrue();
+        verify(racketRepository).findAll(pageable);
+        verify(mapper).toPreDTO(racket2);
     }
 
     @Test
