@@ -8,6 +8,7 @@ export interface AuthUser {
   nickname: string | null;
   email: string;
   role: string;
+  racketId?: number | null;
 }
 
 export interface LoginCredentials {
@@ -44,7 +45,8 @@ function isAuthUser(value: unknown): value is AuthUser {
     && (typeof candidate.name === 'string' || candidate.name === null)
     && (typeof candidate.nickname === 'string' || candidate.nickname === null)
     && typeof candidate.email === 'string'
-    && typeof candidate.role === 'string';
+    && typeof candidate.role === 'string'
+    && (candidate.racketId === undefined || typeof candidate.racketId === 'number' || candidate.racketId === null);
 }
 
 export const authService = {

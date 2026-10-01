@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import api from '../../../service/api';
+import { racketService } from '../../rackets/services/racketService';
 
 const activities = [
   {
@@ -45,6 +46,21 @@ const statLabels: { key: keyof HomeStats; label: string }[] = [
   { key: 'rackets', label: 'Palas disponibles' },
 ];
 
+async function getTotalRacketStock(signal: AbortSignal): Promise<number> {
+  let page = 0;
+  let totalStock = 0;
+  let last = false;
+
+  while (!last) {
+    const result = await racketService.getRackets(page, 10, signal);
+    totalStock += result.content.reduce((total, racket) => total + (racket.stock ?? 0), 0);
+    last = result.last;
+    page += 1;
+  }
+
+  return totalStock;
+}
+
 function HomePage() {
   const [stats, setStats] = useState<HomeStats | null>(null);
   const today = new Date();
@@ -59,7 +75,7 @@ function HomePage() {
     const statsRequests = Promise.allSettled([
       api.get<{ id: number }[]>('/api/v1/courts', options),
       api.get<{ id: number }[]>('/api/v1/users/coachs', options),
-      api.get<{ stock: number | null }[]>('/api/v1/rackets', options),
+      getTotalRacketStock(controller.signal),
     ]);
 
     void statsRequests.then(([courts, coaches, rackets]) => {
@@ -70,9 +86,7 @@ function HomePage() {
       setStats({
         courts: courts.status === 'fulfilled' ? courts.value.data.length : null,
         coaches: coaches.status === 'fulfilled' ? coaches.value.data.length : null,
-        rackets: rackets.status === 'fulfilled'
-          ? rackets.value.data.reduce((total, racket) => total + (racket.stock ?? 0), 0)
-          : null,
+        rackets: rackets.status === 'fulfilled' ? rackets.value : null,
       });
     });
 

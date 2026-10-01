@@ -25,7 +25,16 @@ describe('Core layout', () => {
         return Promise.resolve({ data: Array.from({ length: 9 }, (_, id) => ({ id })) });
       }
       if (url === '/api/v1/rackets') {
-        return Promise.resolve({ data: [{ stock: 90 }] });
+        return Promise.resolve({
+          data: {
+            content: [{ id: 1, brand: 'Test', name: 'Racket', stock: 90 }],
+            number: 0,
+            size: 10,
+            totalElements: 1,
+            totalPages: 1,
+            last: true,
+          },
+        });
       }
       return Promise.resolve({ data: [] });
     });

@@ -12,6 +12,9 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import java.io.ByteArrayInputStream;
@@ -68,29 +71,49 @@ class RacketControllerTest {
     @Test
     void getAllRackets_ShouldReturnListOfRackets() throws Exception {
 
-        when(racketService.getAllRackets()).thenReturn(Arrays.asList(preDto1, preDto2));
+        when(racketService.getRackets(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(Arrays.asList(preDto1, preDto2), PageRequest.of(0, 10), 2));
 
         mockMvc.perform(get("/api/v1/rackets")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].brand").value("Babolat"))
-                .andExpect(jsonPath("$[1].brand").value("Wilson"));
+                .andExpect(jsonPath("$.content", hasSize(2)))
+                .andExpect(jsonPath("$.content[0].brand").value("Babolat"))
+                .andExpect(jsonPath("$.content[1].brand").value("Wilson"))
+                .andExpect(jsonPath("$.last").value(true));
 
-        verify(racketService, times(1)).getAllRackets();
+        verify(racketService).getRackets(PageRequest.of(0, 10));
     }
 
     @Test
     void getAllRackets_WhenServiceReturnsEmptyList_ShouldReturnEmptyList() throws Exception {
 
-        when(racketService.getAllRackets()).thenReturn(Collections.emptyList());
+        when(racketService.getRackets(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(Collections.emptyList(), PageRequest.of(0, 10), 0));
 
         mockMvc.perform(get("/api/v1/rackets")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(0)));
+                .andExpect(jsonPath("$.content", hasSize(0)))
+                .andExpect(jsonPath("$.last").value(true));
 
-        verify(racketService, times(1)).getAllRackets();
+        verify(racketService).getRackets(PageRequest.of(0, 10));
+    }
+
+    @Test
+    void getAllRackets_ShouldAcceptPageAndSizeQueryParameters() throws Exception {
+        when(racketService.getRackets(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(Collections.singletonList(preDto2), PageRequest.of(1, 2), 3));
+
+        mockMvc.perform(get("/api/v1/rackets").param("page", "1").param("size", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].brand").value("Wilson"))
+                .andExpect(jsonPath("$.number").value(1))
+                .andExpect(jsonPath("$.size").value(2))
+                .andExpect(jsonPath("$.last").value(true));
+
+        verify(racketService).getRackets(PageRequest.of(1, 2));
     }
 
     @Test

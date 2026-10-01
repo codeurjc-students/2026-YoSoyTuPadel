@@ -114,13 +114,13 @@ public class UserController {
     }
 
     @PreAuthorize("@userService.isMe(#id)")
-    @PatchMapping("/{id}/racket")
-    public UserDTO rentRacket(@PathVariable long id, @RequestParam long racketId) {
+    @PatchMapping("/{id}/racket/{racketId}")
+    public UserDTO rentRacket(@PathVariable long id, @PathVariable long racketId) {
         return userService.rentRacket(id, racketId);
     }
 
     @PreAuthorize("@userService.isMe(#id)")
-    @PatchMapping("/{id}/racket-returned")
+    @DeleteMapping("/{id}/racket")
     public UserDTO returnRacket(@PathVariable long id) {
         return userService.returnRacket(id);
     }
