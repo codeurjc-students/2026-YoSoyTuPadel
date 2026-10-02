@@ -143,6 +143,7 @@ describe('CourtDetailPage', () => {
     }));
     renderCourtDetail();
 
+    await selectTomorrow();
     expect(await screen.findByRole('button', { name: '11:00, reservada' })).toBeDisabled();
   });
 
