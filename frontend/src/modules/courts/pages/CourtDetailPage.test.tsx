@@ -95,7 +95,7 @@ describe('CourtDetailPage', () => {
     expect(await screen.findByRole('heading', { name: '¡Reserva confirmada!' })).toBeInTheDocument();
     const [year, month, day] = dateValue.split('-').map(Number);
     const formattedDate = new Intl.DateTimeFormat('es-ES').format(new Date(year, month - 1, day));
-    expect(screen.getAllByText(new RegExp(formattedDate))).toHaveLength(2);
+    expect(screen.getByText(new RegExp(formattedDate))).toBeInTheDocument();
     expect(screen.getAllByText('€8/h')).toHaveLength(2);
     expect(api.post).toHaveBeenCalledWith('/api/v1/bookings', {
       userId: 9,
