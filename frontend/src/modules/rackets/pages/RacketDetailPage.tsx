@@ -227,15 +227,17 @@ function RacketDetailPage() {
                 <Button
                   component={Link}
                   to="/rackets"
-                  variant="outlined"
+                  variant="contained"
                   color="error"
                   fullWidth
                   sx={{
                     py: 1.4,
                     borderRadius: 3,
+                    color: 'white',
+                    bgcolor: '#e60012',
                     fontWeight: 900,
                     letterSpacing: 0.6,
-                    '&:hover': { bgcolor: 'rgba(230,0,18,.12)', borderColor: 'error.main' },
+                    '&:hover': { color: 'white', bgcolor: '#c90010' },
                   }}
                 >
                   Mirar otras palas

@@ -33,11 +33,14 @@ api.interceptors.response.use(
             const isAlreadyRentedRacket = error.config?.method?.toLowerCase() === 'patch'
                 && /^\/api\/v1\/users\/\d+\/racket\/\d+$/.test(error.config.url ?? '')
                 && backendMessage?.toLowerCase().includes('already have a rented racket') === true;
+            const isCourtBookingHandledByPage = (error.config?.url ?? '').startsWith('/api/v1/bookings/courts/')
+                || (error.config?.method?.toLowerCase() === 'post'
+                    && (error.config?.url ?? '') === '/api/v1/bookings');
             const message = isLoginForbidden(error)
                 ? 'El correo o la contraseña son incorrectos.'
                 : backendMessage
                 ?? fallbackMessage;
-            if (!isAlreadyRentedRacket) {
+            if (!isAlreadyRentedRacket && !isCourtBookingHandledByPage) {
                 toast.error(message);
             }
         } else {

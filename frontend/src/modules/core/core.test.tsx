@@ -19,7 +19,7 @@ describe('Core layout', () => {
     vi.clearAllMocks();
     (api.get as Mock).mockImplementation((url: string) => {
       if (url === '/api/v1/courts') {
-        return Promise.resolve({ data: Array.from({ length: 20 }, (_, id) => ({ id })) });
+        return Promise.resolve({ data: { content: [], totalElements: 20 } });
       }
       if (url === '/api/v1/users/coachs') {
         return Promise.resolve({ data: Array.from({ length: 9 }, (_, id) => ({ id })) });

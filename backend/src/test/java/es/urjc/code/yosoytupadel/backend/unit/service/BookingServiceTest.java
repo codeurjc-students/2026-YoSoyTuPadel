@@ -84,6 +84,19 @@ class BookingServiceTest {
     }
 
     @Test
+    void getReservedCourtSlots_ShouldReturnHourlySlotsThatOverlapActiveBookings() {
+        booking1.setStartTime(LocalTime.of(10, 30));
+        booking1.setEndTime(LocalTime.of(11, 30));
+        when(bookingRepository.findActiveCourtBookings(1L, LocalDate.now().plusDays(1)))
+                .thenReturn(List.of(booking1));
+
+        List<LocalTime> result = bookingService.getReservedCourtSlots(1L, LocalDate.now().plusDays(1));
+
+        assertThat(result).containsExactly(LocalTime.of(10, 0), LocalTime.of(11, 0));
+        verify(bookingRepository).findActiveCourtBookings(1L, LocalDate.now().plusDays(1));
+    }
+
+    @Test
     void createBooking_WhenValid_ShouldSaveAndReturnDTO() {
         User student = new User();
         student.setId(2L);

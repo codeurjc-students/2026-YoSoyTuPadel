@@ -12,6 +12,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
@@ -56,8 +58,8 @@ class CourtServiceTest {
         courtDTO1 = new CourtDTO( 1L,"Alameda de Osuna", 8.0, CourtType.INDOOR, SurfaceType.GLASS, true);
         courtDTO2 = new CourtDTO( 2L, "Coslada", 7.0, CourtType.INDOOR, SurfaceType.WALL, true);
 
-        preCourtDTO1 = new PreCourtDTO(1L,"Alameda de Osuna", true);
-        preCourtDTO2 = new PreCourtDTO(2L, "Coslada", true );
+        preCourtDTO1 = new PreCourtDTO(1L, "Alameda de Osuna", true);
+        preCourtDTO2 = new PreCourtDTO(2L, "Coslada", true);
 
     }
 
@@ -75,6 +77,22 @@ class CourtServiceTest {
         assertThat(result).hasSize(2);
         assertThat(result).containsExactly(preCourtDTO1, preCourtDTO2);
         verify(courtRepository, times(1)).findAll();
+    }
+
+    @Test
+    void getCourts_ShouldMapTheRequestedPage() {
+        var pageable = PageRequest.of(1, 10);
+        when(courtRepository.findAll(pageable))
+                .thenReturn(new PageImpl<>(List.of(court2), pageable, 11));
+        when(mapper.toPreDTO(court2)).thenReturn(preCourtDTO2);
+
+        var result = courtService.getCourts(pageable);
+
+        assertThat(result.getContent()).containsExactly(preCourtDTO2);
+        assertThat(result.getNumber()).isEqualTo(1);
+        assertThat(result.getSize()).isEqualTo(10);
+        verify(courtRepository).findAll(pageable);
+        verify(mapper).toPreDTO(court2);
     }
 
     @Test

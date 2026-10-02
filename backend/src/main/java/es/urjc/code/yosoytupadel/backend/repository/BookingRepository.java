@@ -17,6 +17,14 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByUserIdAndType(Long userId, es.urjc.code.yosoytupadel.backend.entities.BookingType type);
 
+    @Query("SELECT b FROM Booking b WHERE b.court.id = :courtId " +
+            "AND b.bookingDate = :date " +
+            "AND b.status <> es.urjc.code.yosoytupadel.backend.entities.BookingStatus.CANCELLED")
+    List<Booking> findActiveCourtBookings(
+            @Param("courtId") Long courtId,
+            @Param("date") LocalDate date
+    );
+
     // Comprueba solapamientos de horarios
     @Query("SELECT COUNT(b) > 0 FROM Booking b WHERE b.court.id = :courtId " +
             "AND b.bookingDate = :date " +
