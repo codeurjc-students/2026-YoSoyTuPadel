@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
@@ -92,11 +92,12 @@ describe('CourtDetailPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Finalizar reserva · 09:00' }));
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
 
-    expect(await screen.findByRole('heading', { name: '¡Reserva confirmada!' })).toBeInTheDocument();
+    await screen.findByRole('heading', { name: '¡Reserva confirmada!' });
+    const successDialog = screen.getByRole('dialog', { name: '¡Reserva confirmada!' });
     const [year, month, day] = dateValue.split('-').map(Number);
     const formattedDate = new Intl.DateTimeFormat('es-ES').format(new Date(year, month - 1, day));
-    expect(screen.getByText(new RegExp(formattedDate))).toBeInTheDocument();
-    expect(screen.getAllByText('€8/h')).toHaveLength(2);
+    expect(within(successDialog).getByText(new RegExp(formattedDate))).toBeInTheDocument();
+    expect(within(successDialog).getByText('€8/h')).toBeInTheDocument();
     expect(api.post).toHaveBeenCalledWith('/api/v1/bookings', {
       userId: 9,
       courtId: 4,
