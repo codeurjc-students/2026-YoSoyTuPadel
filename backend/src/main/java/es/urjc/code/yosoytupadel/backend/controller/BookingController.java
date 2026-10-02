@@ -2,6 +2,8 @@ package es.urjc.code.yosoytupadel.backend.controller;
 
 import java.net.URI;
 import java.util.Collection;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 import es.urjc.code.yosoytupadel.backend.dto.BookingDTO;
 import es.urjc.code.yosoytupadel.backend.service.BookingService;
@@ -25,6 +27,17 @@ public class BookingController {
     @GetMapping("")
     public Collection<BookingDTO> getAllBookings() {
         return bookingService.getAllBookings();
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/courts/{courtId}/availability")
+    public Collection<String> getReservedCourtSlots(
+            @PathVariable long courtId,
+            @RequestParam LocalDate date
+    ) {
+        return bookingService.getReservedCourtSlots(courtId, date).stream()
+                .map(time -> time.toString().substring(0, 5))
+                .toList();
     }
 
     @PreAuthorize("hasRole('ADMIN') or @userService.isMine(#id)")

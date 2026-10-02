@@ -46,6 +46,22 @@ public class BookingService {
         return mapper.toDTOs(bookingRepository.findByUserId(userId));
     }
 
+    public List<LocalTime> getReservedCourtSlots(Long courtId, LocalDate date) {
+        List<Booking> bookings = bookingRepository.findActiveCourtBookings(courtId, date);
+        List<LocalTime> reservedSlots = new java.util.ArrayList<>();
+
+        for (int hour = 9; hour <= 21; hour++) {
+            LocalTime slotStart = LocalTime.of(hour, 0);
+            LocalTime slotEnd = slotStart.plusHours(1);
+            boolean isReserved = bookings.stream().anyMatch(booking ->
+                    booking.getStartTime().isBefore(slotEnd) && booking.getEndTime().isAfter(slotStart));
+            if (isReserved) {
+                reservedSlots.add(slotStart);
+            }
+        }
+        return reservedSlots;
+    }
+
     public Optional<BookingDTO> getBookingById(long id) {
         return bookingRepository.findById(id).map(mapper::toDTO);
     }

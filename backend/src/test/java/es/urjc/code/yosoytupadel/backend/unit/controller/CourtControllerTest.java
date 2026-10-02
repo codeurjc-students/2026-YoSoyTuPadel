@@ -15,6 +15,9 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpHeaders;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -61,36 +64,58 @@ class CourtControllerTest {
         dto1 = new CourtDTO( 1L,"Alameda de Osuna", 8.0, CourtType.INDOOR, SurfaceType.GLASS, true);
         dto2 = new CourtDTO( 2L, "Coslada", 7.0, CourtType.INDOOR, SurfaceType.WALL, true);
 
-        preDto1 = new PreCourtDTO(1L,"Alameda de Osuna", true);
-        preDto2 = new PreCourtDTO(2L, "Coslada", true );
+        preDto1 = new PreCourtDTO(1L, "Alameda de Osuna", true);
+        preDto2 = new PreCourtDTO(2L, "Coslada", true);
     }
 
     @Test
-    void getAllCourts_ShouldReturnListOfCourts() throws Exception {
+    void getCourts_ShouldReturnPagedCourtsUsingDefaultPageSize() throws Exception {
 
-        when(courtService.getAllCourts()).thenReturn(Arrays.asList(preDto1, preDto2));
+        when(courtService.getCourts(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(Arrays.asList(preDto1, preDto2), PageRequest.of(0, 10), 2));
 
         mockMvc.perform(get("/api/v1/courts")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].name").value("Alameda de Osuna"))
-                .andExpect(jsonPath("$[1].name").value("Coslada"));
+                .andExpect(jsonPath("$.content", hasSize(2)))
+                .andExpect(jsonPath("$.content[0].name").value("Alameda de Osuna"))
+                .andExpect(jsonPath("$.content[0].isAvailable").value(true))
+                .andExpect(jsonPath("$.content[0].courtPrice").doesNotExist())
+                .andExpect(jsonPath("$.content[0].type").doesNotExist())
+                .andExpect(jsonPath("$.content[1].name").value("Coslada"))
+                .andExpect(jsonPath("$.totalElements").value(2));
 
-        verify(courtService, times(1)).getAllCourts();
+        verify(courtService).getCourts(PageRequest.of(0, 10));
     }
 
     @Test
-    void getAllCourts_WhenServiceReturnsEmptyList_ShouldReturnEmptyList() throws Exception {
+    void getCourts_WhenServiceReturnsEmptyPage_ShouldReturnEmptyContent() throws Exception {
 
-        when(courtService.getAllCourts()).thenReturn(Collections.emptyList());
+        when(courtService.getCourts(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(Collections.emptyList(), PageRequest.of(0, 10), 0));
 
         mockMvc.perform(get("/api/v1/courts")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(0)));
+                .andExpect(jsonPath("$.content", hasSize(0)))
+                .andExpect(jsonPath("$.totalPages").value(0));
 
-        verify(courtService, times(1)).getAllCourts();
+        verify(courtService).getCourts(PageRequest.of(0, 10));
+    }
+
+    @Test
+    void getCourts_ShouldAcceptPageAndSizeParameters() throws Exception {
+        when(courtService.getCourts(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(Collections.singletonList(preDto2), PageRequest.of(1, 5), 6));
+
+        mockMvc.perform(get("/api/v1/courts").param("page", "1").param("size", "5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.number").value(1))
+                .andExpect(jsonPath("$.size").value(5))
+                .andExpect(jsonPath("$.totalPages").value(2));
+
+        verify(courtService).getCourts(PageRequest.of(1, 5));
     }
 
     @Test

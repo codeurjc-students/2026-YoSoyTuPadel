@@ -30,6 +30,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.Mockito.*;
@@ -84,6 +85,20 @@ class BookingControllerTest {
                 .andExpect(jsonPath("$", hasSize(0)));
 
         verify(bookingService, times(1)).getAllBookings();
+    }
+
+    @Test
+    void getReservedCourtSlots_ShouldReturnReservedTimesForDate() throws Exception {
+        LocalDate date = LocalDate.now().plusDays(1);
+        when(bookingService.getReservedCourtSlots(1L, date)).thenReturn(List.of(LocalTime.of(10, 0)));
+
+        mockMvc.perform(get("/api/v1/bookings/courts/1/availability")
+                        .param("date", date.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0]").value("10:00"));
+
+        verify(bookingService).getReservedCourtSlots(1L, date);
     }
 
     @Test

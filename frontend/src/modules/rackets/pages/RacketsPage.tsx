@@ -200,9 +200,15 @@ function RacketsPage() {
             disabled={loadingMore}
             startIcon={loadingMore ? <CircularProgress size={18} color="inherit" /> : undefined}
             sx={{
-              borderColor: 'rgba(255,255,255,0.35)',
-              color: 'white',
-              '&:hover': { borderColor: 'white', backgroundColor: 'rgba(255,255,255,0.08)' },
+              px: 3,
+              minHeight: 44,
+              bgcolor: 'white',
+              color: '#111318',
+              borderColor: 'white',
+              borderRadius: 2,
+              fontWeight: 700,
+              textTransform: 'none',
+              '&:hover': { bgcolor: 'grey.100', borderColor: 'grey.100' },
             }}
           >
             Más resultados
