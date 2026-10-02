@@ -42,6 +42,25 @@ function renderCourtDetail(auth: AuthContextValue = signedInAuth) {
   );
 }
 
+async function selectTomorrow() {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const dateValue = [
+    tomorrow.getFullYear(),
+    String(tomorrow.getMonth() + 1).padStart(2, '0'),
+    String(tomorrow.getDate()).padStart(2, '0'),
+  ].join('-');
+  const dateLabel = new Intl.DateTimeFormat('es-ES', {
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+  }).format(tomorrow);
+
+  fireEvent.click(await screen.findByRole('button', { name: dateLabel }));
+  await waitFor(() => expect(screen.getByRole('button', { name: '09:00' })).toBeEnabled());
+  return dateValue;
+}
+
 describe('CourtDetailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -68,15 +87,9 @@ describe('CourtDetailPage', () => {
     renderCourtDetail();
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Pista central' })).toBeInTheDocument();
-    const today = new Date();
-    const dateValue = [
-      today.getFullYear(),
-      String(today.getMonth() + 1).padStart(2, '0'),
-      String(today.getDate()).padStart(2, '0'),
-    ].join('-');
-    await waitFor(() => expect(screen.getByRole('button', { name: '13:00' })).toBeEnabled());
-    fireEvent.click(screen.getByRole('button', { name: '13:00' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Finalizar reserva · 13:00' }));
+    const dateValue = await selectTomorrow();
+    fireEvent.click(screen.getByRole('button', { name: '09:00' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Finalizar reserva · 09:00' }));
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
 
     expect(await screen.findByRole('heading', { name: '¡Reserva confirmada!' })).toBeInTheDocument();
@@ -88,8 +101,8 @@ describe('CourtDetailPage', () => {
       userId: 9,
       courtId: 4,
       bookingDate: dateValue,
-      startTime: '13:00:00',
-      endTime: '14:00:00',
+      startTime: '09:00:00',
+      endTime: '10:00:00',
       bookingPrice: null,
       type: 'MATCH',
       status: 'PENDING',
@@ -106,14 +119,14 @@ describe('CourtDetailPage', () => {
     renderCourtDetail();
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Pista central' })).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByRole('button', { name: '13:00' })).toBeEnabled());
-    fireEvent.click(screen.getByRole('button', { name: '13:00' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Finalizar reserva · 13:00' }));
+    await selectTomorrow();
+    fireEvent.click(screen.getByRole('button', { name: '09:00' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Finalizar reserva · 09:00' }));
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
 
     expect(await screen.findByText('Esta hora ya está reservada. Elige otra franja horaria.')).toBeInTheDocument();
     expect(screen.getAllByText('Esta hora ya está reservada. Elige otra franja horaria.')).toHaveLength(1);
-    expect(await screen.findByRole('button', { name: '13:00, reservada' })).toBeDisabled();
+    expect(await screen.findByRole('button', { name: '09:00, reservada' })).toBeDisabled();
   });
 
   test('marks time slots already returned by the availability API as unavailable', async () => {
