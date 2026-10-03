@@ -10,6 +10,8 @@ import es.urjc.code.yosoytupadel.backend.repository.BookingRepository;
 import es.urjc.code.yosoytupadel.backend.repository.RacketRepository;
 import org.hibernate.engine.jdbc.proxy.BlobProxy;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpStatus;
@@ -240,6 +242,16 @@ public class UserService {
         return userRepository.findByRole(UserRole.COACH).stream()
                 .map(userMapper::toCoachDTO)
                 .toList();
+    }
+
+    public Page<CoachDTO> getCoachs(Pageable pageable) {
+        return userRepository.findAllByRole(UserRole.COACH, pageable)
+                .map(userMapper::toCoachDTO);
+    }
+
+    public Optional<CoachDTO> getCoachById(long id) {
+        return userRepository.findByIdAndRole(id, UserRole.COACH)
+                .map(userMapper::toCoachDTO);
     }
 
     public boolean isMe(long id) {

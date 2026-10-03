@@ -102,6 +102,20 @@ class BookingControllerTest {
     }
 
     @Test
+    void getReservedCoachSlots_ShouldReturnReservedTimesForDate() throws Exception {
+        LocalDate date = LocalDate.now().plusDays(1);
+        when(bookingService.getReservedCoachSlots(3L, date)).thenReturn(List.of(LocalTime.of(11, 0)));
+
+        mockMvc.perform(get("/api/v1/bookings/coaches/3/availability")
+                        .param("date", date.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0]").value("11:00"));
+
+        verify(bookingService).getReservedCoachSlots(3L, date);
+    }
+
+    @Test
     void getBooking_ShouldReturnBooking() throws Exception {
         when(bookingService.getBookingById(1L)).thenReturn(Optional.of(dto1));
 

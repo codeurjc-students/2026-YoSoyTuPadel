@@ -64,7 +64,7 @@ class UserServiceTest {
         racket.setId(1L);
         racket.setStock(5);
 
-        coachDTO = new CoachDTO(1L, "Entrenador Pepe", 9.5, 35.0);
+        coachDTO = new CoachDTO(1L, "Entrenador Pepe", 3, 35.0);
         studentDTO = mock(UserDTO.class);
     }
 

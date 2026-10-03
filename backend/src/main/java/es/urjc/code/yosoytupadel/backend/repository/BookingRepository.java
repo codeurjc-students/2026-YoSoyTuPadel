@@ -25,6 +25,14 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             @Param("date") LocalDate date
     );
 
+    @Query("SELECT b FROM Booking b WHERE b.coach.id = :coachId " +
+            "AND b.bookingDate = :date " +
+            "AND b.status <> es.urjc.code.yosoytupadel.backend.entities.BookingStatus.CANCELLED")
+    List<Booking> findActiveCoachBookings(
+            @Param("coachId") Long coachId,
+            @Param("date") LocalDate date
+    );
+
     // Comprueba solapamientos de horarios
     @Query("SELECT COUNT(b) > 0 FROM Booking b WHERE b.court.id = :courtId " +
             "AND b.bookingDate = :date " +

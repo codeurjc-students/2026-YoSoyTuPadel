@@ -62,6 +62,22 @@ public class BookingService {
         return reservedSlots;
     }
 
+    public List<LocalTime> getReservedCoachSlots(Long coachId, LocalDate date) {
+        List<Booking> bookings = bookingRepository.findActiveCoachBookings(coachId, date);
+        List<LocalTime> reservedSlots = new java.util.ArrayList<>();
+
+        for (int hour = 9; hour <= 19; hour += 2) {
+            LocalTime slotStart = LocalTime.of(hour, 0);
+            LocalTime slotEnd = slotStart.plusHours(2);
+            boolean isReserved = bookings.stream().anyMatch(booking ->
+                    booking.getStartTime().isBefore(slotEnd) && booking.getEndTime().isAfter(slotStart));
+            if (isReserved) {
+                reservedSlots.add(slotStart);
+            }
+        }
+        return reservedSlots;
+    }
+
     public Optional<BookingDTO> getBookingById(long id) {
         return bookingRepository.findById(id).map(mapper::toDTO);
     }

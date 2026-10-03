@@ -8,6 +8,8 @@ import { AuthProvider } from './modules/auth/context/AuthProvider';
 import AuthPage from './modules/auth/pages/AuthPage';
 import CourtListPage from './modules/courts/pages/CourtListPage';
 import CourtDetailPage from './modules/courts/pages/CourtDetailPage';
+import CoachListPage from './modules/coaches/pages/CoachListPage';
+import CoachDetailPage from './modules/coaches/pages/CoachDetailPage';
 
 function App() {
   return (
@@ -19,7 +21,8 @@ function App() {
           <Route path="rackets/:id" element={<RacketDetailPage />} />
           <Route path="courts" element={<CourtListPage />} />
           <Route path="courts/:id" element={<CourtDetailPage />} />
-          <Route path="coaches" element={<ComingSoonPage title="Nuestros entrenadores" />} />
+          <Route path="coaches" element={<CoachListPage />} />
+          <Route path="coaches/:id" element={<CoachDetailPage />} />
           <Route path="bookings" element={<ComingSoonPage title="Mis reservas" />} />
           <Route path="profile" element={<ComingSoonPage title="Mi perfil" />} />
           <Route path="login" element={<AuthPage />} />
