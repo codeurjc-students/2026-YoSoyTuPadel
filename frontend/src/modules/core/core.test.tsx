@@ -21,7 +21,7 @@ describe('Core layout', () => {
       if (url === '/api/v1/courts') {
         return Promise.resolve({ data: { content: [], totalElements: 20 } });
       }
-      if (url === '/api/v1/users/coachs') {
+      if (url === '/api/v1/users/coaches') {
         return Promise.resolve({
           data: {
             content: Array.from({ length: 9 }, (_, id) => ({ id })),
