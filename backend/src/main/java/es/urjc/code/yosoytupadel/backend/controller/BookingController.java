@@ -40,6 +40,17 @@ public class BookingController {
                 .toList();
     }
 
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/coaches/{coachId}/availability")
+    public Collection<String> getReservedCoachSlots(
+            @PathVariable long coachId,
+            @RequestParam LocalDate date
+    ) {
+        return bookingService.getReservedCoachSlots(coachId, date).stream()
+                .map(time -> time.toString().substring(0, 5))
+                .toList();
+    }
+
     @PreAuthorize("hasRole('ADMIN') or @userService.isMine(#id)")
     @GetMapping("/{id}")
     public BookingDTO getBooking(@PathVariable long id) {

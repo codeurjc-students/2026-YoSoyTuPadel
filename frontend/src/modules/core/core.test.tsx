@@ -22,7 +22,16 @@ describe('Core layout', () => {
         return Promise.resolve({ data: { content: [], totalElements: 20 } });
       }
       if (url === '/api/v1/users/coachs') {
-        return Promise.resolve({ data: Array.from({ length: 9 }, (_, id) => ({ id })) });
+        return Promise.resolve({
+          data: {
+            content: Array.from({ length: 9 }, (_, id) => ({ id })),
+            number: 0,
+            size: 10,
+            totalElements: 9,
+            totalPages: 1,
+            last: true,
+          },
+        });
       }
       if (url === '/api/v1/rackets') {
         return Promise.resolve({

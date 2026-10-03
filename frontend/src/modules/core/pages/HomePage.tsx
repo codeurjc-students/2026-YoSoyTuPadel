@@ -74,7 +74,7 @@ function HomePage() {
     const options = { signal: controller.signal };
     const statsRequests = Promise.allSettled([
       api.get<{ totalElements: number }>('/api/v1/courts', options),
-      api.get<{ id: number }[]>('/api/v1/users/coachs', options),
+      api.get<{ totalElements: number }>('/api/v1/users/coaches', options),
       getTotalRacketStock(controller.signal),
     ]);
 
@@ -85,7 +85,7 @@ function HomePage() {
 
       setStats({
         courts: courts.status === 'fulfilled' ? courts.value.data.totalElements : null,
-        coaches: coaches.status === 'fulfilled' ? coaches.value.data.length : null,
+        coaches: coaches.status === 'fulfilled' ? coaches.value.data.totalElements : null,
         rackets: rackets.status === 'fulfilled' ? rackets.value : null,
       });
     });

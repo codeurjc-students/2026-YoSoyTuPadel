@@ -85,8 +85,10 @@ public class WebSecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/rackets").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/rackets/*/image").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/courts").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/users/coachs").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/users/coachs/*/image").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/users/coaches").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/users/coaches/*/image").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/users/coaches/*").hasAnyRole("USER", "ADMIN")
+
 
                 // Rackets
                 .requestMatchers(HttpMethod.GET, "/api/v1/rackets/**").hasAnyRole("USER", "ADMIN")

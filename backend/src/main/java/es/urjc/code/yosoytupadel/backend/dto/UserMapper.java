@@ -30,7 +30,7 @@ public interface UserMapper {
         return new CoachDTO(
                 user.getId(),
                 user.getName(),
-                user.getSkillLevel(),
+                user.getSkillLevel() == null ? null : user.getSkillLevel().intValue(),
                 user.getSessionPrice()
         );
     }

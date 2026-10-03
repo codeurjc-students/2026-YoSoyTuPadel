@@ -16,6 +16,8 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpHeaders;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -61,24 +63,35 @@ class UserControllerTest {
 
     @BeforeEach
     void setUp() {
-        coachDTO = new CoachDTO(1L, "Rafa Nadal", 10.0, 25.0);
+        coachDTO = new CoachDTO(1L, "Rafa Nadal", 2, 25.0);
 
         userDTO = mock(UserDTO.class);
     }
 
     @Test
     void getAllCoachs_ShouldReturnListOfCoaches() throws Exception {
-        when(userService.getAllCoachs()).thenReturn(Arrays.asList(coachDTO));
+        when(userService.getCoachs(any())).thenReturn(new PageImpl<>(Arrays.asList(coachDTO), PageRequest.of(0, 10), 1));
 
-        mockMvc.perform(get("/api/v1/users/coachs")
+        mockMvc.perform(get("/api/v1/users/coaches")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].name").value("Rafa Nadal"))
-                .andExpect(jsonPath("$[0].skillLevel").value(10.0))
-                .andExpect(jsonPath("$[0].sessionPrice").value(25.0));
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].name").value("Rafa Nadal"))
+                .andExpect(jsonPath("$.content[0].skillLevel").value(2))
+                .andExpect(jsonPath("$.content[0].sessionPrice").value(25.0))
+                .andExpect(jsonPath("$.totalElements").value(1));
 
-        verify(userService, times(1)).getAllCoachs();
+        verify(userService).getCoachs(PageRequest.of(0, 10));
+    }
+
+    @Test
+    void getCoachById_ShouldReturnCoachDetails() throws Exception {
+        when(userService.getCoachById(1L)).thenReturn(Optional.of(coachDTO));
+
+        mockMvc.perform(get("/api/v1/users/coaches/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Rafa Nadal"))
+                .andExpect(jsonPath("$.sessionPrice").value(25.0));
     }
 
     @Test

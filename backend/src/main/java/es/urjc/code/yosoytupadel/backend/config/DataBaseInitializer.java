@@ -75,7 +75,7 @@ public class DataBaseInitializer implements CommandLineRunner {
         if (emails.add("victor@alumno.com")) {
             User student = new User(
                     "Victor",
-                    "victor",
+                    "victorcc02",
                     "victor@alumno.com",
                     passwordEncoder.encode("pass"),
                     UserRole.USER
@@ -85,15 +85,15 @@ public class DataBaseInitializer implements CommandLineRunner {
         }
 
         List<CoachSample> coaches = List.of(
-                new CoachSample("Juan Perez", "coach@yosoytupadel.com", 4.8, 35.0),
-                new CoachSample("Lucía Martín", "lucia.coach@yosoytupadel.com", 4.6, 38.0),
-                new CoachSample("Carlos Ruiz", "carlos.coach@yosoytupadel.com", 4.9, 40.0),
-                new CoachSample("Marta Sánchez", "marta.coach@yosoytupadel.com", 4.4, 36.0),
-                new CoachSample("Diego López", "diego.coach@yosoytupadel.com", 4.7, 42.0),
-                new CoachSample("Paula Gómez", "paula.coach@yosoytupadel.com", 4.5, 37.0),
-                new CoachSample("Álvaro Pérez", "alvaro.coach@yosoytupadel.com", 4.3, 39.0),
-                new CoachSample("Elena Torres", "elena.coach@yosoytupadel.com", 4.8, 41.0),
-                new CoachSample("Sergio Ramos", "sergio.coach@yosoytupadel.com", 5.0, 44.0)
+                new CoachSample("Juan Perez", "coach@yosoytupadel.com", 1, 35.0, "entrenador1.jpg"),
+                new CoachSample("Lucía Martín", "lucia.coach@yosoytupadel.com", 2, 38.0, "entrenador2.jpg"),
+                new CoachSample("Carlos Ruiz", "carlos.coach@yosoytupadel.com", 3, 40.0, "entrenador3.jpg"),
+                new CoachSample("Marta Sánchez", "marta.coach@yosoytupadel.com", 1, 36.0, "entrenador4.jpg"),
+                new CoachSample("Diego López", "diego.coach@yosoytupadel.com", 2, 42.0, "entrenador5.jpg"),
+                new CoachSample("Paula Gómez", "paula.coach@yosoytupadel.com", 3, 37.0, "entrenador6.jpg"),
+                new CoachSample("Álvaro Pérez", "alvaro.coach@yosoytupadel.com", 1, 39.0, "entrenador7.jpg"),
+                new CoachSample("Elena Torres", "elena.coach@yosoytupadel.com", 2, 41.0, "entrenador8.jpg"),
+                new CoachSample("Sergio Ramos", "sergio.coach@yosoytupadel.com", 3, 44.0, "entrenador9.jpg")
         );
         for (CoachSample sample : coaches) {
             if (emails.add(sample.email())) {
@@ -103,10 +103,19 @@ public class DataBaseInitializer implements CommandLineRunner {
                         UserRole.COACH,
                         sample.name()
                 );
-                coach.setSkillLevel(sample.skillLevel());
+                coach.setSkillLevel((double) sample.skillLevel());
                 coach.setSessionPrice(sample.sessionPrice());
-                coach.setProfilePicture(imageBlob("static/images/entrenador1.jpg"));
+                coach.setProfilePicture(imageBlob("static/images/" + sample.imageName()));
                 newUsers.add(coach);
+            } else {
+                userRepository.findByEmail(sample.email())
+                        .filter(coach -> coach.getRole() == UserRole.COACH)
+                        .filter(coach -> coach.getSkillLevel() == null
+                                || Double.compare(coach.getSkillLevel(), sample.skillLevel()) != 0)
+                        .ifPresent(coach -> {
+                            coach.setSkillLevel((double) sample.skillLevel());
+                            newUsers.add(coach);
+                        });
             }
         }
 
@@ -224,11 +233,11 @@ public class DataBaseInitializer implements CommandLineRunner {
 
         LocalDate today = LocalDate.now();
         bookingRepository.saveAll(List.of(
-                new Booking(today.plusDays(1), LocalTime.of(10, 0), LocalTime.of(11, 30),
+                new Booking(today.plusDays(1), LocalTime.of(10, 0), LocalTime.of(11, 0),
                         courts.get(0).getCourtPrice(), student, courts.get(0)),
-                new Booking(today.plusDays(2), LocalTime.of(18, 0), LocalTime.of(19, 30),
+                new Booking(today.plusDays(2), LocalTime.of(18, 0), LocalTime.of(19, 0),
                         courts.get(1).getCourtPrice(), student, courts.get(1)),
-                new Booking(today.plusDays(5), LocalTime.of(20, 0), LocalTime.of(21, 30),
+                new Booking(today.plusDays(5), LocalTime.of(20, 0), LocalTime.of(21, 0),
                         courts.get(2).getCourtPrice(), student, courts.get(2)),
                 new Booking(today.plusDays(3), LocalTime.of(9, 0), LocalTime.of(10, 0),
                         coaches.get(0).getSessionPrice(), student, coaches.get(0))
@@ -242,7 +251,13 @@ public class DataBaseInitializer implements CommandLineRunner {
         }
     }
 
-    private record CoachSample(String name, String email, double skillLevel, double sessionPrice) {}
+    private record CoachSample(
+            String name,
+            String email,
+            int skillLevel,
+            double sessionPrice,
+            String imageName
+    ) {}
 
     private record RacketSample(
             String brand,
@@ -253,5 +268,10 @@ public class DataBaseInitializer implements CommandLineRunner {
             String imageName
     ) {}
 
-    private record CourtSample(String name, double price, CourtType type, SurfaceType surface) {}
+    private record CourtSample(
+            String name,
+            double price,
+            CourtType type,
+            SurfaceType surface
+    ) {}
 }

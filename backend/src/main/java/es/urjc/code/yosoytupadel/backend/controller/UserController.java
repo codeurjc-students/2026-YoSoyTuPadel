@@ -8,6 +8,9 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -165,13 +168,19 @@ public class UserController {
     }
 
 
-    @GetMapping("/coachs")
-    public ResponseEntity<Collection<CoachDTO>> getAllCoachs() {
-        return ResponseEntity.ok(userService.getAllCoachs());
+    @GetMapping("/coaches")
+    public ResponseEntity<Page<CoachDTO>> getAllCoachs(@PageableDefault(size = 10) Pageable pageable) {
+        return ResponseEntity.ok(userService.getCoachs(pageable));
+    }
+
+    @GetMapping("/coaches/{id}")
+    public CoachDTO getCoach(@PathVariable long id) {
+        return userService.getCoachById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Coach not found"));
     }
 
     @PreAuthorize("@userService.isCoach(#id)")
-    @GetMapping("/coachs/{id}/image")
+    @GetMapping("/coaches/{id}/image")
     public ResponseEntity<Object> getImageCoach(@PathVariable long id) throws SQLException {
         Resource profilePicture = userService.getUserImage(id);
         return ResponseEntity.ok()
