@@ -6,7 +6,6 @@ import {
   Button,
   Card,
   CardContent,
-  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -156,7 +155,7 @@ function UserProfilePage() {
     }
   };
 
-  const handleSaveProfile = async () => {
+  const handleSaveProfile = async (emailChanged: boolean) => {
     setIsSaving(true);
     try {
       const details = {
@@ -167,10 +166,18 @@ function UserProfilePage() {
 
       const updatedDetails = await authService.updateUser(profile.id, details);
       const updatedUser: AuthUser = { ...profile, ...updatedDetails };
+      setUserProfile((currentProfile) => currentProfile
+        ? { ...currentProfile, name: details.name, nickname: details.nickname, email: details.email }
+        : updatedUser);
       authService.storeUser(updatedUser);
       updateUser?.(updatedUser);
       setIsEditOpen(false);
-      setSuccessMessage('Perfil actualizado con éxito');
+      if (emailChanged) {
+        await logout();
+        navigate('/login', { replace: true });
+      } else {
+        setSuccessMessage('Perfil actualizado con éxito');
+      }
     } catch (error: unknown) {
       toast.error(authService.getErrorMessage(error));
     } finally {
@@ -179,9 +186,10 @@ function UserProfilePage() {
   };
 
   const handleConfirmEdit = async () => {
+    const emailChanged = form.email.trim() !== profile.email.trim();
     setIsConfirmEditOpen(false);
     setIsEditOpen(false);
-    await handleSaveProfile();
+    await handleSaveProfile(emailChanged);
   };
 
   const handleDeleteAccount = async () => {
