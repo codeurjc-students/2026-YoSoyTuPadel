@@ -28,6 +28,7 @@ export interface RacketPage {
 export interface RacketRentalUser {
   id: number;
   racketId: number | null;
+  racketHistory?: RacketDTO[];
 }
 
 export const racketService = {

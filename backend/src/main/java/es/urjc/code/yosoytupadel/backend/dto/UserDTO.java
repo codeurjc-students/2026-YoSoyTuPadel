@@ -6,6 +6,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
+import java.util.List;
+
 public record UserDTO(
         Long id,
         String name,
@@ -24,5 +26,6 @@ public record UserDTO(
         UserRole role,
         Double skillLevel,
         Long racketId,
-        Integer racketUsages
+        Integer racketUsages,
+        List<RacketDTO> racketHistory
 ) {}

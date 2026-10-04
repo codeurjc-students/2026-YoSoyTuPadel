@@ -87,7 +87,7 @@ describe('RacketDetailPage', () => {
     expect(await screen.findByRole('heading', { name: 'Inicio de sesión' })).toBeInTheDocument();
   });
 
-  test('redirects users who already have a racket to their profile', async () => {
+  test('redirects users who already have a racket to their bookings material tab', async () => {
     const userWithRacket: AuthContextValue = {
       ...authenticatedUser,
       user: { id: 1, name: 'Test', nickname: null, email: 'test@example.com', role: 'USER', racketId: 8 },
@@ -96,7 +96,7 @@ describe('RacketDetailPage', () => {
       <MemoryRouter initialEntries={['/rackets/3']}>
         <Routes>
           <Route path="/rackets/:id" element={<AuthContext.Provider value={userWithRacket}><RacketDetailPage /></AuthContext.Provider>} />
-          <Route path="/profile" element={<h1>Mi perfil</h1>} />
+          <Route path="/bookings" element={<h1>Material de mis reservas</h1>} />
         </Routes>
       </MemoryRouter>,
     );
@@ -104,11 +104,11 @@ describe('RacketDetailPage', () => {
     await screen.findByRole('heading', { name: 'Bullpadel Vertex 04' });
     fireEvent.click(screen.getByRole('button', { name: 'Reservar' }));
 
-    expect(await screen.findByRole('heading', { name: 'Mi perfil' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Material de mis reservas' })).toBeInTheDocument();
     expect(racketService.rentRacket).not.toHaveBeenCalled();
   });
 
-  test('redirects to profile if the backend reports an existing rental', async () => {
+  test('redirects to bookings material if the backend reports an existing rental', async () => {
     vi.mocked(racketService.rentRacket).mockRejectedValue({
       response: { data: { message: 'You already have a rented racket.' } },
       isAxiosError: true,
@@ -117,7 +117,7 @@ describe('RacketDetailPage', () => {
       <MemoryRouter initialEntries={['/rackets/3']}>
         <Routes>
           <Route path="/rackets/:id" element={<AuthContext.Provider value={authenticatedUser}><RacketDetailPage /></AuthContext.Provider>} />
-          <Route path="/profile" element={<h1>Mi perfil</h1>} />
+          <Route path="/bookings" element={<h1>Material de mis reservas</h1>} />
         </Routes>
       </MemoryRouter>,
     );
@@ -126,7 +126,7 @@ describe('RacketDetailPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Reservar' }));
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
 
-    expect(await screen.findByRole('heading', { name: 'Mi perfil' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Material de mis reservas' })).toBeInTheDocument();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 

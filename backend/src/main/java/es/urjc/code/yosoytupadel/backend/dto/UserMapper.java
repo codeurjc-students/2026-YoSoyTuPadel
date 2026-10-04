@@ -6,7 +6,7 @@ import es.urjc.code.yosoytupadel.backend.entities.User;
 import java.util.Collection;
 import java.util.List;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = RacketMapper.class)
 public interface UserMapper {
 
     @Mapping(source = "racket.id", target = "racketId")
@@ -20,6 +20,7 @@ public interface UserMapper {
     @Mapping(target = "profilePicture", ignore = true)
     @Mapping(target = "imgUserPath", ignore = true)
     @Mapping(target = "racketUsages", ignore = true)
+    @Mapping(target = "racketHistory", ignore = true)
     @Mapping(target = "sessionPrice", ignore = true)
     User toDomain(UserDTO userDTO);
 

@@ -45,11 +45,11 @@ function RacketDetailPage() {
 
   const redirectToProfileForExistingRental = () => {
     setDialogOpen(false);
-    toast('Ya tienes una pala reservada, como puedes ver en tu perfil.', {
+    toast('Ya tienes una pala alquilada. Consulta los usos restantes en tus reservas.', {
       icon: '🎾',
       style: { fontSize: '1.1rem', lineHeight: 1.5, padding: '18px 24px', maxWidth: 440 },
     });
-    navigate('/profile');
+    navigate('/bookings?tab=material');
   };
 
   useEffect(() => {

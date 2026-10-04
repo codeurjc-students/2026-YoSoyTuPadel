@@ -82,4 +82,19 @@ class UserServiceIntegrationTest extends BaseIntegrationTest {
         assertThat(updatedStudent.getRacket().getId()).isEqualTo(savedRacket.getId());
         assertThat(updatedRacket.getStock()).isEqualTo(2);
     }
+
+    @Test
+    void returnRacket_ShouldPersistRacketRentalHistory() {
+        userService.rentRacket(savedStudent.getId(), savedRacket.getId());
+
+        userService.returnRacket(savedStudent.getId());
+        userService.rentRacket(savedStudent.getId(), savedRacket.getId());
+        userService.returnRacket(savedStudent.getId());
+
+        User updatedStudent = userRepository.findById(savedStudent.getId()).orElseThrow();
+        assertThat(updatedStudent.getRacket()).isNull();
+        assertThat(updatedStudent.getRacketHistory())
+                .extracting(Racket::getId)
+                .containsExactly(savedRacket.getId(), savedRacket.getId());
+    }
 }

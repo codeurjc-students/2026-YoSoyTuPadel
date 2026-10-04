@@ -119,9 +119,9 @@ class UserControllerTest {
     @Test
     void createUser_ShouldReturnLocationHeader() throws Exception {
         UserDTO newUser = new UserDTO(null, "Test User", "test-user", "test@example.com",
-                "password", null, null, null, 0);
+                "password", null, null, null, 0, java.util.List.of());
         UserDTO savedUser = new UserDTO(5L, "Test User", "test-user", "test@example.com",
-                null, null, null, null, 0);
+                null, null, null, null, 0, java.util.List.of());
         when(userService.createUser(any(UserDTO.class))).thenReturn(savedUser);
 
         mockMvc.perform(post("/api/v1/users/new")

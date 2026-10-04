@@ -9,6 +9,17 @@ export interface AuthUser {
   email: string;
   role: string;
   racketId?: number | null;
+  racketUsages?: number;
+  racketHistory?: RacketHistoryEntry[];
+}
+
+export interface RacketHistoryEntry {
+  id: number;
+  brand: string;
+  name: string;
+  description: string | null;
+  pricePerDay: number;
+  stock: number | null;
 }
 
 export interface LoginCredentials {
@@ -46,7 +57,21 @@ function isAuthUser(value: unknown): value is AuthUser {
     && (typeof candidate.nickname === 'string' || candidate.nickname === null)
     && typeof candidate.email === 'string'
     && typeof candidate.role === 'string'
-    && (candidate.racketId === undefined || typeof candidate.racketId === 'number' || candidate.racketId === null);
+    && (candidate.racketId === undefined || typeof candidate.racketId === 'number' || candidate.racketId === null)
+    && (candidate.racketUsages === undefined || typeof candidate.racketUsages === 'number')
+    && (candidate.racketHistory === undefined || (
+      Array.isArray(candidate.racketHistory)
+      && candidate.racketHistory.every((entry: unknown) => {
+        if (typeof entry !== 'object' || entry === null) return false;
+        const racket = entry as Record<string, unknown>;
+        return typeof racket.id === 'number'
+          && typeof racket.brand === 'string'
+          && typeof racket.name === 'string'
+          && (typeof racket.description === 'string' || racket.description === null)
+          && typeof racket.pricePerDay === 'number'
+          && (typeof racket.stock === 'number' || racket.stock === null);
+      })
+    ));
 }
 
 export const authService = {

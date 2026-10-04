@@ -240,7 +240,13 @@ public class DataBaseInitializer implements CommandLineRunner {
                 new Booking(today.plusDays(5), LocalTime.of(20, 0), LocalTime.of(21, 0),
                         courts.get(2).getCourtPrice(), student, courts.get(2)),
                 new Booking(today.plusDays(3), LocalTime.of(9, 0), LocalTime.of(10, 0),
-                        coaches.get(0).getSessionPrice(), student, coaches.get(0))
+                        coaches.get(0).getSessionPrice(), student, coaches.get(0)),
+
+
+                new Booking(today.minusDays(4), LocalTime.of(17, 0), LocalTime.of(18, 0),
+                        courts.get(0).getCourtPrice(), student, courts.get(0)),
+                new Booking(today.minusWeeks(1), LocalTime.of(11, 0), LocalTime.of(12, 0),
+                        coaches.get(1).getSessionPrice(), student, coaches.get(1))
         ));
     }
 
