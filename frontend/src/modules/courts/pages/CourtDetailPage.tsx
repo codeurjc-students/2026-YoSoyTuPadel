@@ -21,6 +21,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { courtService, type CourtDTO } from '../services/courtService';
@@ -115,6 +116,11 @@ function CourtDetailPage() {
   const selectedTimeHasPassed = selectedDate === currentDate
     && selectedTime !== ''
     && selectedTime <= `${String(currentTime.getHours()).padStart(2, '0')}:${String(currentTime.getMinutes()).padStart(2, '0')}`;
+  const availableSlots = timeSlots.filter((time) => {
+    const isPast = selectedDate === currentDate
+      && time <= `${String(currentTime.getHours()).padStart(2, '0')}:${String(currentTime.getMinutes()).padStart(2, '0')}`;
+    return !reservedSlots.includes(time) && !isPast;
+  });
   const hasCourtChanges = Boolean(editForm && court && (
     editForm.name !== court.name
     || editForm.courtPrice !== court.courtPrice
@@ -424,6 +430,15 @@ function CourtDetailPage() {
                   <CircularProgress size={22} color="error" />
                 </Box>
               )}
+              {!isLoadingAvailability && !availabilityError && availableSlots.length === 0 ? (
+                <Box sx={{ py: 4, px: 2, textAlign: 'center', bgcolor: 'grey.900', borderRadius: 3, border: '1px solid', borderColor: 'grey.800', my: 2 }}>
+                  <AccessTimeRoundedIcon sx={{ color: 'grey.300', fontSize: 34, mb: 1 }} />
+                  <Typography sx={{ color: 'white', fontWeight: 900 }}>No hay horas disponibles</Typography>
+                  <Typography sx={{ color: 'grey.400', mt: 0.75 }}>
+                    Selecciona otra fecha en el calendario para ver las franjas libres.
+                  </Typography>
+                </Box>
+              ) : (
               <Grid container spacing={1}>
                 {timeSlots.map((time) => {
                   const isSelected = selectedTime === time;
@@ -465,6 +480,7 @@ function CourtDetailPage() {
                   );
                 })}
               </Grid>
+              )}
 
               <Button
                 fullWidth
