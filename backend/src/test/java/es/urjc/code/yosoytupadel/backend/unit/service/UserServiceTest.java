@@ -113,4 +113,39 @@ class UserServiceTest {
         verify(racketRepository, never()).save(racket);
         verify(userRepository, never()).save(student);
     }
+
+    @Test
+    void returnRacket_ShouldPersistReturnedRacketInHistory() {
+        student.setRacket(racket);
+        student.setRacketUsages(2);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(student));
+        when(racketRepository.save(racket)).thenReturn(racket);
+        when(userRepository.save(student)).thenReturn(student);
+        when(userMapper.toDTO(student)).thenReturn(studentDTO);
+
+        UserDTO result = userService.returnRacket(2L);
+
+        assertThat(result).isEqualTo(studentDTO);
+        assertThat(student.getRacketHistory()).containsExactly(racket);
+        assertThat(student.getRacket()).isNull();
+        assertThat(student.getRacketUsages()).isZero();
+        assertThat(racket.getStock()).isEqualTo(6);
+        verify(userRepository).save(student);
+    }
+
+    @Test
+    void processThirdRacketUsage_ShouldAddReturnedRacketToHistory() {
+        student.setRacket(racket);
+        student.setRacketUsages(2);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(student));
+        when(racketRepository.save(racket)).thenReturn(racket);
+        when(userRepository.save(student)).thenReturn(student);
+
+        userService.processRacketUsageForUser(2L);
+
+        assertThat(student.getRacketHistory()).containsExactly(racket);
+        assertThat(student.getRacket()).isNull();
+        assertThat(student.getRacketUsages()).isZero();
+        assertThat(racket.getStock()).isEqualTo(6);
+    }
 }

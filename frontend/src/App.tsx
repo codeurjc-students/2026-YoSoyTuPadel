@@ -10,6 +10,7 @@ import CourtListPage from './modules/courts/pages/CourtListPage';
 import CourtDetailPage from './modules/courts/pages/CourtDetailPage';
 import CoachListPage from './modules/coaches/pages/CoachListPage';
 import CoachDetailPage from './modules/coaches/pages/CoachDetailPage';
+import MyBookingsPage from './modules/bookings/pages/MyBookingsPage';
 
 function App() {
   return (
@@ -23,7 +24,7 @@ function App() {
           <Route path="courts/:id" element={<CourtDetailPage />} />
           <Route path="coaches" element={<CoachListPage />} />
           <Route path="coaches/:id" element={<CoachDetailPage />} />
-          <Route path="bookings" element={<ComingSoonPage title="Mis reservas" />} />
+          <Route path="bookings" element={<MyBookingsPage />} />
           <Route path="profile" element={<ComingSoonPage title="Mi perfil" />} />
           <Route path="login" element={<AuthPage />} />
           <Route path="*" element={<ComingSoonPage title="Página no encontrada" />} />

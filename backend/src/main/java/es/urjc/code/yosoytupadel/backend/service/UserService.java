@@ -8,6 +8,7 @@ import es.urjc.code.yosoytupadel.backend.entities.Racket;
 import es.urjc.code.yosoytupadel.backend.entities.UserRole;
 import es.urjc.code.yosoytupadel.backend.repository.BookingRepository;
 import es.urjc.code.yosoytupadel.backend.repository.RacketRepository;
+import org.hibernate.Hibernate;
 import org.hibernate.engine.jdbc.proxy.BlobProxy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -60,8 +61,15 @@ public class UserService {
         return userMapper.toDTOs(userRepository.findAll());
     }
 
+    @Transactional(readOnly = true)
     public Optional<UserDTO> getUserById(long id) {
-        return userRepository.findById(id).map(userMapper::toDTO);
+        Optional<User> user = userRepository.findById(id);
+        if (user.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Hibernate.initialize(user.get().getRacketHistory());
+        return Optional.of(userMapper.toDTO(user.get()));
     }
 
     @Transactional
@@ -160,6 +168,7 @@ public class UserService {
         Racket racket = user.getRacket();
 
         if (racket != null) {
+            user.addRacketToHistory(racket);
             racket.setStock(racket.getStock() + 1);
             racketRepository.save(racket);
 
@@ -181,6 +190,7 @@ public class UserService {
             // forzamos la devolución tras el tercer uso
             if (user.getRacketUsages() >= 3) {
                 Racket racket = user.getRacket();
+                user.addRacketToHistory(racket);
                 racket.setStock(racket.getStock() + 1);
                 racketRepository.save(racket);
 
@@ -221,11 +231,12 @@ public class UserService {
         }
     }
 
+    @Transactional(readOnly = true)
     public Optional<UserDTO> getAuthenticatedUserDto() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication != null && authentication.getPrincipal() instanceof UserDetails userDetails) {
-            return userRepository.findByEmail(userDetails.getUsername())
+            return userRepository.findWithRacketHistoryByEmail(userDetails.getUsername())
                     .map(userMapper::toDTO);
         }
 
