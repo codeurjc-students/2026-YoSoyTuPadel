@@ -47,7 +47,8 @@ function RacketImage({ racket }: { racket: RacketListDTO }) {
 }
 
 function RacketsPage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const isAdmin = user?.role.toUpperCase().replace(/^ROLE_/, '') === 'ADMIN';
   const [rackets, setRackets] = useState<RacketListDTO[]>([]);
   const [totalModels, setTotalModels] = useState(0);
   const [page, setPage] = useState(0);
@@ -174,7 +175,7 @@ function RacketsPage() {
                       aria-label={`Ver detalles de ${racket.brand} ${racket.name}`}
                       className="rounded-xl bg-brand-red px-4 py-2.5 text-xs font-bold text-white transition hover:bg-red-600"
                     >
-                      Ver detalles
+                      {isAdmin ? 'Ver detalles' : 'Ver detalles'}
                     </Link>
                   ) : (
                     <Link

@@ -57,6 +57,8 @@ public class UserService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
     }
 
+
+    @Transactional(readOnly = true)
     public Collection<UserDTO> getAllUsers() {
         return userMapper.toDTOs(userRepository.findAll());
     }

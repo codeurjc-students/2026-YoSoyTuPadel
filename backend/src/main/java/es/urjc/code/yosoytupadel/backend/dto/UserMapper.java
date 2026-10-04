@@ -43,7 +43,8 @@ public interface UserMapper {
         return new UserUpdateDTO(
                 user.getName(),
                 user.getNickname(),
-                user.getEmail()
+                user.getEmail(),
+                user.getSessionPrice()
         );
     }
 

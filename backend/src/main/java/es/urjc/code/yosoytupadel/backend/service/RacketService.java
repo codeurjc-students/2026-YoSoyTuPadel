@@ -5,6 +5,7 @@ import es.urjc.code.yosoytupadel.backend.dto.RacketDTO;
 import es.urjc.code.yosoytupadel.backend.dto.RacketMapper;
 import es.urjc.code.yosoytupadel.backend.entities.Racket;
 import es.urjc.code.yosoytupadel.backend.repository.RacketRepository;
+import es.urjc.code.yosoytupadel.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.engine.jdbc.proxy.BlobProxy;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.sql.rowset.serial.SerialBlob;
@@ -35,6 +37,9 @@ public class RacketService {
 
     @Autowired
     private RacketMapper mapper;
+
+    @Autowired
+    private UserRepository userRepository;
 
     public Collection<PreRacketDTO> getAllRackets() {
         return mapper.toPreDTOs(racketRepository.findAll());
@@ -80,12 +85,21 @@ public class RacketService {
         return mapper.toDTO(savedRacket);
     }
 
+    @Transactional
     public RacketDTO deleteRacket(long id) {
         Racket racket = racketRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Racket not found"));
 
+        RacketDTO deletedRacket = mapper.toDTO(racket);
+        var affectedUsers = userRepository.findByRacketOrRacketHistoryContaining(racket, racket);
+        affectedUsers.forEach(user -> {
+            user.setRacket(null);
+            user.getRacketHistory().removeIf(historyRacket -> historyRacket.getId().equals(racket.getId()));
+        });
+        userRepository.saveAll(affectedUsers);
+        userRepository.flush();
         racketRepository.delete(racket);
-        return mapper.toDTO(racket);
+        return deletedRacket;
     }
 
 

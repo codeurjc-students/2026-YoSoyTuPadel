@@ -27,5 +27,21 @@ public record UserDTO(
         Double skillLevel,
         Long racketId,
         Integer racketUsages,
-        List<RacketDTO> racketHistory
-) {}
+        List<RacketDTO> racketHistory,
+        Double sessionPrice
+) {
+    public UserDTO(
+            Long id,
+            String name,
+            String nickname,
+            String email,
+            String password,
+            UserRole role,
+            Double skillLevel,
+            Long racketId,
+            Integer racketUsages,
+            List<RacketDTO> racketHistory
+    ) {
+        this(id, name, nickname, email, password, role, skillLevel, racketId, racketUsages, racketHistory, null);
+    }
+}
