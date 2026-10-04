@@ -14,6 +14,7 @@ import {
   Grid,
   Snackbar,
   Stack,
+  TextField,
   Typography,
 } from '@mui/material';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
@@ -31,6 +32,7 @@ type Feedback = {
 
 function RacketDetailPage() {
   const { isAuthenticated, user } = useAuth();
+  const isAdmin = user?.role.toUpperCase().replace(/^ROLE_/, '') === 'ADMIN';
   const { id: idParam } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const id = Number(idParam);
@@ -41,7 +43,19 @@ function RacketDetailPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [photoOpen, setPhotoOpen] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
+  const [editForm, setEditForm] = useState<RacketDTO | null>(null);
   const isLoading = loadedRouteId !== (idParam ?? '');
+  const hasRacketChanges = Boolean(editForm && racket && (
+    editForm.brand !== racket.brand
+    || editForm.name !== racket.name
+    || editForm.description !== racket.description
+    || editForm.pricePerDay !== racket.pricePerDay
+    || editForm.stock !== racket.stock
+  ));
 
   const redirectToProfileForExistingRental = () => {
     setDialogOpen(false);
@@ -122,6 +136,45 @@ function RacketDetailPage() {
     }
   };
 
+  const saveRacket = async () => {
+    if (!editForm) return;
+    try {
+      const updated = await racketService.updateRacket(editForm);
+      setRacket((previous) => previous
+        ? { ...previous, ...updated, image: previous.image }
+        : { ...updated, image: `/api/v1/rackets/${updated.id}/image` });
+      setEditOpen(false);
+      setFeedback({ severity: 'success', message: 'Pala actualizada correctamente.' });
+    } catch {
+      setFeedback({ severity: 'error', message: 'No se ha podido actualizar la pala.' });
+    }
+  };
+
+  const deleteRacket = async () => {
+    if (!racket) return;
+    try {
+      await racketService.deleteRacket(racket.id);
+      setDeleteOpen(false);
+      setFeedback({ severity: 'success', message: 'Pala eliminada con éxito' });
+      window.setTimeout(() => navigate('/rackets', { replace: true }), 1500);
+    } catch {
+      setFeedback({ severity: 'error', message: 'No se ha podido eliminar la pala.' });
+    }
+  };
+
+  const uploadPhoto = async () => {
+    if (!selectedPhoto || !racket) return;
+    try {
+      await racketService.uploadRacketImage(racket.id, selectedPhoto);
+      setRacket((current) => current ? { ...current, image: `/api/v1/rackets/${current.id}/image?v=${Date.now()}` } : current);
+      setSelectedPhoto(null);
+      setPhotoOpen(false);
+      setFeedback({ severity: 'success', message: 'Imagen actualizada correctamente.' });
+    } catch {
+      setFeedback({ severity: 'error', message: 'No se ha podido actualizar la imagen.' });
+    }
+  };
+
   if (!isAuthenticated || !user) {
     return <Navigate to="/login" replace />;
   }
@@ -151,7 +204,7 @@ function RacketDetailPage() {
         ← Volver al catálogo
       </Button>
 
-      <Grid container component="div" spacing={{ xs: 3, md: 6 }} sx={{ alignItems: 'center' }}>
+      <Grid container component="div" spacing={{ xs: 3, md: 6 }} sx={{ maxWidth: 900, mx: 'auto', alignItems: 'center' }}>
         <Grid component="div" size={{ xs: 12, md: 6 }}>
           <Box
             sx={{
@@ -171,6 +224,23 @@ function RacketDetailPage() {
               alt={`${racket.brand} ${racket.name}`}
               sx={{ display: 'block', width: '100%', height: { xs: 320, sm: 420 }, objectFit: 'contain', p: { xs: 3, sm: 5 } }}
             />
+            {isAdmin && (
+              <Button
+                component="label"
+                variant="contained"
+                sx={{ mt: 2, bgcolor: 'white', color: 'grey.900', fontWeight: 800, textTransform: 'none', borderRadius: 2, '&:hover': { bgcolor: 'grey.200' } }}
+              >
+                Actualizar foto
+                <input type="file" hidden accept="image/*" onChange={(event) => {
+                  const file = event.target.files?.[0] ?? null;
+                  event.target.value = '';
+                  if (file) {
+                    setSelectedPhoto(file);
+                    setPhotoOpen(true);
+                  }
+                }} />
+              </Button>
+            )}
           </Box>
         </Grid>
 
@@ -193,7 +263,7 @@ function RacketDetailPage() {
             <Typography sx={{ color: 'grey.300', fontWeight: 700 }}>
               Stock disponible: {racket.stock ?? 0}
             </Typography>
-            {racket.stock !== null && racket.stock > 0 ? (
+            {isAdmin ? null : racket.stock !== null && racket.stock > 0 ? (
               <Button
                 fullWidth
                 variant="contained"
@@ -247,6 +317,32 @@ function RacketDetailPage() {
           </Stack>
         </Grid>
       </Grid>
+
+        {isAdmin && (
+          <Stack direction="row" spacing={2} sx={{ justifyContent: 'center', mt: 3 }}>
+            <Button variant="contained" onClick={() => { setEditForm({ ...racket }); setEditOpen(true); }} sx={{ bgcolor: 'white', color: 'grey.900', fontWeight: 800, textTransform: 'none', borderRadius: 2, '&:hover': { bgcolor: 'grey.200' } }}>Editar</Button>
+            <Button variant="contained" color="error" onClick={() => setDeleteOpen(true)} sx={{ fontWeight: 800, textTransform: 'none', borderRadius: 2 }}>Eliminar</Button>
+          </Stack>
+        )}
+
+        <Dialog open={editOpen} onClose={() => setEditOpen(false)} fullWidth maxWidth="sm" slotProps={{ paper: { sx: { bgcolor: 'white', borderRadius: 3, color: 'grey.900' } } }}>
+          <DialogTitle sx={{ color: 'grey.900', fontWeight: 900 }}>Editar pala</DialogTitle>
+          <DialogContent>
+            <Stack spacing={2} sx={{ pt: 1 }}>
+              <TextField variant="outlined" label="Marca" value={editForm?.brand ?? ''} onChange={(event) => setEditForm((current) => current ? { ...current, brand: event.target.value } : current)} fullWidth />
+              <TextField variant="outlined" label="Nombre" value={editForm?.name ?? ''} onChange={(event) => setEditForm((current) => current ? { ...current, name: event.target.value } : current)} fullWidth />
+              <TextField variant="outlined" label="Descripción" multiline value={editForm?.description ?? ''} onChange={(event) => setEditForm((current) => current ? { ...current, description: event.target.value } : current)} fullWidth />
+              <TextField variant="outlined" label="Precio" type="number" value={editForm?.pricePerDay ?? ''} onChange={(event) => setEditForm((current) => current ? { ...current, pricePerDay: Number(event.target.value) } : current)} fullWidth />
+              <TextField variant="outlined" label="Stock" type="number" value={editForm?.stock ?? ''} onChange={(event) => setEditForm((current) => current ? { ...current, stock: Number(event.target.value) } : current)} fullWidth />
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setEditOpen(false)} variant="text" sx={{ color: 'grey.700', textTransform: 'none' }}>Cancelar</Button>
+            <Button disabled={!hasRacketChanges} variant="contained" onClick={() => void saveRacket()} sx={{ bgcolor: 'grey.900', color: 'white', textTransform: 'none', '&:hover': { bgcolor: 'grey.800' } }}>Guardar cambios</Button>
+          </DialogActions>
+        </Dialog>
+        <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)}><DialogTitle>¿Eliminar pala?</DialogTitle><DialogContent><DialogContentText>Esta acción no se puede deshacer.</DialogContentText></DialogContent><DialogActions><Button onClick={() => setDeleteOpen(false)}>Cancelar</Button><Button color="error" variant="contained" onClick={() => void deleteRacket()}>Eliminar</Button></DialogActions></Dialog>
+        <Dialog open={photoOpen} onClose={() => setPhotoOpen(false)}><DialogTitle>¿Deseas actualizar la imagen?</DialogTitle><DialogActions><Button onClick={() => setPhotoOpen(false)}>Cancelar</Button><Button color="error" variant="contained" disabled={!selectedPhoto} onClick={() => void uploadPhoto()}>Confirmar</Button></DialogActions></Dialog>
 
       <Dialog
         open={dialogOpen}

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import api from '../../../service/api';
 import { racketService } from '../../rackets/services/racketService';
+import { useAuth } from '../../auth/hooks/useAuth';
 
 const activities = [
   {
@@ -62,6 +63,8 @@ async function getTotalRacketStock(signal: AbortSignal): Promise<number> {
 }
 
 function HomePage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role.toUpperCase().replace(/^ROLE_/, '') === 'ADMIN';
   const [stats, setStats] = useState<HomeStats | null>(null);
   const today = new Date();
   const formattedDate = new Intl.DateTimeFormat('es-ES', {
@@ -164,7 +167,7 @@ function HomePage() {
         </div>
       </section>
 
-      <section className="relative isolate mx-auto max-w-7xl overflow-hidden px-4 py-14 text-white sm:px-6 sm:py-16 lg:px-8">
+      {!isAdmin && <section className="relative isolate mx-auto max-w-7xl overflow-hidden px-4 py-14 text-white sm:px-6 sm:py-16 lg:px-8">
         <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand-red">Vamos a jugar</p>
@@ -178,7 +181,7 @@ function HomePage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
-          {activities.map((activity, index) => (
+          {activities.filter((activity) => !isAdmin || activity.to !== '/coaches').map((activity, index) => (
             <motion.article
               key={activity.to}
               initial={{ opacity: 0, y: 16 }}
@@ -210,7 +213,7 @@ function HomePage() {
             </motion.article>
           ))}
         </div>
-      </section>
+      </section>}
     </div>
   );
 }

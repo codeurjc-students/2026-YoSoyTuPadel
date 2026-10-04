@@ -9,5 +9,7 @@ public record UserUpdateDTO(
         @Size(min = 2, message = "Nickname must be at least 2 characters long")
         String nickname,
 
-        String email
+        String email,
+
+        Double sessionPrice
 ) {}

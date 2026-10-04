@@ -76,4 +76,13 @@ export const courtService = {
     const { data } = await api.post<BookingDTO>('/api/v1/bookings', booking);
     return data;
   },
+
+  async updateCourt(court: CourtDTO): Promise<CourtDTO> {
+    const { data } = await api.put<CourtDTO>(`/api/v1/courts/${court.id}`, court);
+    return data;
+  },
+
+  async deleteCourt(id: number): Promise<void> {
+    await api.delete(`/api/v1/courts/${id}`);
+  },
 };

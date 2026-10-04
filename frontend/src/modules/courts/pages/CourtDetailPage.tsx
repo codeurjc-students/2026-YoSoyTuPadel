@@ -14,8 +14,11 @@ import {
   DialogTitle,
   Grid,
   IconButton,
+  MenuItem,
   Paper,
   Snackbar,
+  Stack,
+  TextField,
   Typography,
 } from '@mui/material';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -77,6 +80,7 @@ function surfaceLabel(surface: string): string {
 function CourtDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const isAdmin = user?.role.toUpperCase().replace(/^ROLE_/, '') === 'ADMIN';
   const navigate = useNavigate();
   const courtId = Number(id);
   const isValidCourtId = Number.isSafeInteger(courtId) && courtId > 0;
@@ -89,10 +93,17 @@ function CourtDetailPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string }>({ open: false, message: '' });
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error';
+  }>({ open: false, message: '', severity: 'error' });
   const [loadError, setLoadError] = useState<string | null>(null);
   const [availability, setAvailability] = useState<{ date: string; slots: string[] } | null>(null);
   const [availabilityErrorDate, setAvailabilityErrorDate] = useState<string | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [editForm, setEditForm] = useState<CourtDTO | null>(null);
   const dayListRef = useRef<HTMLDivElement | null>(null);
   const selectedDay = bookingDays.find((date) => formatDate(date) === selectedDate);
   const reservedSlots = availability?.date === selectedDate ? availability.slots : [];
@@ -104,6 +115,13 @@ function CourtDetailPage() {
   const selectedTimeHasPassed = selectedDate === currentDate
     && selectedTime !== ''
     && selectedTime <= `${String(currentTime.getHours()).padStart(2, '0')}:${String(currentTime.getMinutes()).padStart(2, '0')}`;
+  const hasCourtChanges = Boolean(editForm && court && (
+    editForm.name !== court.name
+    || editForm.courtPrice !== court.courtPrice
+    || editForm.type !== court.type
+    || editForm.surface !== court.surface
+    || editForm.isAvailable !== court.isAvailable
+  ));
 
   useEffect(() => {
     const timer = window.setInterval(() => setCurrentTime(new Date()), 30_000);
@@ -132,7 +150,7 @@ function CourtDetailPage() {
   }, [courtId, id, isAuthLoading, isAuthenticated, isValidCourtId, user]);
 
   useEffect(() => {
-    if (!court) return;
+    if (!court || isAdmin) return;
 
     const controller = new AbortController();
     void courtService.getReservedCourtSlots(court.id, selectedDate, controller.signal)
@@ -145,6 +163,7 @@ function CourtDetailPage() {
           setAvailabilityErrorDate(selectedDate);
           setSnackbar({
             open: true,
+            severity: 'error',
             message: axios.isAxiosError(error) && error.response?.status === 409
               ? getErrorMessage(error)
               : 'No se han podido consultar los horarios. Inténtalo de nuevo.',
@@ -153,7 +172,7 @@ function CourtDetailPage() {
       });
 
     return () => controller.abort();
-  }, [court, selectedDate]);
+  }, [court, isAdmin, selectedDate]);
 
   const confirmBooking = async () => {
     if (!court || !user || !isAuthenticated || !selectedDate || !selectedTime || selectedTimeHasPassed) return;
@@ -166,7 +185,7 @@ function CourtDetailPage() {
     } catch (error: unknown) {
       const message = getErrorMessage(error);
       setIsDialogOpen(false);
-      setSnackbar({ open: true, message });
+      setSnackbar({ open: true, message, severity: 'error' });
       if (axios.isAxiosError(error) && error.response?.status === 409) {
         setAvailability((current) => ({
           date: selectedDate,
@@ -181,6 +200,30 @@ function CourtDetailPage() {
     }
   };
 
+  const saveCourt = async () => {
+    if (!editForm) return;
+    try {
+      const updated = await courtService.updateCourt(editForm);
+      setCourt(updated);
+      setEditOpen(false);
+      setSnackbar({ open: true, message: 'Pista actualizada correctamente', severity: 'success' });
+    } catch {
+      setSnackbar({ open: true, message: 'No se ha podido actualizar la pista.', severity: 'error' });
+    }
+  };
+
+  const deleteCourt = async () => {
+    if (!court) return;
+    try {
+      await courtService.deleteCourt(court.id);
+      setDeleteOpen(false);
+      setSnackbar({ open: true, message: 'Pista eliminada con éxito', severity: 'success' });
+      window.setTimeout(() => navigate('/courts', { replace: true }), 1500);
+    } catch {
+      setSnackbar({ open: true, message: 'No se ha podido eliminar la pista.', severity: 'error' });
+    }
+  };
+
   if (isAuthLoading || (!isAuthenticated && !loadError) || (isLoading && isValidCourtId)) {
     return (
       <Box role="status" aria-label="Cargando pista" sx={{ minHeight: '55vh', display: 'grid', placeItems: 'center' }}>
@@ -190,7 +233,7 @@ function CourtDetailPage() {
   }
 
   return (
-    <Box component="section" sx={{ maxWidth: 1240, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, py: { xs: 3, sm: 5 } }}>
+    <Box component="section" sx={{ maxWidth: 1000, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, py: { xs: 3, sm: 5 } }}>
       <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2, mb: 3 }}>
         <Button component={Link} to="/courts" color="inherit" sx={{ color: 'rgba(255,255,255,0.75)', textTransform: 'none' }}>
           ← Pistas
@@ -205,7 +248,8 @@ function CourtDetailPage() {
       {!isValidCourtId && <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>La pista solicitada no es válida.</Alert>}
 
       {court && (
-        <Grid container spacing={{ xs: 2.5, md: 3 }}>
+        <>
+        <Grid container spacing={{ xs: 2.5, md: 3 }} sx={{ maxWidth: 900, mx: 'auto' }}>
           <Grid size={{ xs: 12, md: 7 }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Paper
@@ -234,7 +278,6 @@ function CourtDetailPage() {
                   sx={{ position: 'absolute', left: 2.5, bottom: 2.5, fontWeight: 800 }}
                 />
               </Paper>
-
               <Paper elevation={2} sx={{ p: { xs: 2.25, sm: 3 }, borderRadius: 3 }}>
                 <Box sx={{
                   display: 'flex',
@@ -276,7 +319,7 @@ function CourtDetailPage() {
             </Box>
           </Grid>
 
-          <Grid size={{ xs: 12, md: 5 }}>
+          <Grid size={{ xs: 12, md: 5 }} sx={{ display: isAdmin ? 'none' : undefined }}>
             <Paper
               elevation={3}
               sx={{
@@ -446,7 +489,41 @@ function CourtDetailPage() {
             </Paper>
           </Grid>
         </Grid>
+        {isAdmin && (
+          <Stack direction="row" spacing={2} sx={{ justifyContent: 'center', mt: 3 }}>
+            <Button variant="contained" onClick={() => { setEditForm({ ...court }); setEditOpen(true); }} sx={{ bgcolor: 'white', color: 'grey.900', fontWeight: 800, textTransform: 'none', borderRadius: 2, '&:hover': { bgcolor: 'grey.200' } }}>Editar</Button>
+            <Button variant="contained" color="error" onClick={() => setDeleteOpen(true)} sx={{ fontWeight: 800, textTransform: 'none', borderRadius: 2 }}>Eliminar</Button>
+          </Stack>
+        )}
+        </>
       )}
+
+      <Dialog open={editOpen} onClose={() => setEditOpen(false)} fullWidth maxWidth="sm" slotProps={{ paper: { sx: { bgcolor: 'white', borderRadius: 3, color: 'grey.900' } } }}>
+        <DialogTitle sx={{ color: 'grey.900', fontWeight: 900 }}>Editar pista</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <TextField variant="outlined" label="Nombre" value={editForm?.name ?? ''} onChange={(event) => setEditForm((current) => current ? { ...current, name: event.target.value } : current)} fullWidth />
+            <TextField variant="outlined" label="Precio por hora" type="number" value={editForm?.courtPrice ?? ''} onChange={(event) => setEditForm((current) => current ? { ...current, courtPrice: Number(event.target.value) } : current)} fullWidth />
+            <TextField select variant="outlined" label="Modalidad" value={editForm?.type ?? ''} onChange={(event) => setEditForm((current) => current ? { ...current, type: event.target.value } : current)} fullWidth>
+              <MenuItem value="INDOOR">INDOOR</MenuItem>
+              <MenuItem value="OUTDOOR">OUTDOOR</MenuItem>
+            </TextField>
+            <TextField select variant="outlined" label="Tipo de superficie" value={editForm?.surface ?? ''} onChange={(event) => setEditForm((current) => current ? { ...current, surface: event.target.value } : current)} fullWidth>
+              <MenuItem value="WALL">MURO</MenuItem>
+              <MenuItem value="GLASS">CRISTAL</MenuItem>
+            </TextField>
+            <TextField select variant="outlined" label="Estado" value={editForm?.isAvailable ? 'true' : 'false'} onChange={(event) => setEditForm((current) => current ? { ...current, isAvailable: event.target.value === 'true' } : current)} fullWidth>
+              <MenuItem value="true">Disponible</MenuItem>
+              <MenuItem value="false">No disponible</MenuItem>
+            </TextField>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditOpen(false)} variant="text" sx={{ color: 'grey.700', textTransform: 'none' }}>Cancelar</Button>
+          <Button disabled={!hasCourtChanges} variant="contained" onClick={() => void saveCourt()} sx={{ bgcolor: 'grey.900', color: 'white', textTransform: 'none', '&:hover': { bgcolor: 'grey.800' } }}>Guardar cambios</Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)}><DialogTitle>¿Eliminar pista?</DialogTitle><DialogContent><DialogContentText>Esta acción no se puede deshacer.</DialogContentText></DialogContent><DialogActions><Button onClick={() => setDeleteOpen(false)}>Cancelar</Button><Button color="error" variant="contained" onClick={() => void deleteCourt()}>Eliminar</Button></DialogActions></Dialog>
 
       <Dialog
         open={isDialogOpen}
@@ -524,7 +601,7 @@ function CourtDetailPage() {
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
         <Alert
-          severity="error"
+          severity={snackbar.severity}
           variant="standard"
           onClose={() => setSnackbar((current) => ({ ...current, open: false }))}
           sx={{
@@ -534,7 +611,7 @@ function CourtDetailPage() {
             color: '#252830',
             boxShadow: '0 12px 36px rgba(0,0,0,0.22)',
             fontSize: 16,
-            '& .MuiAlert-icon': { color: '#e60012', fontSize: 24, alignItems: 'center' },
+            '& .MuiAlert-icon': { fontSize: 24, alignItems: 'center' },
           }}
         >
           {snackbar.message}

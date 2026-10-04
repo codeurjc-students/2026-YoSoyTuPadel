@@ -18,7 +18,8 @@ const PAGE_SIZE = 10;
 const courtImage = '/images/padel-court-overhead.jpg';
 
 function CourtListPage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const isAdmin = user?.role.toUpperCase().replace(/^ROLE_/, '') === 'ADMIN';
   const [courts, setCourts] = useState<PreCourtDTO[]>([]);
   const [totalCourts, setTotalCourts] = useState(0);
   const [page, setPage] = useState(0);
@@ -184,7 +185,7 @@ function CourtListPage() {
                         color="error"
                         sx={{ minHeight: 40, borderRadius: 2, px: 2, bgcolor: '#e60012', fontWeight: 800, fontSize: 12, textTransform: 'none', whiteSpace: 'nowrap', boxShadow: 'none', '&:hover': { bgcolor: '#c90010', boxShadow: 'none' } }}
                       >
-                        Ver disponibilidad
+                        {isAdmin ? 'Ver detalles' : 'Ver disponibilidad'}
                       </Button>
                     ) : (
                       <Button

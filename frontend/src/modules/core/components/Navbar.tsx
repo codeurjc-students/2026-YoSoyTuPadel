@@ -11,6 +11,11 @@ const links = [
   { to: '/bookings', label: 'Mis reservas' },
 ];
 
+function canAccessAdmin(user: AuthUser | null, isAuthenticated: boolean) {
+  const role = user?.role.toUpperCase().replace(/^ROLE_/, '');
+  return isAuthenticated && role === 'ADMIN';
+}
+
 function canAccessBookings(user: AuthUser | null, isAuthenticated: boolean) {
   const role = user?.role.toUpperCase().replace(/^ROLE_/, '');
   return isAuthenticated && (role === 'USER' || role === 'COACH');
@@ -24,6 +29,12 @@ function Navbar() {
   const visibleLinks = canAccessBookings(user, isAuthenticated)
     ? links
     : links.filter((link) => link.to !== '/bookings');
+  const adminLinkVisible = canAccessAdmin(user, isAuthenticated);
+  const isAdmin = adminLinkVisible;
+  const adminLinks = isAdmin
+    ? links.filter((link) => link.to !== '/coaches' && link.to !== '/bookings')
+      .concat({ to: '/admin', label: 'Panel de administración' })
+    : visibleLinks;
 
   const confirmLogout = async () => {
     if (await logout()) {
@@ -53,7 +64,7 @@ function Navbar() {
         </Link>
 
         <nav aria-label="Navegación principal" className="hidden items-center gap-1 lg:flex">
-          {visibleLinks.map((link) => (
+          {adminLinks.map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
@@ -136,7 +147,7 @@ function Navbar() {
           className="border-t border-brand-line bg-white px-4 py-3 shadow-soft lg:hidden"
         >
           <div className="mx-auto flex max-w-7xl flex-col gap-1">
-            {visibleLinks.map((link) => (
+            {adminLinks.map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}

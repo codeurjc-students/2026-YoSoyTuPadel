@@ -11,6 +11,7 @@ export interface AuthUser {
   racketId?: number | null;
   racketUsages?: number;
   racketHistory?: RacketHistoryEntry[];
+  sessionPrice?: number | null;
 }
 
 export interface RacketHistoryEntry {
@@ -36,6 +37,7 @@ export interface UserUpdateDetails {
   name: string;
   nickname: string;
   email: string;
+  sessionPrice?: number | null;
 }
 
 export type UpdatedUserDetails = UserUpdateDetails;
@@ -67,6 +69,7 @@ function isAuthUser(value: unknown): value is AuthUser {
     && typeof candidate.role === 'string'
     && (candidate.racketId === undefined || typeof candidate.racketId === 'number' || candidate.racketId === null)
     && (candidate.racketUsages === undefined || typeof candidate.racketUsages === 'number')
+    && (candidate.sessionPrice === undefined || typeof candidate.sessionPrice === 'number' || candidate.sessionPrice === null)
     && (candidate.racketHistory === undefined || (
       Array.isArray(candidate.racketHistory)
       && candidate.racketHistory.every((entry: unknown) => {

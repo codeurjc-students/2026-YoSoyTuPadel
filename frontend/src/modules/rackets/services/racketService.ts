@@ -55,4 +55,21 @@ export const racketService = {
     const { data } = await api.delete<RacketRentalUser>(`/api/v1/users/${userId}/racket`);
     return data;
   },
+
+  async updateRacket(racket: RacketDTO): Promise<RacketDTO> {
+    const { data } = await api.put<RacketDTO>(`/api/v1/rackets/${racket.id}`, racket);
+    return data;
+  },
+
+  async deleteRacket(id: number): Promise<void> {
+    await api.delete(`/api/v1/rackets/${id}`);
+  },
+
+  async uploadRacketImage(id: number, image: File): Promise<void> {
+    const formData = new FormData();
+    formData.append('imageFile', image);
+    await api.put(`/api/v1/rackets/${id}/image`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 };
