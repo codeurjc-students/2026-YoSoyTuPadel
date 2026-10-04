@@ -107,6 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<AuthContextValue>(() => ({
     user,
+    updateUser: setUser,
     isAuthenticated: user !== null,
     isLoading,
     error,

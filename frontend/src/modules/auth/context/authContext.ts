@@ -3,6 +3,7 @@ import type { AuthUser, LoginCredentials, RegistrationDetails } from '../service
 
 export interface AuthContextValue {
   user: AuthUser | null;
+  updateUser?: (user: AuthUser) => void;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
