@@ -32,6 +32,14 @@ export interface RegistrationDetails extends LoginCredentials {
   nickname: string;
 }
 
+export interface UserUpdateDetails {
+  name: string;
+  nickname: string;
+  email: string;
+}
+
+export type UpdatedUserDetails = UserUpdateDetails;
+
 interface AuthResponse {
   status: 'SUCCESS' | 'FAILURE';
   message: string;
@@ -98,6 +106,23 @@ export const authService = {
   async getCurrentUser(): Promise<AuthUser> {
     const { data } = await api.get<AuthUser>('/api/v1/users/me');
     return data;
+  },
+
+  async updateUser(id: number, details: UserUpdateDetails): Promise<UpdatedUserDetails> {
+    const { data } = await api.put<UpdatedUserDetails>(`/api/v1/users/${id}`, details);
+    return data;
+  },
+
+  async uploadUserImage(id: number, image: File): Promise<void> {
+    const formData = new FormData();
+    formData.append('imageFile', image);
+    await api.put(`/api/v1/users/${id}/image`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
+  async deleteUser(id: number): Promise<void> {
+    await api.delete(`/api/v1/users/${id}`);
   },
 
   async refresh(): Promise<void> {
