@@ -32,15 +32,17 @@ function Footer() {
           </div>
         )}
 
-        <div>
-          <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Tu cuenta</h2>
-          <div className="mt-4 flex flex-col items-start gap-3 text-sm text-slate-300">
-            <Link className="transition hover:text-white" to="/profile">Mi perfil</Link>
-            {isAuthenticated && role === 'USER' && <Link className="transition hover:text-white" to="/bookings">Mis reservas</Link>}
-            {isCoach && <Link className="transition hover:text-white" to="/coach-dashboard">Panel de entrenador</Link>}
-            {isAdmin && <Link className="transition hover:text-white" to="/admin">Panel de administración</Link>}
+        {user && (
+          <div>
+            <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Tu cuenta</h2>
+            <div className="mt-4 flex flex-col items-start gap-3 text-sm text-slate-300">
+              <Link className="transition hover:text-white" to="/profile">Mi perfil</Link>
+              {isAuthenticated && role === 'USER' && <Link className="transition hover:text-white" to="/bookings">Mis reservas</Link>}
+              {isCoach && <Link className="transition hover:text-white" to="/coach-dashboard">Panel de entrenador</Link>}
+              {isAdmin && <Link className="transition hover:text-white" to="/admin">Panel de administración</Link>}
+            </div>
           </div>
-        </div>
+        )}
       </div>
       <div className="border-t border-white/10">
         <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-5 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
