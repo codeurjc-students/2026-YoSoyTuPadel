@@ -61,10 +61,14 @@ function formatDate(value: string): string {
 }
 
 function hasBookingPassed(booking: BookingItem): boolean {
-  if (!booking.date || !booking.time) return false;
-  const [year, month, day] = booking.date.split('-').map(Number);
-  const [hour, minute] = booking.time.split(':').map(Number);
-  return new Date(year, month - 1, day, hour, minute).getTime() <= Date.now();
+  if (!booking.date) return false;
+  const today = new Date();
+  const todayValue = [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, '0'),
+    String(today.getDate()).padStart(2, '0'),
+  ].join('-');
+  return booking.date < todayValue;
 }
 
 function EmptyState({ tab }: { tab: BookingTab }) {
@@ -156,7 +160,9 @@ function MyBookingsPage() {
       .sort((a, b) => {
         if (a.date === null) return b.date === null ? 0 : 1;
         if (b.date === null) return -1;
-        return a.date.localeCompare(b.date) || (a.time ?? '').localeCompare(b.time ?? '');
+        const aDate = new Date(`${a.date}T${a.time ?? '00:00'}`).getTime();
+        const bDate = new Date(`${b.date}T${b.time ?? '00:00'}`).getTime();
+        return aDate - bDate;
       }),
     [filteredBookings],
   );
@@ -169,7 +175,9 @@ function MyBookingsPage() {
       .sort((a, b) => {
         if (a.date === null) return b.date === null ? 0 : 1;
         if (b.date === null) return -1;
-        return b.date.localeCompare(a.date) || (b.time ?? '').localeCompare(a.time ?? '');
+        const aDate = new Date(`${a.date}T${a.time ?? '00:00'}`).getTime();
+        const bDate = new Date(`${b.date}T${b.time ?? '00:00'}`).getTime();
+        return bDate - aDate;
       }),
     [filteredBookings],
   );
