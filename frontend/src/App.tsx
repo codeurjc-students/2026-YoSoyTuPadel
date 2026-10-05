@@ -1,9 +1,10 @@
 import { useEffect, type ReactNode } from 'react';
 import { Route, Routes, useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
 import Layout from './modules/core/components/Layout';
-import ComingSoonPage from './modules/core/pages/ComingSoonPage';
 import HomePage from './modules/core/pages/HomePage';
+import NotFoundPage from './modules/core/pages/NotFoundPage';
+import ServerErrorPage from './modules/core/pages/ServerErrorPage';
+import ForbiddenPage from './modules/core/pages/ForbiddenPage';
 import RacketsPage from './modules/rackets/pages/RacketsPage';
 import RacketDetailPage from './modules/rackets/pages/RacketDetailPage';
 import { AuthProvider } from './modules/auth/context/AuthProvider';
@@ -27,22 +28,14 @@ function RoleGuard({ children, allowedRoles }: { children: ReactNode; allowedRol
     ? user.role.toUpperCase().replace(/^ROLE_/, '') as UserRole
     : 'GUEST';
   const hasAccess = allowedRoles.includes(currentRole);
-  const fallbackPath = currentRole === 'ADMIN'
-    ? '/admin'
-    : currentRole === 'COACH'
-      ? '/coach-dashboard'
-      : currentRole === 'GUEST'
-        ? '/login'
-        : '/';
 
   useEffect(() => {
     if (hasAccess) {
       return;
     }
 
-    toast.error('No tienes acceso a esta pantalla');
-    navigate(fallbackPath, { replace: true });
-  }, [fallbackPath, hasAccess, navigate]);
+    navigate('/403', { replace: true });
+  }, [hasAccess, navigate]);
 
   return hasAccess ? <>{children}</> : null;
 }
@@ -64,8 +57,10 @@ function App() {
           <Route path="admin" element={<RoleGuard allowedRoles={['ADMIN']}><AdminDashboardPage /></RoleGuard>} />
           <Route path="coach-dashboard" element={<RoleGuard allowedRoles={['COACH']}><CoachDashboardPage /></RoleGuard>} />
           <Route path="login" element={<AuthPage />} />
-          <Route path="*" element={<ComingSoonPage title="Página no encontrada" />} />
         </Route>
+        <Route path="/500" element={<ServerErrorPage />} />
+        <Route path="/403" element={<ForbiddenPage />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </AuthProvider>
   );

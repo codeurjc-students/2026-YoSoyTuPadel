@@ -26,6 +26,20 @@ api.interceptors.response.use(
         }
 
         if (axios.isAxiosError<{ message?: string; error?: string }>(error)) {
+            if (error.response?.status === 403) {
+                if (window.location.pathname !== '/403') {
+                    window.location.href = '/403';
+                }
+                return Promise.reject(error);
+            }
+
+            if ((error.response?.status ?? 0) >= 500) {
+                if (window.location.pathname !== '/500') {
+                    window.location.href = '/500';
+                }
+                return Promise.reject(error);
+            }
+
             const fallbackMessage = error.response
                 ? `No se pudo completar la petición (${error.response.status}).`
                 : 'No se pudo conectar con el servidor.';
