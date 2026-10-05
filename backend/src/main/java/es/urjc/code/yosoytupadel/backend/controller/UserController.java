@@ -66,7 +66,7 @@ public class UserController {
         return ResponseEntity.created(location).body(responseDTO);
     }
 
-    @PreAuthorize("hasRole('ADMIN') or @userService.isMe(#id)")
+    @PreAuthorize("hasRole('ADMIN') or (hasAnyRole('USER', 'COACH') and @userService.isMe(#id))")
     @PutMapping("/{id}")
     public ResponseEntity<UserUpdateDTO> updateUser(
             @PathVariable Long id,
@@ -134,7 +134,7 @@ public class UserController {
         return userService.deleteUser(id);
     }
 
-    @PreAuthorize("hasRole('ADMIN') or @userService.isMe(#id)")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('COACH') or @userService.isMe(#id)")
     @GetMapping("/{id}/image")
     public ResponseEntity<Object> getUserImage(@PathVariable long id) throws SQLException {
 
@@ -145,7 +145,7 @@ public class UserController {
     }
 
 
-    @PreAuthorize("hasRole('ADMIN') or @userService.isMe(#id)")
+    @PreAuthorize("hasRole('ADMIN') or (hasAnyRole('USER', 'COACH') and @userService.isMe(#id))")
     @PutMapping("/{id}/image")
     public ResponseEntity<Object> replaceUserImage(@PathVariable long id, @RequestParam MultipartFile imageFile)
             throws IOException {

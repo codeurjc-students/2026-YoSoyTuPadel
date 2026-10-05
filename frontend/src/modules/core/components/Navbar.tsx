@@ -26,6 +26,8 @@ function Navbar() {
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const navigate = useNavigate();
+  const role = user?.role.toUpperCase().replace(/^ROLE_/, '');
+  const isCoach = isAuthenticated && role === 'COACH';
   const visibleLinks = canAccessBookings(user, isAuthenticated)
     ? links
     : links.filter((link) => link.to !== '/bookings');
@@ -34,6 +36,8 @@ function Navbar() {
   const adminLinks = isAdmin
     ? links.filter((link) => link.to !== '/coaches' && link.to !== '/bookings')
       .concat({ to: '/admin', label: 'Panel de administración' })
+    : isCoach
+      ? [{ to: '/coach-dashboard', label: 'Panel de entrenador' }]
     : visibleLinks;
 
   const confirmLogout = async () => {

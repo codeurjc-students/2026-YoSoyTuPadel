@@ -15,6 +15,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByUserId(Long userId);
 
+    List<Booking> findByCoachId(Long coachId);
+
     List<Booking> findByUserIdAndType(Long userId, es.urjc.code.yosoytupadel.backend.entities.BookingType type);
 
     @Query("SELECT b FROM Booking b WHERE b.court.id = :courtId " +

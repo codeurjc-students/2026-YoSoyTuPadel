@@ -13,6 +13,7 @@ import CoachDetailPage from './modules/coaches/pages/CoachDetailPage';
 import MyBookingsPage from './modules/bookings/pages/MyBookingsPage';
 import UserProfilePage from './modules/users/pages/UserProfilePage';
 import AdminDashboardPage from './modules/admin/pages/AdminDashboardPage';
+import CoachDashboardPage from './modules/coaches/pages/CoachDashboardPage';
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
           <Route path="bookings" element={<MyBookingsPage />} />
           <Route path="profile" element={<UserProfilePage />} />
           <Route path="admin" element={<AdminDashboardPage />} />
+          <Route path="coach-dashboard" element={<CoachDashboardPage />} />
           <Route path="login" element={<AuthPage />} />
           <Route path="*" element={<ComingSoonPage title="Página no encontrada" />} />
         </Route>

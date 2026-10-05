@@ -88,6 +88,7 @@ public class WebSecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/coaches").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/coaches/*/image").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/coaches/*").hasAnyRole("USER", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/v1/users/*/image").hasAnyRole("USER", "COACH", "ADMIN")
 
 
                 // Rackets
@@ -100,9 +101,10 @@ public class WebSecurityConfig {
 
                 // Bookings
                 .requestMatchers(HttpMethod.GET, "/api/v1/bookings").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/v1/bookings/coach").hasRole("COACH")
                 .requestMatchers(HttpMethod.GET, "/api/v1/bookings/*").hasAnyRole("USER", "ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/v1/bookings").hasRole("USER")
-                .requestMatchers(HttpMethod.PATCH, "/api/v1/bookings/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/api/v1/bookings/**").hasAnyRole("USER", "ADMIN", "COACH")
                 .requestMatchers(HttpMethod.DELETE, "/api/v1/bookings/**").hasRole("ADMIN")
 
                 // Users
@@ -112,6 +114,8 @@ public class WebSecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/me").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/v1/users").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/*/bookings").hasAnyRole("USER", "ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/v1/users/*").hasAnyRole("USER", "COACH", "ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/v1/users/*/image").hasAnyRole("USER", "COACH", "ADMIN")
                 .requestMatchers("/api/v1/users/**").hasAnyRole("USER", "ADMIN")
 
                 .anyRequest().authenticated()
