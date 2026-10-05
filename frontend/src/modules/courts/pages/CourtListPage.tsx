@@ -159,11 +159,6 @@ function CourtListPage() {
                       alt={`Vista de una pista de pádel - ${court.name}`}
                       sx={{ height: '100%', objectFit: 'cover' }}
                     />
-                    {!court.isAvailable && (
-                      <Box sx={{ position: 'absolute', top: 2, left: 2, borderRadius: 99, bgcolor: 'white', px: 1.25, py: 0.5, color: '#c62828', fontSize: 12, fontWeight: 800 }}>
-                        No disponible
-                      </Box>
-                    )}
                   </Box>
                   <CardContent sx={{ p: 2.5 }}>
                     <Typography component="h2" variant="h6" sx={{ color: '#17191e', fontSize: 20, lineHeight: 1.35, fontWeight: 900 }}>
@@ -181,7 +176,7 @@ function CourtListPage() {
                         component={Link}
                         to={`/courts/${court.id}`}
                         variant="contained"
-                        disabled={!court.isAvailable}
+                        disabled={!court.isAvailable && !isAdmin}
                         color="error"
                         sx={{ minHeight: 40, borderRadius: 2, px: 2, bgcolor: '#e60012', fontWeight: 800, fontSize: 12, textTransform: 'none', whiteSpace: 'nowrap', boxShadow: 'none', '&:hover': { bgcolor: '#c90010', boxShadow: 'none' } }}
                       >

@@ -239,7 +239,7 @@ function CourtDetailPage() {
   }
 
   return (
-    <Box component="section" sx={{ maxWidth: 1000, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, py: { xs: 3, sm: 5 } }}>
+    <Box component="section" sx={{ maxWidth: isAdmin ? 800 : 1100, mx: 'auto', width: '100%', px: { xs: 2, sm: 3, lg: 4 }, py: { xs: 3, sm: 5 } }}>
       <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2, mb: 3 }}>
         <Button component={Link} to="/courts" color="inherit" sx={{ color: 'rgba(255,255,255,0.75)', textTransform: 'none' }}>
           ← Pistas
@@ -255,8 +255,8 @@ function CourtDetailPage() {
 
       {court && (
         <>
-        <Grid container spacing={{ xs: 2.5, md: 3 }} sx={{ maxWidth: 900, mx: 'auto' }}>
-          <Grid size={{ xs: 12, md: 7 }}>
+        <Grid container spacing={{ xs: 2.5, md: 3 }} sx={{ maxWidth: isAdmin ? 900 : 1100, mx: 'auto' }}>
+          <Grid size={{ xs: 12, md: isAdmin ? 12 : 6 }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Paper
                 elevation={3}
@@ -280,7 +280,7 @@ function CourtDetailPage() {
                 }} />
                 <Chip
                   label={court.isAvailable ? 'Disponible para reservar' : 'No disponible'}
-                  color={court.isAvailable ? 'success' : 'default'}
+                  color={court.isAvailable ? 'success' : 'error'}
                   sx={{ position: 'absolute', left: 2.5, bottom: 2.5, fontWeight: 800 }}
                 />
               </Paper>
@@ -303,18 +303,18 @@ function CourtDetailPage() {
                     <Typography variant="caption" sx={{ color: '#626875' }}>por hora</Typography>
                   </Box>
                 </Box>
-                <Grid container spacing={1.25} sx={{ mt: 2 }}>
+                <Grid container spacing={2} sx={{ mt: 2, justifyContent: 'center' }}>
                   {[
                     { title: 'Modalidad', value: courtTypeLabel(court.type) },
                     { title: 'Tipo', value: surfaceLabel(court.surface) },
                     { title: 'Estado', value: court.isAvailable ? 'Disponible' : 'No disponible' },
                   ].map(({ title, value }) => (
                     <Grid key={title} size={{ xs: 12, sm: 4 }}>
-                      <Box sx={{ height: '100%', p: 1.5, bgcolor: '#f0f1f4', borderRadius: 2 }}>
-                        <Typography variant="caption" sx={{ display: 'block', color: '#626875', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                      <Box sx={{ height: '100%', p: 1.5, bgcolor: '#f0f1f4', borderRadius: 2, textAlign: 'center' }}>
+                        <Typography variant="caption" sx={{ display: 'block', color: title === 'Estado' && !court.isAvailable ? 'error.main' : '#626875', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', whiteSpace: 'normal' }}>
                           {title}
                         </Typography>
-                        <Typography variant="body2" sx={{ mt: 0.4, color: '#17191e', fontWeight: 700 }}>
+                        <Typography variant="body2" sx={{ mt: 0.4, color: title === 'Estado' && !court.isAvailable ? 'error.main' : '#17191e', fontWeight: title === 'Estado' && !court.isAvailable ? 900 : 700, whiteSpace: 'normal' }}>
                           {value}
                         </Typography>
                       </Box>
@@ -325,7 +325,7 @@ function CourtDetailPage() {
             </Box>
           </Grid>
 
-          <Grid size={{ xs: 12, md: 5 }} sx={{ display: isAdmin ? 'none' : undefined }}>
+          <Grid size={{ xs: 12, md: 6 }} sx={{ display: isAdmin ? 'none' : undefined }}>
             <Paper
               elevation={3}
               sx={{
@@ -536,7 +536,7 @@ function CourtDetailPage() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEditOpen(false)} variant="text" sx={{ color: 'grey.700', textTransform: 'none' }}>Cancelar</Button>
-          <Button disabled={!hasCourtChanges} variant="contained" onClick={() => void saveCourt()} sx={{ bgcolor: 'grey.900', color: 'white', textTransform: 'none', '&:hover': { bgcolor: 'grey.800' } }}>Guardar cambios</Button>
+          <Button disabled={!hasCourtChanges} variant="contained" color="error" onClick={() => void saveCourt()} sx={{ textTransform: 'none' }}>Guardar cambios</Button>
         </DialogActions>
       </Dialog>
       <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)}><DialogTitle>¿Eliminar pista?</DialogTitle><DialogContent><DialogContentText>Esta acción no se puede deshacer.</DialogContentText></DialogContent><DialogActions><Button onClick={() => setDeleteOpen(false)}>Cancelar</Button><Button color="error" variant="contained" onClick={() => void deleteCourt()}>Eliminar</Button></DialogActions></Dialog>

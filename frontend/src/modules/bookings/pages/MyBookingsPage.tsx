@@ -511,10 +511,12 @@ function BookingCard({
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
+            wordBreak: 'break-word',
+            whiteSpace: 'normal',
             pr: 0,
             color: '#17191e',
             fontWeight: 900,
-            lineHeight: 1.25,
+            lineHeight: 1.2,
             minWidth: 0,
           }}
         >
@@ -535,12 +537,12 @@ function BookingCard({
           </Stack>
         )}
         {booking.type === 'racket' && (
-          <Typography variant="body2" sx={{ color: '#626875', fontWeight: 700 }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.8rem', fontWeight: 700 }}>
             Alquiler actual · {booking.remainingUses ?? 0} usos restantes
           </Typography>
         )}
         {booking.price !== null && (
-          <Typography variant="body2" sx={{ color: '#17191e', fontWeight: 900 }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.8rem', fontWeight: 900 }}>
             {booking.type === 'racket' ? `${booking.price} € - 3 Sesiones` : `€${booking.price}`}
           </Typography>
         )}

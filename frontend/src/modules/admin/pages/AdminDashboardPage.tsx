@@ -246,8 +246,15 @@ function AdminDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
+  const [originalEditingUser, setOriginalEditingUser] = useState<AdminUser | null>(null);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const hasChanges = Boolean(editingUser && originalEditingUser && (
+    editingUser.name !== originalEditingUser.name
+    || editingUser.nickname !== originalEditingUser.nickname
+    || editingUser.email !== originalEditingUser.email
+    || editingUser.sessionPrice !== originalEditingUser.sessionPrice
+  ));
 
   useEffect(() => {
     const controller = new AbortController();
@@ -289,6 +296,7 @@ function AdminDashboardPage() {
         });
         setUsers((current) => current.map((user) => user.id === confirmation.user.id ? confirmation.user : user));
         setEditingUser(null);
+        setOriginalEditingUser(null);
         setSuccessMessage('Usuario modificado con éxito.');
       } else if (confirmation.kind === 'cancel-booking') {
         await api.patch(`/api/v1/bookings/${confirmation.booking.id}`);
@@ -347,7 +355,7 @@ function AdminDashboardPage() {
                     </CardContent>
                     <Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', sm: 'block' } }} />
                     <Stack direction={{ xs: 'row', sm: 'column' }} spacing={1.2} sx={{ p: 2.5, justifyContent: 'center', minWidth: { sm: 165 } }}>
-                      <Button fullWidth variant="outlined" startIcon={<EditOutlinedIcon />} onClick={() => setEditingUser({ ...user })} sx={{ borderColor: 'grey.800', color: 'grey.900', borderWidth: 2, fontWeight: 'bold', textTransform: 'none', borderRadius: 2, '&:hover': { borderWidth: 2, bgcolor: 'grey.100' } }}>Modificar</Button>
+                      <Button fullWidth variant="outlined" startIcon={<EditOutlinedIcon />} onClick={() => { setEditingUser({ ...user }); setOriginalEditingUser({ ...user }); }} sx={{ borderColor: 'grey.800', color: 'grey.900', borderWidth: 2, fontWeight: 'bold', textTransform: 'none', borderRadius: 2, '&:hover': { borderWidth: 2, bgcolor: 'grey.100' } }}>Modificar</Button>
                       <Button fullWidth variant="contained" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => setConfirmation({ kind: 'delete-user', user })} sx={{ fontWeight: 800, textTransform: 'none', borderRadius: 2 }}>Eliminar</Button>
                     </Stack>
                   </Card>
@@ -392,7 +400,7 @@ function AdminDashboardPage() {
         </>
       )}
 
-      <Dialog open={editingUser !== null} onClose={() => setEditingUser(null)} fullWidth maxWidth="sm" slotProps={{ paper: { sx: { bgcolor: 'white', borderRadius: 3 } } }}>
+      <Dialog open={editingUser !== null} onClose={() => { setEditingUser(null); setOriginalEditingUser(null); }} fullWidth maxWidth="sm" slotProps={{ paper: { sx: { bgcolor: 'white', borderRadius: 3 } } }}>
         <DialogTitle sx={{ color: 'grey.900', fontWeight: 900 }}>Modificar usuario</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
@@ -427,7 +435,7 @@ function AdminDashboardPage() {
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setEditingUser(null)} sx={{ color: 'grey.700', textTransform: 'none' }}>Volver</Button>
-          <Button variant="contained" color="error" disabled={!editingUser?.name.trim() || !editingUser?.email.trim()} onClick={() => editingUser && setConfirmation({ kind: 'save-user', user: editingUser })} sx={{ fontWeight: 800, textTransform: 'none' }}>Guardar</Button>
+          <Button variant="contained" color="error" disabled={!hasChanges || !editingUser?.name.trim() || !editingUser?.email.trim()} onClick={() => editingUser && setConfirmation({ kind: 'save-user', user: editingUser })} sx={{ fontWeight: 800, textTransform: 'none' }}>Guardar</Button>
         </DialogActions>
       </Dialog>
 

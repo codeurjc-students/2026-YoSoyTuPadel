@@ -18,21 +18,33 @@ import AdminDashboardPage from './modules/admin/pages/AdminDashboardPage';
 import CoachDashboardPage from './modules/coaches/pages/CoachDashboardPage';
 import { useAuth } from './modules/auth/hooks/useAuth';
 
-function RestrictCoachGuard({ children }: { children: ReactNode }) {
+type UserRole = 'USER' | 'ADMIN' | 'COACH' | 'GUEST';
+
+function RoleGuard({ children, allowedRoles }: { children: ReactNode; allowedRoles: UserRole[] }) {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const isCoach = user?.role.toUpperCase().replace(/^ROLE_/, '') === 'COACH';
+  const currentRole: UserRole = user
+    ? user.role.toUpperCase().replace(/^ROLE_/, '') as UserRole
+    : 'GUEST';
+  const hasAccess = allowedRoles.includes(currentRole);
+  const fallbackPath = currentRole === 'ADMIN'
+    ? '/admin'
+    : currentRole === 'COACH'
+      ? '/coach-dashboard'
+      : currentRole === 'GUEST'
+        ? '/login'
+        : '/';
 
   useEffect(() => {
-    if (!isCoach) {
+    if (hasAccess) {
       return;
     }
 
     toast.error('No tienes acceso a esta pantalla');
-    navigate('/', { replace: true });
-  }, [isCoach, navigate]);
+    navigate(fallbackPath, { replace: true });
+  }, [fallbackPath, hasAccess, navigate]);
 
-  return isCoach ? null : <>{children}</>;
+  return hasAccess ? <>{children}</> : null;
 }
 
 function App() {
@@ -41,16 +53,16 @@ function App() {
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<HomePage />} />
-          <Route path="rackets" element={<RestrictCoachGuard><RacketsPage /></RestrictCoachGuard>} />
-          <Route path="rackets/:id" element={<RestrictCoachGuard><RacketDetailPage /></RestrictCoachGuard>} />
-          <Route path="courts" element={<RestrictCoachGuard><CourtListPage /></RestrictCoachGuard>} />
-          <Route path="courts/:id" element={<RestrictCoachGuard><CourtDetailPage /></RestrictCoachGuard>} />
-          <Route path="coaches" element={<RestrictCoachGuard><CoachListPage /></RestrictCoachGuard>} />
-          <Route path="coaches/:id" element={<RestrictCoachGuard><CoachDetailPage /></RestrictCoachGuard>} />
-          <Route path="bookings" element={<RestrictCoachGuard><MyBookingsPage /></RestrictCoachGuard>} />
+          <Route path="rackets" element={<RoleGuard allowedRoles={['USER', 'ADMIN', 'GUEST']}><RacketsPage /></RoleGuard>} />
+          <Route path="rackets/:id" element={<RoleGuard allowedRoles={['USER', 'ADMIN']}><RacketDetailPage /></RoleGuard>} />
+          <Route path="courts" element={<RoleGuard allowedRoles={['USER', 'ADMIN', 'GUEST']}><CourtListPage /></RoleGuard>} />
+          <Route path="courts/:id" element={<RoleGuard allowedRoles={['USER', 'ADMIN']}><CourtDetailPage /></RoleGuard>} />
+          <Route path="coaches" element={<RoleGuard allowedRoles={['USER', 'ADMIN', 'GUEST']}><CoachListPage /></RoleGuard>} />
+          <Route path="coaches/:id" element={<RoleGuard allowedRoles={['USER', 'ADMIN']}><CoachDetailPage /></RoleGuard>} />
+          <Route path="bookings" element={<RoleGuard allowedRoles={['USER']}><MyBookingsPage /></RoleGuard>} />
           <Route path="profile" element={<UserProfilePage />} />
-          <Route path="admin" element={<AdminDashboardPage />} />
-          <Route path="coach-dashboard" element={<CoachDashboardPage />} />
+          <Route path="admin" element={<RoleGuard allowedRoles={['ADMIN']}><AdminDashboardPage /></RoleGuard>} />
+          <Route path="coach-dashboard" element={<RoleGuard allowedRoles={['COACH']}><CoachDashboardPage /></RoleGuard>} />
           <Route path="login" element={<AuthPage />} />
           <Route path="*" element={<ComingSoonPage title="Página no encontrada" />} />
         </Route>
