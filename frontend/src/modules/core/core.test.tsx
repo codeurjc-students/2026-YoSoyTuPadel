@@ -62,7 +62,7 @@ describe('Core layout', () => {
     expect(screen.queryByRole('link', { name: 'Mis reservas' })).not.toBeInTheDocument();
   });
 
-  test.each(['USER', 'COACH'])('shows bookings navigation to authenticated %s accounts', (role) => {
+  test.each(['USER', 'COACH'])('shows role navigation to authenticated %s accounts', (role) => {
     const authValue: AuthContextValue = {
       user: { id: 1, name: 'Test', nickname: null, email: 'test@example.com', role },
       isAuthenticated: true,
@@ -82,7 +82,11 @@ describe('Core layout', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('link', { name: 'Mis reservas' })).toBeInTheDocument();
+    if (role === 'USER') {
+      expect(screen.getByRole('link', { name: 'Mis reservas' })).toBeInTheDocument();
+    } else {
+      expect(screen.getByRole('link', { name: 'Panel de entrenador' })).toBeInTheDocument();
+    }
   });
 
   test('renders the authentication page at /login', () => {
