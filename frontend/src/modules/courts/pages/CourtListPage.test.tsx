@@ -1,21 +1,47 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
-import api from '../../../service/api';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthContext, type AuthContextValue } from '../../auth/context/authContext';
+import { courtService, type CourtPage } from '../services/courtService';
 import CourtListPage from './CourtListPage';
 
-vi.mock('../../../service/api', () => ({
-  default: {
-    get: vi.fn(),
-    post: vi.fn(),
+vi.mock('../services/courtService', () => ({
+  courtService: {
+    getCourts: vi.fn(),
   },
 }));
 
-const guestAuth: AuthContextValue = {
-  user: null,
-  isAuthenticated: false,
+const getCourtsMock = vi.mocked(courtService.getCourts);
+
+const successfulResponse: CourtPage = {
+  content: [
+    { id: 1, name: 'Central court', isAvailable: true },
+    { id: 2, name: 'Training court', isAvailable: false },
+  ],
+  number: 0,
+  size: 10,
+  totalElements: 2,
+  totalPages: 1,
+  last: true,
+};
+
+const authenticatedUser = {
+  id: 7,
+  name: 'Test user',
+  nickname: 'test-user',
+  email: 'user@example.com',
+  role: 'USER',
+};
+
+const adminUser = {
+  ...authenticatedUser,
+  role: 'ADMIN',
+};
+
+const defaultAuth: AuthContextValue = {
+  user: authenticatedUser,
+  isAuthenticated: true,
   isLoading: false,
   error: null,
   login: vi.fn(),
@@ -24,10 +50,10 @@ const guestAuth: AuthContextValue = {
   clearError: vi.fn(),
 };
 
-function renderList() {
+function renderCourtList(authValue: AuthContextValue = defaultAuth) {
   return render(
     <MemoryRouter>
-      <AuthContext.Provider value={guestAuth}>
+      <AuthContext.Provider value={authValue}>
         <CourtListPage />
       </AuthContext.Provider>
     </MemoryRouter>,
@@ -35,76 +61,58 @@ function renderList() {
 }
 
 describe('CourtListPage', () => {
-  beforeEach(() => vi.clearAllMocks());
-
-  test('shows public courts and offers login to visitors', async () => {
-    vi.mocked(api.get).mockResolvedValue({
-      data: {
-        content: [{
-          id: 1,
-          name: 'Pista central',
-          isAvailable: true,
-        }],
-        number: 0,
-        size: 10,
-        totalElements: 1,
-        totalPages: 1,
-        last: true,
-      },
-    });
-
-    renderList();
-
-    expect(await screen.findByRole('heading', { name: 'Pista central' })).toBeInTheDocument();
-    expect(screen.getByText('1 pista')).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: 'Vista de una pista de pádel - Pista central' }))
-      .toHaveAttribute('src', '/images/padel-court-overhead.jpg');
-    expect(screen.getByRole('link', { name: /Volver al inicio/ })).toHaveAttribute('href', '/');
-    expect(screen.queryByText('€24/h')).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Inicia sesión para reservar' })).toHaveAttribute('href', '/login');
-    expect(api.get).toHaveBeenCalledWith('/api/v1/courts', {
-      params: { page: 0, size: 10 },
-      signal: expect.any(AbortSignal),
-    });
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  test('loads and appends the next page', async () => {
-    vi.mocked(api.get)
-      .mockResolvedValueOnce({
-        data: {
-          content: Array.from({ length: 10 }, (_, index) => ({
-            id: index + 1,
-            name: `Pista ${index + 1}`,
-            isAvailable: true,
-          })),
-          number: 0,
-          size: 10,
-          totalElements: 11,
-          totalPages: 2,
-          last: false,
-        },
-      })
-      .mockResolvedValueOnce({
-        data: {
-          content: [{ id: 11, name: 'Pista 11', isAvailable: true }],
-          number: 1,
-          size: 10,
-          totalElements: 11,
-          totalPages: 2,
-          last: true,
-        },
-      });
+  it('renders the loading skeleton while courts are being fetched', () => {
+    getCourtsMock.mockReturnValue(new Promise(() => undefined));
 
-    renderList();
+    renderCourtList();
 
-    expect(await screen.findByRole('heading', { name: 'Pista 10' })).toBeInTheDocument();
-    expect(screen.getByText('11 pistas')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Más resultados' }));
-    expect(await screen.findByRole('heading', { name: 'Pista 11' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Más resultados' })).not.toBeInTheDocument();
-    expect(api.get).toHaveBeenNthCalledWith(2, '/api/v1/courts', {
-      params: { page: 1, size: 10 },
-      signal: undefined,
-    });
+    expect(screen.getByRole('status', { name: 'Cargando pistas' })).toBeInTheDocument();
+  });
+
+  it('renders an error message when loading courts fails', async () => {
+    getCourtsMock.mockRejectedValue(new Error('Request failed'));
+
+    renderCourtList();
+
+    expect(await screen.findByText('No se han podido cargar las pistas.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument();
+  });
+
+  it('renders court cards with their names and availability states', async () => {
+    getCourtsMock.mockResolvedValue(successfulResponse);
+
+    renderCourtList();
+
+    expect(await screen.findByRole('heading', { name: 'Central court' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Training court' })).toBeInTheDocument();
+    expect(screen.getByText('Disponible')).toBeInTheDocument();
+    expect(screen.getByText('No disponible')).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: 'Ver disponibilidad' })).toHaveLength(2);
+  });
+
+  it('disables details for unavailable courts for regular users', async () => {
+    getCourtsMock.mockResolvedValue(successfulResponse);
+
+    renderCourtList();
+
+    const detailsButtons = await screen.findAllByRole('link', { name: 'Ver disponibilidad' });
+
+    expect(detailsButtons[1]).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  it('keeps details enabled for unavailable courts for administrators', async () => {
+    getCourtsMock.mockResolvedValue(successfulResponse);
+
+    renderCourtList({ ...defaultAuth, user: adminUser });
+
+    const detailsButtons = await screen.findAllByRole('link', { name: 'Ver detalles' });
+    const unavailableCourtDetails = detailsButtons[1];
+
+    expect(unavailableCourtDetails).not.toHaveAttribute('aria-disabled', 'true');
+    expect(unavailableCourtDetails).toHaveAttribute('href', '/courts/2');
   });
 });
