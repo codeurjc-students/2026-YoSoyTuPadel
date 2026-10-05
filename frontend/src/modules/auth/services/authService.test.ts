@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosHeaders, type InternalAxiosRequestConfig } from 'axios';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import api from '../../../service/api';
 import { authService } from './authService';
@@ -93,19 +93,22 @@ describe('authService', () => {
   });
 
   it('maps unauthorized and server errors to user-facing messages', () => {
+    const requestConfig: InternalAxiosRequestConfig = {
+      headers: new AxiosHeaders(),
+    };
     const unauthorizedError = new axios.AxiosError(
       'Unauthorized',
       'ERR_BAD_REQUEST',
       undefined,
       undefined,
-      { status: 401, statusText: 'Unauthorized', headers: {}, config: {}, data: { message: 'Invalid credentials' } },
+      { status: 401, statusText: 'Unauthorized', headers: {}, config: requestConfig, data: { message: 'Invalid credentials' } },
     );
     const serverError = new axios.AxiosError(
       'Server error',
       'ERR_BAD_RESPONSE',
       undefined,
       undefined,
-      { status: 500, statusText: 'Internal Server Error', headers: {}, config: {}, data: { error: 'Service unavailable' } },
+      { status: 500, statusText: 'Internal Server Error', headers: {}, config: requestConfig, data: { error: 'Service unavailable' } },
     );
 
     expect(authService.getErrorMessage(unauthorizedError)).toBe('Invalid credentials');

@@ -1,6 +1,7 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '../context/AuthProvider';
+import type { AuthUser } from '../services/authService';
 import { useAuth } from './useAuth';
 
 const authServiceMocks = vi.hoisted(() => ({
@@ -9,7 +10,7 @@ const authServiceMocks = vi.hoisted(() => ({
   logout: vi.fn(),
   refresh: vi.fn(),
   getCurrentUser: vi.fn(),
-  readStoredUser: vi.fn(() => null),
+  readStoredUser: vi.fn<() => AuthUser | null>(() => null),
   storeUser: vi.fn(),
   getErrorMessage: vi.fn(() => 'Authentication failed'),
 }));
