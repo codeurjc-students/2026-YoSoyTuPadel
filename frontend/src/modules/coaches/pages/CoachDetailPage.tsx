@@ -176,7 +176,7 @@ function CoachDetailPage() {
   }
 
   return (
-    <Box component="section" sx={{ maxWidth: 1240, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, py: { xs: 3, sm: 5 } }}>
+    <Box component="section" sx={{ maxWidth: 950, mx: 'auto', width: '100%', px: { xs: 2, sm: 3, lg: 4 }, py: { xs: 3, sm: 5 } }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
         <Button component={Link} to="/coaches" color="inherit" sx={{ color: 'rgba(255,255,255,0.75)', textTransform: 'none' }}>
           ← Entrenadores
@@ -192,7 +192,7 @@ function CoachDetailPage() {
 
       {coach && (
         <Grid container spacing={{ xs: 2.5, md: 3 }} sx={{ alignItems: 'stretch' }}>
-          <Grid size={{ xs: 12, md: 6 }} sx={{ position: 'relative', minHeight: { xs: 400, md: 'auto' } }}>
+          <Grid size={{ xs: 12, md: 5 }} sx={{ position: 'relative', minHeight: { xs: 400, md: 'auto' } }}>
             <Box sx={{ position: { xs: 'relative', md: 'absolute' }, top: 0, left: 0, right: 0, bottom: 0, height: '100%' }}>
               <CardMedia
                 component="img"
@@ -213,7 +213,7 @@ function CoachDetailPage() {
             </Box>
           </Grid>
 
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 7 }}>
             <Stack spacing={3}>
               <Paper elevation={2} sx={{ p: { xs: 2.25, sm: 3 }, borderRadius: 3 }}>
                 <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', gap: 1.5 }}>
@@ -228,22 +228,22 @@ function CoachDetailPage() {
                   </Box>
                 </Box>
                 <Grid container spacing={1.25} sx={{ mt: 2 }}>
-                  <Grid size={{ xs: 12, sm: 6 }}>
+                  <Grid size={{ xs: 12, sm: 5 }}>
                     <Box sx={{ height: '100%', p: 1.5, bgcolor: '#f0f1f4', borderRadius: 2 }}>
                       <Typography variant="caption" sx={{ display: 'block', color: '#626875', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
                         Certificación FEP
                       </Typography>
-                      <Typography variant="h6" sx={{ mt: 0.4, color: '#17191e', fontWeight: 900 }}>
+                      <Typography variant="subtitle1" sx={{ mt: 0.4, color: '#17191e', fontWeight: 700, fontSize: '1rem' }}>
                         FEP Nivel {coach.skillLevel ?? '—'}
                       </Typography>
                     </Box>
                   </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
+                  <Grid size={{ xs: 12, sm: 7 }}>
                     <Box sx={{ height: '100%', p: 1.5, bgcolor: '#f0f1f4', borderRadius: 2 }}>
                       <Typography variant="caption" sx={{ display: 'block', color: '#626875', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
                         Especialidad
                       </Typography>
-                      <Typography variant="body2" sx={{ mt: 0.8, color: '#17191e', fontWeight: 800 }}>
+                      <Typography variant="subtitle1" sx={{ mt: 0.8, color: '#17191e', fontWeight: 700, fontSize: '1rem' }}>
                         {getCoachLevelAudience(coach.skillLevel)}
                       </Typography>
                     </Box>
@@ -270,7 +270,7 @@ function CoachDetailPage() {
                           setSelectedDate(value);
                           setSelectedTime('');
                         }}
-                        sx={{ flex: '0 0 auto', px: 1.5, minHeight: 42, borderRadius: 2, whiteSpace: 'nowrap', textTransform: 'none', fontWeight: 700, color: selected ? 'white' : '#515866', borderColor: '#d8dbe1', bgcolor: selected ? undefined : '#f0f1f4' }}
+                        sx={{ flex: '0 0 auto', px: 1.5, minHeight: 42, borderRadius: 2, whiteSpace: 'nowrap', textTransform: 'none', fontWeight: selected ? 800 : 700, fontSize: selected ? '1rem' : undefined, color: selected ? 'white' : '#515866', borderColor: '#d8dbe1', bgcolor: selected ? undefined : '#f0f1f4' }}
                       >
                         {label}
                       </Button>

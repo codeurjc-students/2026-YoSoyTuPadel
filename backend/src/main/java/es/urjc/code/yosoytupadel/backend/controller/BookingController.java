@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 
 import es.urjc.code.yosoytupadel.backend.dto.BookingDTO;
+import es.urjc.code.yosoytupadel.backend.dto.CoachBookingDTO;
 import es.urjc.code.yosoytupadel.backend.service.BookingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -27,6 +28,14 @@ public class BookingController {
     @GetMapping("")
     public Collection<BookingDTO> getAllBookings() {
         return bookingService.getAllBookings();
+    }
+
+    @PreAuthorize("hasRole('COACH')")
+    @GetMapping("/coach")
+    public Collection<CoachBookingDTO> getCoachBookings() {
+        return bookingService.getBookingsForCoach(
+                bookingService.getAuthenticatedCoachId()
+        );
     }
 
     @PreAuthorize("isAuthenticated()")
@@ -70,7 +79,7 @@ public class BookingController {
         return ResponseEntity.created(location).body(responseDTO);
     }
 
-    @PreAuthorize("hasRole('ADMIN') or @userService.isMine(#id)")
+    @PreAuthorize("hasRole('ADMIN') or @userService.isMine(#id) or @bookingService.isCoachForBooking(#id)")
     @PatchMapping("/{id}")
     public BookingDTO cancelBooking(@PathVariable long id) {
         return bookingService.cancelBooking(id);

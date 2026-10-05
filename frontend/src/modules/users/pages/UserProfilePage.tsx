@@ -12,6 +12,7 @@ import {
   DialogContentText,
   DialogTitle,
   Grid,
+  InputAdornment,
   Snackbar,
   Stack,
   TextField,
@@ -53,6 +54,7 @@ function UserProfilePage() {
     name: authenticatedUser?.name ?? '',
     nickname: authenticatedUser?.nickname ?? '',
     email: authenticatedUser?.email ?? '',
+    sessionPrice: authenticatedUser?.sessionPrice ?? null,
   });
 
   useEffect(() => {
@@ -67,6 +69,7 @@ function UserProfilePage() {
             name: currentUser.name ?? '',
             nickname: currentUser.nickname ?? '',
             email: currentUser.email ?? '',
+            sessionPrice: currentUser.sessionPrice ?? null,
           });
           setImageVersion((version) => version + 1);
         }
@@ -123,6 +126,11 @@ function UserProfilePage() {
     );
   }
 
+  const isCoach = profile.role.toUpperCase().replace(/^ROLE_/, '') === 'COACH';
+  const hasChanges = form.name !== (profile.name ?? '')
+    || form.nickname !== (profile.nickname ?? '')
+    || form.email !== profile.email
+    || form.sessionPrice !== (profile.sessionPrice ?? null);
   const activeRacket = profile.racketId ? loadedRacket : undefined;
 
   const handleImageSelection = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -160,14 +168,21 @@ function UserProfilePage() {
     try {
       const details = {
         name: form.name.trim(),
-        nickname: form.nickname.trim(),
+        nickname: isCoach ? profile.nickname ?? '' : form.nickname.trim(),
         email: form.email.trim(),
+        sessionPrice: isCoach ? form.sessionPrice ?? null : undefined,
       };
 
       const updatedDetails = await authService.updateUser(profile.id, details);
       const updatedUser: AuthUser = { ...profile, ...updatedDetails };
       setUserProfile((currentProfile) => currentProfile
-        ? { ...currentProfile, name: details.name, nickname: details.nickname, email: details.email }
+        ? {
+          ...currentProfile,
+          name: details.name,
+          nickname: details.nickname,
+          email: details.email,
+          sessionPrice: details.sessionPrice,
+        }
         : updatedUser);
       authService.storeUser(updatedUser);
       updateUser?.(updatedUser);
@@ -262,7 +277,9 @@ function UserProfilePage() {
             <Grid container spacing={3}>
               {[
                 ['Nombre completo', profile.name || 'Sin nombre'],
-                ['Nickname', `@${profile.nickname || 'sin-nickname'}`],
+                ...(isCoach
+                  ? [['Precio por sesión', profile.sessionPrice == null ? 'Sin precio' : `${profile.sessionPrice} €`]]
+                  : [['Nickname', `@${profile.nickname || 'sin-nickname'}`]]),
                 ['Email', profile.email],
               ].map(([label, value]) => (
                 <Grid key={label} size={{ xs: 12, sm: 6 }}>
@@ -429,7 +446,23 @@ function UserProfilePage() {
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
             <TextField variant="outlined" label="Name" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} fullWidth />
-            <TextField variant="outlined" label="Nickname" value={form.nickname} onChange={(event) => setForm({ ...form, nickname: event.target.value })} fullWidth />
+            {!isCoach && (
+              <TextField variant="outlined" label="Nickname" value={form.nickname} onChange={(event) => setForm({ ...form, nickname: event.target.value })} fullWidth />
+            )}
+            {isCoach && (
+              <TextField
+                variant="outlined"
+                label="Precio por sesión"
+                type="number"
+                value={form.sessionPrice ?? ''}
+                onChange={(event) => setForm({ ...form, sessionPrice: event.target.value === '' ? null : Number(event.target.value) })}
+                slotProps={{
+                  input: { startAdornment: <InputAdornment position="start">€</InputAdornment> },
+                  htmlInput: { min: 0, step: 0.01 },
+                }}
+                fullWidth
+              />
+            )}
             <TextField variant="outlined" label="Email" type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} fullWidth />
           </Stack>
         </DialogContent>
@@ -437,7 +470,7 @@ function UserProfilePage() {
           <Button onClick={() => setIsEditOpen(false)} disabled={isSaving} variant="text" sx={{ color: 'grey.700', textTransform: 'uppercase' }}>
             VOLVER
           </Button>
-          <Button onClick={() => setIsConfirmEditOpen(true)} disabled={isSaving} variant="contained" color="error" disableElevation sx={{ fontWeight: 800, textTransform: 'uppercase' }}>
+          <Button onClick={() => setIsConfirmEditOpen(true)} disabled={isSaving || !hasChanges} variant="contained" color="error" disableElevation sx={{ fontWeight: 800, textTransform: 'uppercase' }}>
             GUARDAR
           </Button>
         </DialogActions>
@@ -460,7 +493,7 @@ function UserProfilePage() {
           <Button onClick={() => setIsConfirmEditOpen(false)} disabled={isSaving} variant="text" sx={{ color: 'grey.700', textTransform: 'uppercase' }}>
             VOLVER
           </Button>
-          <Button onClick={() => void handleConfirmEdit()} disabled={isSaving} variant="contained" color="error" disableElevation sx={{ fontWeight: 800, textTransform: 'uppercase' }}>
+          <Button onClick={() => void handleConfirmEdit()} disabled={isSaving || !hasChanges} variant="contained" color="error" disableElevation sx={{ fontWeight: 800, textTransform: 'uppercase' }}>
             CONFIRMAR
           </Button>
         </DialogActions>

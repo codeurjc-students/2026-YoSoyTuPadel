@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import es.urjc.code.yosoytupadel.backend.dto.BookingDTO;
 import es.urjc.code.yosoytupadel.backend.dto.BookingMapper;
+import es.urjc.code.yosoytupadel.backend.dto.CoachBookingDTO;
 import es.urjc.code.yosoytupadel.backend.entities.*;
 import es.urjc.code.yosoytupadel.backend.repository.BookingRepository;
 import es.urjc.code.yosoytupadel.backend.repository.CourtRepository;
@@ -44,6 +45,31 @@ public class BookingService {
 
     public Collection<BookingDTO> getAllBookingsByUserId(Long userId) {
         return mapper.toDTOs(bookingRepository.findByUserId(userId));
+    }
+
+    public Collection<CoachBookingDTO> getBookingsForCoach(Long coachId) {
+        return bookingRepository.findByCoachId(coachId).stream()
+                .map(booking -> new CoachBookingDTO(
+                        mapper.toDTO(booking),
+                        userService.getUserById(booking.getUser().getId())
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found"))
+                ))
+                .toList();
+    }
+
+    public boolean isCoachForBooking(long bookingId) {
+        return userService.getAuthenticatedUserDto()
+                .filter(user -> user.role().name().equals("COACH"))
+                .flatMap(user -> bookingRepository.findById(bookingId)
+                        .filter(booking -> booking.getCoach() != null && booking.getCoach().getId().equals(user.id())))
+                .isPresent();
+    }
+
+    public Long getAuthenticatedCoachId() {
+        return userService.getAuthenticatedUserDto()
+                .filter(user -> user.role().name().equals("COACH"))
+                .map(user -> user.id())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Coach authentication required"));
     }
 
     public List<LocalTime> getReservedCourtSlots(Long courtId, LocalDate date) {

@@ -4,8 +4,9 @@ import { useAuth } from '../../auth/hooks/useAuth';
 function Footer() {
   const { user, isAuthenticated } = useAuth();
   const role = user?.role.toUpperCase().replace(/^ROLE_/, '');
-  const canViewBookings = isAuthenticated && (role === 'USER' || role === 'COACH');
+  const isCoach = role === 'COACH';
   const isAdmin = role === 'ADMIN';
+  const isRegularUser = !isCoach && !isAdmin;
 
   return (
     <footer className="bg-brand-dark text-white">
@@ -20,20 +21,23 @@ function Footer() {
           </p>
         </div>
 
-        <div>
-          <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Explora</h2>
-          <div className="mt-4 flex flex-col items-start gap-3 text-sm text-slate-300">
-            <Link className="transition hover:text-white" to="/courts">Reserva de pistas</Link>
-            {!isAdmin && <Link className="transition hover:text-white" to="/coaches">Entrenadores</Link>}
-            <Link className="transition hover:text-white" to="/rackets">Catálogo de palas</Link>
+        {isRegularUser && (
+          <div>
+            <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Explora</h2>
+            <div className="mt-4 flex flex-col items-start gap-3 text-sm text-slate-300">
+              <Link className="transition hover:text-white" to="/courts">Reserva de pistas</Link>
+              <Link className="transition hover:text-white" to="/coaches">Entrenadores</Link>
+              <Link className="transition hover:text-white" to="/rackets">Catálogo de palas</Link>
+            </div>
           </div>
-        </div>
+        )}
 
         <div>
           <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Tu cuenta</h2>
           <div className="mt-4 flex flex-col items-start gap-3 text-sm text-slate-300">
-            {canViewBookings && !isAdmin && <Link className="transition hover:text-white" to="/bookings">Mis reservas</Link>}
             <Link className="transition hover:text-white" to="/profile">Mi perfil</Link>
+            {isAuthenticated && role === 'USER' && <Link className="transition hover:text-white" to="/bookings">Mis reservas</Link>}
+            {isCoach && <Link className="transition hover:text-white" to="/coach-dashboard">Panel de entrenador</Link>}
             {isAdmin && <Link className="transition hover:text-white" to="/admin">Panel de administración</Link>}
           </div>
         </div>

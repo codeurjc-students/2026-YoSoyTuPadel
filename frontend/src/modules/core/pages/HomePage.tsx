@@ -65,6 +65,7 @@ async function getTotalRacketStock(signal: AbortSignal): Promise<number> {
 function HomePage() {
   const { user } = useAuth();
   const isAdmin = user?.role.toUpperCase().replace(/^ROLE_/, '') === 'ADMIN';
+  const isCoach = user?.role.toUpperCase().replace(/^ROLE_/, '') === 'COACH';
   const [stats, setStats] = useState<HomeStats | null>(null);
   const today = new Date();
   const formattedDate = new Intl.DateTimeFormat('es-ES', {
@@ -167,7 +168,7 @@ function HomePage() {
         </div>
       </section>
 
-      {!isAdmin && <section className="relative isolate mx-auto max-w-7xl overflow-hidden px-4 py-14 text-white sm:px-6 sm:py-16 lg:px-8">
+      {!isAdmin && !isCoach && <section className="relative isolate mx-auto max-w-7xl overflow-hidden px-4 py-14 text-white sm:px-6 sm:py-16 lg:px-8">
         <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand-red">Vamos a jugar</p>

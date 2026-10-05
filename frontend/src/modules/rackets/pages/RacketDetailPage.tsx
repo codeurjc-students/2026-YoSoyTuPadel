@@ -228,7 +228,7 @@ function RacketDetailPage() {
               <Button
                 component="label"
                 variant="contained"
-                sx={{ mt: 2, bgcolor: 'white', color: 'grey.900', fontWeight: 800, textTransform: 'none', borderRadius: 2, '&:hover': { bgcolor: 'grey.200' } }}
+                sx={{ mt: 2, bgcolor: 'grey.900', color: 'white', fontWeight: 'bold', textTransform: 'none', borderRadius: 2, '&:hover': { bgcolor: 'grey.800' } }}
               >
                 Actualizar foto
                 <input type="file" hidden accept="image/*" onChange={(event) => {
@@ -338,7 +338,7 @@ function RacketDetailPage() {
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setEditOpen(false)} variant="text" sx={{ color: 'grey.700', textTransform: 'none' }}>Cancelar</Button>
-            <Button disabled={!hasRacketChanges} variant="contained" onClick={() => void saveRacket()} sx={{ bgcolor: 'grey.900', color: 'white', textTransform: 'none', '&:hover': { bgcolor: 'grey.800' } }}>Guardar cambios</Button>
+            <Button disabled={!hasRacketChanges} variant="contained" color="error" onClick={() => void saveRacket()} sx={{ textTransform: 'none' }}>Guardar cambios</Button>
           </DialogActions>
         </Dialog>
         <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)}><DialogTitle>¿Eliminar pala?</DialogTitle><DialogContent><DialogContentText>Esta acción no se puede deshacer.</DialogContentText></DialogContent><DialogActions><Button onClick={() => setDeleteOpen(false)}>Cancelar</Button><Button color="error" variant="contained" onClick={() => void deleteRacket()}>Eliminar</Button></DialogActions></Dialog>
