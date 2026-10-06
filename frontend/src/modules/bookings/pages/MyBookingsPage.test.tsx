@@ -135,11 +135,25 @@ describe('MyBookingsPage', () => {
   });
 
   test('orders pending bookings earliest first and finished bookings most recent first', async () => {
+    const today = new Date();
+
+    const pastEarlier = new Date(today);
+    pastEarlier.setDate(today.getDate() - 10);
+
+    const pastLater = new Date(today);
+    pastLater.setDate(today.getDate() - 5);
+
+    const futureEarlier = new Date(today);
+    futureEarlier.setDate(today.getDate() + 5);
+
+    const futureLater = new Date(today);
+    futureLater.setDate(today.getDate() + 10);
+
     vi.mocked(bookingService.getUserBookings).mockResolvedValue([
-      { ...bookings[0], id: 'pending-later', title: 'Pendiente posterior', date: '2026-10-08', time: '11:00' },
-      { ...bookings[1], id: 'finished-earlier', title: 'Terminada anterior', date: '2026-10-02' },
-      { ...bookings[0], id: 'pending-earlier', title: 'Pendiente próxima', date: '2026-10-05', time: '09:00' },
-      { ...bookings[1], id: 'finished-later', title: 'Terminada reciente', date: '2026-10-06' },
+      { ...bookings[0], id: 'pending-later', title: 'Pendiente posterior', date: formatLocalDate(futureLater), time: '11:00' },
+      { ...bookings[1], id: 'finished-earlier', title: 'Terminada anterior', date: formatLocalDate(pastEarlier) },
+      { ...bookings[0], id: 'pending-earlier', title: 'Pendiente próxima', date: formatLocalDate(futureEarlier), time: '09:00' },
+      { ...bookings[1], id: 'finished-later', title: 'Terminada reciente', date: formatLocalDate(pastLater) },
     ]);
     renderPage();
 
