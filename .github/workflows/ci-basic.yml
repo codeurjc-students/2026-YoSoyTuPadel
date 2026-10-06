@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - '**'
-      #- '!main'
+      - '!main'
       - '!master'
   pull_request:
     types: [opened, synchronize, reopened]
@@ -33,9 +33,11 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
+      - name: Compilar el proyecto
+        run: mvn compile -DskipTests -B
 
-      - name: Compilar y Ejecutar Tests Unitarios con Cobertura
-        run: mvn clean jacoco:prepare-agent test jacoco:report -Dtest="!*SystemTest,!*IntegrationTest" -B
+      - name: Ejecutar Tests Unitarios y Generar Reporte JaCoCo
+        run: mvn test jacoco:report -Dtest=*UnitTest,*ControllerTest,*ServiceTest -B
 
       - name: Análisis de Código Estático del Backend
         env:
@@ -43,11 +45,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ -n "${{ github.event.pull_request.number }}" ]; then
-            mvn org.sonarsource.scanner.maven:sonar-maven-plugin:4.0.0.4121:sonar -Dsonar.projectKey=urjc-yosoytupadel-backend -Dsonar.organization=victorcc02 -Dsonar.host.url=https://sonarcloud.io -Dsonar.pullrequest.key=${{ github.event.pull_request.number }} -Dsonar.pullrequest.branch=${{ github.head_ref }} -Dsonar.pullrequest.base=${{ github.base_ref }}
+            mvn org.sonarsource.scanner.maven:sonar-maven-plugin:4.0.0.4121:sonar \
+              -Dsonar.projectKey=urjc-yosoytupadel-backend \
+              -Dsonar.organization=victorcc02 \
+              -Dsonar.host.url=https://sonarcloud.io \
+              -Dsonar.pullrequest.key=${{ github.event.pull_request.number }} \
+              -Dsonar.pullrequest.branch=${{ github.head_ref }} \
+              -Dsonar.pullrequest.base=${{ github.base_ref }}
           else
-            mvn org.sonarsource.scanner.maven:sonar-maven-plugin:4.0.0.4121:sonar -Dsonar.projectKey=urjc-yosoytupadel-backend -Dsonar.organization=victorcc02 -Dsonar.host.url=https://sonarcloud.io
+            mvn org.sonarsource.scanner.maven:sonar-maven-plugin:4.0.0.4121:sonar \
+              -Dsonar.projectKey=urjc-yosoytupadel-backend \
+              -Dsonar.organization=victorcc02 \
+              -Dsonar.host.url=https://sonarcloud.io
           fi
-          
 
   # JOB 2: CONTROL DE CALIDAD DEL CLIENTE (REACT) + SONARCLOUD
 

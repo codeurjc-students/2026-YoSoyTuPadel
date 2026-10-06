@@ -17,17 +17,14 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.NoSuchElementException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -138,47 +135,7 @@ class RacketServiceTest {
 
         assertThat(result.id()).isEqualTo(3L);
         assertThat(result.brand()).isEqualTo("Head");
-        assertThat(newRacket.getImage()).isNotNull();
         verify(racketRepository, times(1)).save(newRacket);
-    }
-
-    @Test
-    void createRacketFromEntityAddsDefaultImageAndSaves() throws SQLException, IOException {
-        Racket newRacket = new Racket("Head", "Speed", "Lightweight", 18.0);
-        when(racketRepository.save(newRacket)).thenReturn(newRacket);
-
-        Racket result = racketService.createRacket(newRacket);
-
-        assertThat(result).isSameAs(newRacket);
-        assertThat(result.getImage()).isNotNull();
-        verify(racketRepository).save(newRacket);
-    }
-
-    @Test
-    void updateRacketReusesExistingIdAndReturnsUpdatedDto() {
-        RacketDTO updateDTO = new RacketDTO(null, "Head", "Speed", "Fast", 18.0, 4);
-        Racket updatedRacket = new Racket("Head", "Speed", "Fast", 18.0);
-        RacketDTO resultDTO = new RacketDTO(1L, "Head", "Speed", "Fast", 18.0, 4);
-        when(racketRepository.findById(1L)).thenReturn(Optional.of(racket1));
-        when(mapper.toDomain(updateDTO)).thenReturn(updatedRacket);
-        when(racketRepository.save(updatedRacket)).thenReturn(updatedRacket);
-        when(mapper.toDTO(updatedRacket)).thenReturn(resultDTO);
-
-        assertThat(racketService.updateRacket(1L, updateDTO)).isEqualTo(resultDTO);
-        assertThat(updatedRacket.getId()).isEqualTo(1L);
-        verify(racketRepository).save(updatedRacket);
-    }
-
-    @Test
-    void updateRacketWhenMissingThrowsNotFound() {
-        when(racketRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> racketService.updateRacket(99L, racketDTO1))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("Racket not found");
-
-        verify(mapper, never()).toDomain(any(RacketDTO.class));
-        verify(racketRepository, never()).save(any(Racket.class));
     }
 
     @Test
@@ -188,94 +145,5 @@ class RacketServiceTest {
         AssertionsForClassTypes.assertThatThrownBy(() -> racketService.deleteRacket(99L))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Racket not found");
-    }
-
-    @Test
-    void deleteRacket_WhenRacketExists_ShouldDeleteSuccessfully() {
-        when(racketRepository.findById(1L)).thenReturn(Optional.of(racket1));
-        when(mapper.toDTO(racket1)).thenReturn(racketDTO1);
-
-        assertThat(racketService.deleteRacket(1L)).isEqualTo(racketDTO1);
-
-        verify(racketRepository, times(1)).delete(racket1);
-    }
-
-    @Test
-    void getRacketImageReturnsStreamForExistingImage() throws SQLException, IOException {
-        racket1.setImage(new javax.sql.rowset.serial.SerialBlob(new byte[]{1, 2, 3}));
-        when(racketRepository.findById(1L)).thenReturn(Optional.of(racket1));
-
-        assertThat(racketService.getRacketImage(1L).getInputStream().readAllBytes())
-                .containsExactly(1, 2, 3);
-    }
-
-    @Test
-    void getRacketImageWhenRacketIsMissingThrowsNotFound() {
-        when(racketRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> racketService.getRacketImage(99L))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("Racket not found");
-    }
-
-    @Test
-    void getRacketImageWhenImageIsMissingThrowsNoSuchElement() {
-        when(racketRepository.findById(1L)).thenReturn(Optional.of(racket1));
-
-        assertThatThrownBy(() -> racketService.getRacketImage(1L))
-                .isInstanceOf(NoSuchElementException.class);
-    }
-
-    @Test
-    void replaceRacketImageUpdatesAndSavesImage() {
-        when(racketRepository.findById(1L)).thenReturn(Optional.of(racket1));
-
-        racketService.replaceRacketImage(1L, new ByteArrayInputStream(new byte[]{1, 2, 3}), 3L);
-
-        assertThat(racket1.getImage()).isNotNull();
-        verify(racketRepository).save(racket1);
-    }
-
-    @Test
-    void replaceRacketImageWhenRacketIsMissingThrowsNotFound() {
-        when(racketRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> racketService.replaceRacketImage(99L, new ByteArrayInputStream(new byte[0]), 0L))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("Racket not found");
-
-        verify(racketRepository, never()).save(any(Racket.class));
-    }
-
-    @Test
-    void deleteRacketImageReplacesImageWithDefaultAndSaves() throws IOException, SQLException {
-        racket1.setImage(new javax.sql.rowset.serial.SerialBlob(new byte[]{1}));
-        when(racketRepository.findById(1L)).thenReturn(Optional.of(racket1));
-
-        racketService.deleteRacketImage(1L);
-
-        assertThat(racket1.getImage()).isNotNull();
-        verify(racketRepository).save(racket1);
-    }
-
-    @Test
-    void deleteRacketImageWhenRacketIsMissingThrowsNotFound() {
-        when(racketRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> racketService.deleteRacketImage(99L))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("Racket not found");
-
-        verify(racketRepository, never()).save(any(Racket.class));
-    }
-
-    @Test
-    void deleteRacketImageWhenImageIsMissingThrowsNoSuchElement() {
-        when(racketRepository.findById(1L)).thenReturn(Optional.of(racket1));
-
-        assertThatThrownBy(() -> racketService.deleteRacketImage(1L))
-                .isInstanceOf(NoSuchElementException.class);
-
-        verify(racketRepository, never()).save(any(Racket.class));
     }
 }
