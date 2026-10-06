@@ -241,13 +241,16 @@ public class BookingService {
         return mapper.toDTOs(bookingRepository.findByUserIdAndType(userId, BookingType.TRAINING));
     }
 
-    @Scheduled(fixedDelay = 600000) // Se ejecuta automáticamente cada 10 minutos (600000 ms)
+    /**
+     * Automatically complete finished bookings.
+     */
+    @Scheduled(fixedDelay = 600000) // It runs automatically every 10 minutes (600,000 ms)
     @Transactional
     public void autoCompleteFinishedBookings() {
         LocalDate today = LocalDate.now();
         LocalTime now = LocalTime.now();
 
-        // reservas que acaban de terminar
+        // Reservations that have just ended
         List<Booking> finishedBookings = bookingRepository.findFinishedPendingBookings(today, now);
 
         for (Booking booking : finishedBookings) {

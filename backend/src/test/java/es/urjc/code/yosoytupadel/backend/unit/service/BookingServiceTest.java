@@ -65,7 +65,7 @@ class BookingServiceTest {
         booking1.setStatus(BookingStatus.PENDING);
         booking1.setType(BookingType.MATCH);
 
-        // Simulamos un DTO genérico
+        // We simulate a generic DTO
         bookingDTO1 = mock(BookingDTO.class);
     }
 

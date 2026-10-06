@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -54,9 +55,9 @@ public class UserController {
     public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO) {
         UserDTO responseDTO = userService.createUser(userDTO);
 
-        String collectionPath = ServletUriComponentsBuilder.fromCurrentRequestUri()
-                .build()
-                .getPath()
+        String collectionPath = Objects.requireNonNull(ServletUriComponentsBuilder.fromCurrentRequestUri()
+                        .build()
+                        .getPath())
                 .replaceFirst("/new$", "");
         URI location = ServletUriComponentsBuilder.fromCurrentRequestUri()
                 .replacePath(collectionPath + "/{id}")
@@ -89,16 +90,16 @@ public class UserController {
 
         if (emailChanged && isSelfEdit) {
 
-            // BORRAR AUTH TOKEN
+            // Delete AUTH TOKEN
             Cookie accessCookie = new Cookie(TokenType.ACCESS.cookieName, null);
             accessCookie.setMaxAge(0);
             accessCookie.setHttpOnly(true);
             accessCookie.setPath("/");
             response.addCookie(accessCookie);
 
-            // BORRAR REFRESH TOKEN
+            // Delete REFRESH TOKEN
             Cookie refreshCookie = new Cookie(TokenType.REFRESH.cookieName, null);
-            refreshCookie.setMaxAge(0); // Orden de destrucción
+            refreshCookie.setMaxAge(0); // Destruction order
             refreshCookie.setHttpOnly(true);
             refreshCookie.setPath("/");
             response.addCookie(refreshCookie);

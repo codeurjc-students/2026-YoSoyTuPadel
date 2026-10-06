@@ -91,7 +91,7 @@ class UserServiceTest {
 
         UserDTO result = userService.rentRacket(2L, 1L);
 
-        // Verificamos que se descontó el stock y se reseteó el uso
+        // We verified that the stock was deducted and the usage was reset
         assertThat(racket.getStock()).isEqualTo(4);
         assertThat(student.getRacket()).isEqualTo(racket);
         assertThat(student.getRacketUsages()).isEqualTo(0);

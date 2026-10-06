@@ -71,10 +71,10 @@ class BookingServiceIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void cancelBooking_ShouldUpdateDatabaseStatusToCancelled() {
-        // Ejecutamos la cancelación a través del servicio
+        // We carry out the cancellation through the service.
         bookingService.cancelBooking(savedBooking.getId());
 
-        // Comprobamos directamente en la base de datos
+        //We check directly in the database.
         Booking cancelledBooking = bookingRepository.findById(savedBooking.getId()).orElseThrow();
 
         assertThat(cancelledBooking.getStatus()).isEqualTo(BookingStatus.CANCELLED);

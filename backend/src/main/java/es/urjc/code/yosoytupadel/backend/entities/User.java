@@ -83,7 +83,7 @@ public class User {
         this.name = name;
     }
 
-    // Getters y Setters
+    // Getters & Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getName() { return name; }
@@ -103,9 +103,7 @@ public class User {
     public Racket getRacket() { return racket; }
     public void setRacket(Racket racket) { this.racket = racket; }
     public List<Racket> getRacketHistory() { return racketHistory; }
-    public void setRacketHistory(List<Racket> racketHistory) {
-        this.racketHistory = racketHistory == null ? new ArrayList<>() : new ArrayList<>(racketHistory);
-    }
+    public void setRacketHistory(List<Racket> racketHistory) {this.racketHistory = racketHistory == null ? new ArrayList<>() : new ArrayList<>(racketHistory);}
     public void addRacketToHistory(Racket racket) { this.racketHistory.add(racket); }
     public String getImgUserPath() {return imgUserPath;}
     public void setImgUserPath(String imgUserPath) {this.imgUserPath = imgUserPath;}

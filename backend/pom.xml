@@ -295,6 +295,7 @@
 				<configuration>
 					<includes>
 						<include>**/*IntegrationTest.java</include>
+						<include>**/*ClientSystemTest.java</include>
 					</includes>
 				</configuration>
 			</plugin>

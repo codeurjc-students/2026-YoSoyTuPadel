@@ -1,9 +1,9 @@
-package es.urjc.code.yosoytupadel.backend.system.e2e;
+package es.urjc.code.yosoytupadel.backend.system.e2e.api;
 
 import es.urjc.code.yosoytupadel.backend.BaseIntegrationTest;
-import es.urjc.code.yosoytupadel.backend.entities.*;
+import es.urjc.code.yosoytupadel.backend.entities.User;
+import es.urjc.code.yosoytupadel.backend.entities.UserRole;
 import es.urjc.code.yosoytupadel.backend.repository.BookingRepository;
-import es.urjc.code.yosoytupadel.backend.repository.CourtRepository;
 import es.urjc.code.yosoytupadel.backend.repository.UserRepository;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
@@ -15,25 +15,22 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
-
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
-class BookingServerSystemTest extends BaseIntegrationTest {
+class UserServerSystemTest extends BaseIntegrationTest {
 
     @LocalServerPort
     private int port;
 
     @Autowired
-    private BookingRepository bookingRepository;
-    @Autowired
-    private CourtRepository courtRepository;
-    @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private BookingRepository bookingRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -45,41 +42,26 @@ class BookingServerSystemTest extends BaseIntegrationTest {
         RestAssured.useRelaxedHTTPSValidation();
 
         bookingRepository.deleteAll();
-        courtRepository.deleteAll();
         userRepository.deleteAll();
 
-        Court court = new Court("Pista Central", 8.0, CourtType.INDOOR, SurfaceType.GLASS);
-        court.setIsAvailable(true);
-        court = courtRepository.save(court);
-
-        // Creamos un admin ya que lo necesitamos para la peticion api posterior
         User admin = new User();
         admin.setEmail("admin@yosoytupadel.com");
         admin.setEncodedPassword(passwordEncoder.encode("admin")); // Guardamos la contraseña encriptada
         admin.setRole(UserRole.ADMIN);
         userRepository.save(admin);
 
-        // El usuario propietario de la reserva
-        User student = new User("victor@alumno.com", passwordEncoder.encode("pass"), UserRole.USER);
-        userRepository.save(student);
-
-        Booking booking = new Booking();
-        booking.setCourt(court);
-        booking.setUser(student);
-        booking.setBookingDate(LocalDate.now().plusDays(2));
-        booking.setStartTime(LocalTime.of(12, 0));
-        booking.setEndTime(LocalTime.of(13, 30));
-        booking.setStatus(BookingStatus.PENDING);
-        booking.setType(BookingType.MATCH);
-        booking.setBookingPrice(8.0);
-
-        bookingRepository.save(booking);
+        User coach = new User();
+        coach.setName("Coach Fernando");
+        coach.setEmail("fernando@coach.com");
+        coach.setEncodedPassword(passwordEncoder.encode("1234"));
+        coach.setRole(UserRole.COACH);
+        coach.setSkillLevel(8.5);
+        coach.setSessionPrice(25.0);
+        userRepository.save(coach);
     }
 
     @Test
-    void shouldFetchBookingsFromApi() {
-
-        // Simulamos el login del Frontend para obtener el JWT real
+    void shouldFetchCoachesFromApi() {
         String authToken = given()
                 .contentType(ContentType.JSON)
                 .body("{ \"email\": \"admin@yosoytupadel.com\", \"password\": \"admin\" }")
@@ -94,10 +76,10 @@ class BookingServerSystemTest extends BaseIntegrationTest {
                 .contentType(ContentType.JSON)
                 .cookie("AuthToken", authToken)
                 .when()
-                .get("/api/v1/bookings")
+                .get("/api/v1/users/coaches")
                 .then()
                 .statusCode(200)
-                .body("$", hasSize(1))
-                .body("[0].type", equalTo("MATCH"));
+                .body("content", hasSize(1))
+                .body("content[0].name", equalTo("Coach Fernando"));
     }
 }
