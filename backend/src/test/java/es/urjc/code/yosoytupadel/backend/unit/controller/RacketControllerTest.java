@@ -168,4 +168,44 @@ class RacketControllerTest {
         mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/api/v1/rackets/1"))
                 .andExpect(status().isOk());
     }
+
+    @Test
+    void getRacketById_ShouldReturnRacket() throws Exception {
+        when(racketService.getRacketById(1L)).thenReturn(Optional.of(dto1));
+
+        mockMvc.perform(get("/api/v1/rackets/1")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.brand").value("Babolat"));
+    }
+
+    @Test
+    void getRacketById_WhenNotFound_ShouldReturn404() throws Exception {
+        when(racketService.getRacketById(99L)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/v1/rackets/99")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void createRacket_ShouldReturnCreated() throws Exception {
+        RacketDTO newRacket = new RacketDTO(null, "Babolat", "Pure Aero", "Buen control", 14.5, 3);
+
+        when(racketService.createRacket(any(RacketDTO.class))).thenReturn(dto1);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/v1/rackets")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(newRacket))) // <--- Conversión automática a JSON
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(1L));
+    }
+
+    @Test
+    void deleteRacket_ShouldReturnNoContent() throws Exception {
+        when(racketService.deleteRacket(1L)).thenReturn(dto1);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/api/v1/rackets/1"))
+                .andExpect(status().isOk());
+    }
 }

@@ -3,9 +3,12 @@ package es.urjc.code.yosoytupadel.backend.unit.service;
 import es.urjc.code.yosoytupadel.backend.dto.CoachDTO;
 import es.urjc.code.yosoytupadel.backend.dto.UserDTO;
 import es.urjc.code.yosoytupadel.backend.dto.UserMapper;
+import es.urjc.code.yosoytupadel.backend.dto.UserUpdateDTO;
+import es.urjc.code.yosoytupadel.backend.entities.Booking;
 import es.urjc.code.yosoytupadel.backend.entities.Racket;
 import es.urjc.code.yosoytupadel.backend.entities.User;
 import es.urjc.code.yosoytupadel.backend.entities.UserRole;
+import es.urjc.code.yosoytupadel.backend.repository.BookingRepository;
 import es.urjc.code.yosoytupadel.backend.repository.RacketRepository;
 import es.urjc.code.yosoytupadel.backend.repository.UserRepository;
 import es.urjc.code.yosoytupadel.backend.service.UserService;
@@ -15,6 +18,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Arrays;
@@ -36,7 +44,13 @@ class UserServiceTest {
     private RacketRepository racketRepository;
 
     @Mock
+    private BookingRepository bookingRepository;
+
+    @Mock
     private UserMapper userMapper;
+
+    @Mock
+    PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private UserService userService;

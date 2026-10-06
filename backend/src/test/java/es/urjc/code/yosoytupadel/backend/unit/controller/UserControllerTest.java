@@ -1,6 +1,7 @@
 package es.urjc.code.yosoytupadel.backend.unit.controller;
 
 import es.urjc.code.yosoytupadel.backend.controller.UserController;
+import es.urjc.code.yosoytupadel.backend.dto.BookingDTO;
 import es.urjc.code.yosoytupadel.backend.dto.CoachDTO;
 import es.urjc.code.yosoytupadel.backend.dto.UserDTO;
 import es.urjc.code.yosoytupadel.backend.dto.BookingDTO;
@@ -14,6 +15,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpHeaders;
 import org.springframework.data.domain.PageImpl;
@@ -21,8 +23,14 @@ import org.springframework.data.domain.PageRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.mock.web.MockHttpServletRequest;
 
-import java.util.Arrays;
+import java.io.ByteArrayInputStream;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.Matchers.hasSize;
@@ -60,12 +68,13 @@ class UserControllerTest {
 
     private CoachDTO coachDTO;
     private UserDTO userDTO;
+    private BookingDTO bookingDTO;
 
     @BeforeEach
     void setUp() {
         coachDTO = new CoachDTO(1L, "Rafa Nadal", 2, 25.0);
 
-        userDTO = mock(UserDTO.class);
+        verify(userService).returnRacket(1L);
     }
 
     @Test
@@ -95,25 +104,49 @@ class UserControllerTest {
     }
 
     @Test
-    void getUserById_ShouldReturnUser() throws Exception {
+    void getUserMatchBookingsValidatesUserAndReturnsBookings() throws Exception {
         when(userService.getUserById(1L)).thenReturn(Optional.of(userDTO));
+        when(bookingService.getMatchBookingsByUserId(1L)).thenReturn(List.of(bookingDTO));
 
-        mockMvc.perform(get("/api/v1/users/1")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/v1/users/1/bookings/matches"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)));
 
-        verify(userService, times(1)).getUserById(1L);
+        verify(userService).getUserById(1L);
+        verify(bookingService).getMatchBookingsByUserId(1L);
     }
 
     @Test
-    void getUserById_WhenNotFound_ShouldReturn404() throws Exception {
+    void getUserMatchBookingsWhenUserDoesNotExistReturnsNotFound() throws Exception {
         when(userService.getUserById(99L)).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/api/v1/users/99")
-                        .contentType(MediaType.APPLICATION_JSON))
+        mockMvc.perform(get("/api/v1/users/99/bookings/matches"))
                 .andExpect(status().isNotFound());
 
-        verify(userService, times(1)).getUserById(99L);
+        verify(bookingService, never()).getMatchBookingsByUserId(anyLong());
+    }
+
+    @Test
+    void getUserTrainingBookingsValidatesUserAndReturnsBookings() throws Exception {
+        when(userService.getUserById(1L)).thenReturn(Optional.of(userDTO));
+        when(bookingService.getTrainingBookingsByUserId(1L)).thenReturn(List.of(bookingDTO));
+
+        mockMvc.perform(get("/api/v1/users/1/bookings/trainings"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)));
+
+        verify(userService).getUserById(1L);
+        verify(bookingService).getTrainingBookingsByUserId(1L);
+    }
+
+    @Test
+    void getUserTrainingBookingsWhenUserDoesNotExistReturnsNotFound() throws Exception {
+        when(userService.getUserById(99L)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/v1/users/99/bookings/trainings"))
+                .andExpect(status().isNotFound());
+
+        verify(bookingService, never()).getTrainingBookingsByUserId(anyLong());
     }
 
     @Test
