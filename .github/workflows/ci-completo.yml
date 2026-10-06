@@ -36,7 +36,7 @@ jobs:
         run: mvn test -Dtest="!**/system/**" -B
 
       - name: Ejecutar Tests de Integración (Testcontainers / Failsafe)
-        run: mvn verify -Dsurefire.skip=true -Dtest="!**/system/**" -B
+        run: mvn verify -Dsurefire.skip=true -Dit.test="!*SystemTest" -B
 
 
   # --- JOB 2: FRONTEND (Unitarios y Build) ---
@@ -112,7 +112,8 @@ jobs:
       - name: Esperar a que los servicios estén listos
         run: sleep 15
 
-      - name: Ejecutar Tests de Sistema (Selenium u otros)
+      - name: Ejecutar Tests de Sistema (Selenium)
         working-directory: ./backend
+        run: mvn verify -Dsurefire.skip=true -Dit.test="*SystemTest" -B
 
-        run: mvn test -Dtest="*SystemTest" -B
+        
