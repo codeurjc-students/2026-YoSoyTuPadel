@@ -3,7 +3,6 @@ package es.urjc.code.yosoytupadel.backend.controller;
 import java.net.URI;
 import java.util.Collection;
 import java.time.LocalDate;
-import java.time.LocalTime;
 
 import es.urjc.code.yosoytupadel.backend.dto.BookingDTO;
 import es.urjc.code.yosoytupadel.backend.dto.CoachBookingDTO;

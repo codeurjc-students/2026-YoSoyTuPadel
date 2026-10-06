@@ -189,7 +189,7 @@ public class UserService {
         if (user.getRacket() != null) {
             user.setRacketUsages(user.getRacketUsages() + 1);
 
-            // forzamos la devolución tras el tercer uso
+            // We forced a return after the third use
             if (user.getRacketUsages() >= 3) {
                 Racket racket = user.getRacket();
                 user.addRacketToHistory(racket);

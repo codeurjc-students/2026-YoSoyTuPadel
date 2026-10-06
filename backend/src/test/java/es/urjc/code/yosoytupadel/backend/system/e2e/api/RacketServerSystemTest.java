@@ -1,10 +1,8 @@
-package es.urjc.code.yosoytupadel.backend.system.e2e;
+package es.urjc.code.yosoytupadel.backend.system.e2e.api;
 
 import es.urjc.code.yosoytupadel.backend.BaseIntegrationTest;
-import es.urjc.code.yosoytupadel.backend.entities.Court;
-import es.urjc.code.yosoytupadel.backend.entities.CourtType;
-import es.urjc.code.yosoytupadel.backend.entities.SurfaceType;
-import es.urjc.code.yosoytupadel.backend.repository.CourtRepository;
+import es.urjc.code.yosoytupadel.backend.entities.Racket;
+import es.urjc.code.yosoytupadel.backend.repository.RacketRepository;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,18 +15,17 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.util.List;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.hasItems;
-import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.*;
 
 @SpringBootTest (webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
-class CourtServerSystemTest extends BaseIntegrationTest {
+class RacketServerSystemTest extends BaseIntegrationTest {
 
     @LocalServerPort
     private int port;
 
     @Autowired
-    private CourtRepository courtRepository;
+    private RacketRepository racketRepository;
 
     @BeforeEach
     void setUp() {
@@ -36,23 +33,24 @@ class CourtServerSystemTest extends BaseIntegrationTest {
         RestAssured.baseURI = "https://localhost";
         RestAssured.useRelaxedHTTPSValidation();
 
-        courtRepository.deleteAll();
+        racketRepository.deleteAll();
 
-        Court court1 = new Court( "Alameda de Osuna", 8.0, CourtType.INDOOR, SurfaceType.GLASS);
-        Court court2 = new Court( "Coslada", 7.0, CourtType.INDOOR, SurfaceType.WALL);
+        Racket racket1 = new Racket( "Babolat", "Pure Aero", "Buen control", 11.5);
+        Racket racket2 = new Racket( "Wilson", "Blade", "Mucha fuerza de golpeo", 15.0);
 
-        courtRepository.saveAll(List.of(court1, court2));
+        racketRepository.saveAll(List.of(racket1, racket2));
     }
 
     @Test
-    void shouldFetchCourtsFromApi() {
+    void shouldFetchRacketsFromApi() {
         given()
                 .contentType(ContentType.JSON)
                 .when()
-                .get("/api/v1/courts")
+                .get("/api/v1/rackets")
                 .then()
                 .statusCode(200)
-                .body("$", hasSize(2))
-                .body("name", hasItems("Alameda de Osuna", "Coslada"));
+                .body("content", hasSize(2))
+                .body("content.brand", hasItems("Babolat", "Wilson"))
+                .body("content.name", hasItems("Pure Aero", "Blade"));
     }
 }
