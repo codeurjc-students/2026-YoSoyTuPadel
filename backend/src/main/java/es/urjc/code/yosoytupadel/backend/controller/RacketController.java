@@ -3,6 +3,11 @@ package es.urjc.code.yosoytupadel.backend.controller;
 import es.urjc.code.yosoytupadel.backend.dto.PreRacketDTO;
 import es.urjc.code.yosoytupadel.backend.dto.RacketDTO;
 import es.urjc.code.yosoytupadel.backend.service.RacketService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -31,18 +36,37 @@ public class RacketController {
     @Autowired
     private RacketService racketService;
 
-
+    @Operation(summary = "Get a paginated list of rackets")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Found the rackets", content = { @Content(mediaType = "application/json") })
+    })
+    @ResponseStatus(HttpStatus.OK)
     @GetMapping("")
     public Page<PreRacketDTO> getAllRackets(@PageableDefault(size = 10) Pageable pageable) {
         return racketService.getRackets(pageable);
     }
 
+    @Operation(summary = "Get a racket by its id")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Found the racket", content = { @Content(mediaType = "application/json", schema = @Schema(implementation = RacketDTO.class)) }),
+            @ApiResponse(responseCode = "400", description = "Invalid id supplied", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Racket not found", content = @Content)
+    })
+    @ResponseStatus(HttpStatus.OK)
     @GetMapping("/{id}")
     public RacketDTO getRacketById(@PathVariable long id) {
         return racketService.getRacketById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Racket not found"));
     }
 
+    @Operation(summary = "Create a new racket (Admin only)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Racket created successfully", content = { @Content(mediaType = "application/json", schema = @Schema(implementation = RacketDTO.class)) }),
+            @ApiResponse(responseCode = "400", description = "Invalid racket data supplied", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Admin rights required", content = @Content)
+    })
+    @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("")
     public ResponseEntity<RacketDTO> createRacket(@RequestBody RacketDTO racketDTO) throws SQLException, IOException {
@@ -55,6 +79,15 @@ public class RacketController {
         return ResponseEntity.created(location).body(responseDTO);
     }
 
+    @Operation(summary = "Update an existing racket (Admin only)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Racket updated successfully", content = { @Content(mediaType = "application/json", schema = @Schema(implementation = RacketDTO.class)) }),
+            @ApiResponse(responseCode = "400", description = "Invalid racket data supplied", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Admin rights required", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Racket not found", content = @Content)
+    })
+    @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public RacketDTO updateRacket(@PathVariable long id, @RequestBody RacketDTO updatedDTO) {
@@ -62,6 +95,14 @@ public class RacketController {
         return racketService.updateRacket(id, updatedDTO);
     }
 
+    @Operation(summary = "Delete a racket by its id (Admin only)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Racket deleted successfully", content = { @Content(mediaType = "application/json", schema = @Schema(implementation = RacketDTO.class)) }),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Admin rights required", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Racket not found", content = @Content)
+    })
+    @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public RacketDTO deleteRacket(@PathVariable long id) {
@@ -70,6 +111,13 @@ public class RacketController {
     }
 
 
+
+    @Operation(summary = "Get the image of a racket")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Found the image", content = { @Content(mediaType = "application/octet-stream") }),
+            @ApiResponse(responseCode = "404", description = "Image or racket not found", content = @Content)
+    })
+    @ResponseStatus(HttpStatus.OK)
     @GetMapping("/{id}/image")
     public ResponseEntity<byte[]> getRacketImage(@PathVariable long id) throws SQLException, IOException {
 
@@ -102,6 +150,15 @@ public class RacketController {
     }
 
 
+    @Operation(summary = "Replace or upload a racket image (Admin only)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Image updated successfully", content = @Content),
+            @ApiResponse(responseCode = "400", description = "Invalid file supplied", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Admin rights required", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Racket not found", content = @Content)
+    })
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}/image")
     public ResponseEntity<Object> replaceRacketImage(@PathVariable long id,
@@ -113,6 +170,14 @@ public class RacketController {
 
     }
 
+    @Operation(summary = "Delete the image of a racket (Admin only)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Image deleted successfully", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Admin rights required", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Racket or image not found", content = @Content)
+    })
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}/image")
     public ResponseEntity<Object> deletePostImage(@PathVariable long id) throws IOException, SQLException {

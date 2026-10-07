@@ -4,6 +4,11 @@ import es.urjc.code.yosoytupadel.backend.dto.*;
 import es.urjc.code.yosoytupadel.backend.security.jwt.TokenType;
 import es.urjc.code.yosoytupadel.backend.entities.BookingType;
 import es.urjc.code.yosoytupadel.backend.service.BookingService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,13 +42,27 @@ public class UserController {
     @Autowired
     private BookingService bookingService;
 
-
+    @Operation(summary = "Get all users (Admin only)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Found all users", content = { @Content(mediaType = "application/json") }),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Admin rights required", content = @Content)
+    })
+    @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("")
     public Collection<UserDTO> getAllUsers() {
         return userService.getAllUsers();
     }
 
+    @Operation(summary = "Get a user by id (Admin only)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Found the user", content = { @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class)) }),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Admin rights required", content = @Content),
+            @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
+    })
+    @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
     public UserDTO getUser(@PathVariable long id) {
@@ -51,6 +70,12 @@ public class UserController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
     }
 
+    @Operation(summary = "Register a new user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "User created successfully", content = { @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class)) }),
+            @ApiResponse(responseCode = "400", description = "Invalid user data supplied", content = @Content)
+    })
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/new")
     public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO) {
         UserDTO responseDTO = userService.createUser(userDTO);
@@ -67,6 +92,15 @@ public class UserController {
         return ResponseEntity.created(location).body(responseDTO);
     }
 
+    @Operation(summary = "Update an existing user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User updated successfully", content = { @Content(mediaType = "application/json", schema = @Schema(implementation = UserUpdateDTO.class)) }),
+            @ApiResponse(responseCode = "400", description = "Invalid update data supplied", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Cannot modify other users", content = @Content),
+            @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
+    })
+    @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasRole('ADMIN') or (hasAnyRole('USER', 'COACH') and @userService.isMe(#id))")
     @PutMapping("/{id}")
     public ResponseEntity<UserUpdateDTO> updateUser(
@@ -110,6 +144,15 @@ public class UserController {
         return ResponseEntity.ok(updatedUser);
     }
 
+    @Operation(summary = "Update user skill level")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Skill level updated successfully", content = { @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class)) }),
+            @ApiResponse(responseCode = "400", description = "Invalid change value supplied", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Admin or Coach rights required", content = @Content),
+            @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
+    })
+    @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasAnyRole('ADMIN','COACH')")
     @PatchMapping("/{id}/skill-level")
     public UserDTO updateSkillLevel(@PathVariable long id, @RequestParam Double change) {
@@ -117,24 +160,57 @@ public class UserController {
         return userService.updateSkillLevel(id, change);
     }
 
+    @Operation(summary = "Rent a racket for a user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Racket rented successfully", content = { @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class)) }),
+            @ApiResponse(responseCode = "400", description = "Racket not available", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Cannot rent for other users", content = @Content),
+            @ApiResponse(responseCode = "404", description = "User or Racket not found", content = @Content)
+    })
+    @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("@userService.isMe(#id)")
     @PatchMapping("/{id}/racket/{racketId}")
     public UserDTO rentRacket(@PathVariable long id, @PathVariable long racketId) {
         return userService.rentRacket(id, racketId);
     }
 
+    @Operation(summary = "Return a rented racket")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Racket returned successfully", content = { @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class)) }),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Cannot return for other users", content = @Content),
+            @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
+    })
+    @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("@userService.isMe(#id)")
     @DeleteMapping("/{id}/racket")
     public UserDTO returnRacket(@PathVariable long id) {
         return userService.returnRacket(id);
     }
 
+    @Operation(summary = "Delete a user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User deleted successfully", content = { @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class)) }),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Admin or self-access required", content = @Content),
+            @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
+    })
+    @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasRole('ADMIN') or @userService.isMe(#id)")
     @DeleteMapping("/{id}")
     public UserDTO deleteUser(@PathVariable long id) {
         return userService.deleteUser(id);
     }
 
+    @Operation(summary = "Get user profile image")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Found the image", content = { @Content(mediaType = "image/jpeg") }),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Access denied", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Image or user not found", content = @Content)
+    })
+    @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasRole('ADMIN') or hasRole('COACH') or @userService.isMe(#id)")
     @GetMapping("/{id}/image")
     public ResponseEntity<Object> getUserImage(@PathVariable long id) throws SQLException {
@@ -145,7 +221,15 @@ public class UserController {
                 .body(profilePicture);
     }
 
-
+    @Operation(summary = "Replace or upload a user profile image")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Image updated successfully", content = @Content),
+            @ApiResponse(responseCode = "400", description = "Invalid file supplied", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Cannot modify other users", content = @Content),
+            @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
+    })
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('ADMIN') or (hasAnyRole('USER', 'COACH') and @userService.isMe(#id))")
     @PutMapping("/{id}/image")
     public ResponseEntity<Object> replaceUserImage(@PathVariable long id, @RequestParam MultipartFile imageFile)
@@ -154,6 +238,14 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Delete user profile image")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User image deleted successfully", content = { @Content(mediaType = "text/plain") }),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Cannot delete for other users", content = @Content),
+            @ApiResponse(responseCode = "404", description = "User or image not found", content = @Content)
+    })
+    @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasRole('ADMIN') or @userService.isMe(#id)")
     @DeleteMapping("/{id}/image")
     public ResponseEntity<String> deleteUserImage(@PathVariable long id) {
@@ -161,6 +253,12 @@ public class UserController {
             return ResponseEntity.ok("User image deleted successfully");
     }
 
+    @Operation(summary = "Get the currently authenticated user's details")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Authenticated user retrieved", content = { @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class)) }),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
+    })
+    @ResponseStatus(HttpStatus.OK)
     @GetMapping("/me")
     public ResponseEntity<UserDTO> getAuthenticatedUser() {
         return userService.getAuthenticatedUserDto()
@@ -168,18 +266,36 @@ public class UserController {
                 .orElseGet(() -> ResponseEntity.status(401).build());
     }
 
-
+    @Operation(summary = "Get a paginated list of all coaches")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Found the coaches", content = { @Content(mediaType = "application/json") })
+    })
+    @ResponseStatus(HttpStatus.OK)
     @GetMapping("/coaches")
     public ResponseEntity<Page<CoachDTO>> getAllCoachs(@PageableDefault(size = 10) Pageable pageable) {
         return ResponseEntity.ok(userService.getCoachs(pageable));
     }
 
+    @Operation(summary = "Get a specific coach by id")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Found the coach", content = { @Content(mediaType = "application/json", schema = @Schema(implementation = CoachDTO.class)) }),
+            @ApiResponse(responseCode = "404", description = "Coach not found", content = @Content)
+    })
+    @ResponseStatus(HttpStatus.OK)
     @GetMapping("/coaches/{id}")
     public CoachDTO getCoach(@PathVariable long id) {
         return userService.getCoachById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Coach not found"));
     }
 
+    @Operation(summary = "Get a coach's profile image")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Found the image", content = { @Content(mediaType = "image/jpeg") }),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Not a coach", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Coach or image not found", content = @Content)
+    })
+    @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("@userService.isCoach(#id)")
     @GetMapping("/coaches/{id}/image")
     public ResponseEntity<Object> getImageCoach(@PathVariable long id) throws SQLException {
@@ -189,6 +305,14 @@ public class UserController {
                 .body(profilePicture);
     }
 
+    @Operation(summary = "Get all bookings for a specific user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Found user bookings", content = { @Content(mediaType = "application/json") }),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Access denied", content = @Content),
+            @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
+    })
+    @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasRole('ADMIN') or @userService.isMe(#id)")
     @GetMapping("/{id}/bookings")
     public Collection<BookingDTO> getAllBookingsByUserId(
