@@ -18,9 +18,11 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import {
+  ArrowBackRounded as ArrowBackRoundedIcon,
+  DeleteOutlineRounded as DeleteOutlineRoundedIcon,
+  EditOutlined as EditOutlinedIcon,
+} from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../auth/hooks/useAuth';

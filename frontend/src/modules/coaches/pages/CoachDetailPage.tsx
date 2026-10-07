@@ -17,7 +17,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
+import { AccessTimeRounded as AccessTimeRoundedIcon } from '@mui/icons-material';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { coachService, type CoachDTO } from '../services/coachService';
