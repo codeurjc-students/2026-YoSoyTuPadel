@@ -75,7 +75,7 @@ function RacketsPage() {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [createForm, setCreateForm] = useState({ brand: '', name: '', description: '', stock: '', image: null as File | null });
+  const [createForm, setCreateForm] = useState({ brand: '', name: '', description: '', stock: '', price: '', image: null as File | null });
 
   const refreshRackets = async () => {
     const result = await racketService.getRackets(0, PAGE_SIZE);
@@ -93,14 +93,14 @@ function RacketsPage() {
         brand: createForm.brand.trim(),
         name: createForm.name.trim(),
         description: createForm.description.trim(),
-        pricePerDay: 0,
+        pricePerDay: Number(createForm.price),
         stock: Number(createForm.stock),
       });
       if (createForm.image) await racketService.uploadRacketImage(created.id, createForm.image);
       await refreshRackets();
       setCreateOpen(false);
       setConfirmCreate(false);
-      setCreateForm({ brand: '', name: '', description: '', stock: '', image: null });
+      setCreateForm({ brand: '', name: '', description: '', stock: '', price: '', image: null });
       setSuccessMessage('Pala creada correctamente.');
     } catch {
       setCreateError('No se ha podido crear la pala.');
@@ -279,7 +279,8 @@ function RacketsPage() {
           <Stack spacing={2} sx={{ pt: 1 }}>
             <TextField label="Marca" value={createForm.brand} onChange={(event) => setCreateForm((current) => ({ ...current, brand: event.target.value }))} fullWidth />
             <TextField label="Nombre" value={createForm.name} onChange={(event) => setCreateForm((current) => ({ ...current, name: event.target.value }))} fullWidth />
-            <TextField label="Descripción (opcional)" value={createForm.description} onChange={(event) => setCreateForm((current) => ({ ...current, description: event.target.value }))} multiline minRows={3} fullWidth />
+            <TextField label="Descripción" value={createForm.description} onChange={(event) => setCreateForm((current) => ({ ...current, description: event.target.value }))} multiline minRows={3} fullWidth />
+            <TextField label="Precio para 3 sesiones" type="number" value={createForm.price} onChange={(event) => setCreateForm((current) => ({ ...current, price: event.target.value }))} slotProps={{ input: { startAdornment: <InputAdornment position="start">€</InputAdornment> }, htmlInput: { min: 0, step: 0.01 } }} fullWidth />
             <TextField label="Stock inicial" type="number" value={createForm.stock} onChange={(event) => setCreateForm((current) => ({ ...current, stock: event.target.value }))} slotProps={{ input: { startAdornment: <InputAdornment position="start">uds.</InputAdornment> }, htmlInput: { min: 0, step: 1 } }} fullWidth />
             <Button component="label" variant="outlined" sx={{ justifyContent: 'flex-start', textTransform: 'none' }}>
               {createForm.image?.name ?? 'Seleccionar imagen (opcional)'}
@@ -290,8 +291,7 @@ function RacketsPage() {
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setCreateOpen(false)} sx={{ color: 'grey.700', textTransform: 'none' }}>Cancelar</Button>
-          <Button variant="contained" color="error" disabled={!createForm.brand.trim() || !createForm.name.trim() || createForm.stock === '' || Number(createForm.stock) < 0} onClick={() => setConfirmCreate(true)} sx={{ textTransform: 'none', fontWeight: 800 }}>Continuar</Button>
-        </DialogActions>
+          <Button variant="contained" color="error" disabled={!createForm.brand.trim() || !createForm.name.trim() || !createForm.description.trim() || createForm.stock === '' || Number(createForm.stock) < 0 || createForm.price === '' || Number(createForm.price) < 0} onClick={() => setConfirmCreate(true)} sx={{ textTransform: 'none', fontWeight: 800 }}>Continuar</Button>        </DialogActions>
       </Dialog>
       <Dialog open={confirmCreate} onClose={() => !creating && setConfirmCreate(false)} fullWidth maxWidth="xs" slotProps={{ paper: { sx: { bgcolor: 'white', borderRadius: 3 } } }}>
         <DialogTitle sx={{ color: 'grey.900', fontWeight: 900 }}>¿Crear esta pala?</DialogTitle>
