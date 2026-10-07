@@ -41,11 +41,10 @@ function Navbar() {
     : visibleLinks;
 
   const confirmLogout = async () => {
-    if (await logout()) {
-      setLogoutDialogOpen(false);
-      setMenuOpen(false);
-      navigate('/', { replace: true });
-    }
+    setLogoutDialogOpen(false);
+    setMenuOpen(false);
+    navigate('/', { replace: true });
+    await logout();
   };
 
   return (

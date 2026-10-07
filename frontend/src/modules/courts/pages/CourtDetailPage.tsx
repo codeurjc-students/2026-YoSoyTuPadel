@@ -21,7 +21,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
+import { AccessTimeRounded as AccessTimeRoundedIcon } from '@mui/icons-material';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { courtService, type CourtDTO } from '../services/courtService';

@@ -22,10 +22,12 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded';
-import PersonOutlineRoundedIcon from '@mui/icons-material/PersonOutlineRounded';
+import {
+  DeleteOutlineRounded as DeleteOutlineRoundedIcon,
+  EditOutlined as EditOutlinedIcon,
+  EventAvailableRounded as EventAvailableRoundedIcon,
+  PersonOutlineRounded as PersonOutlineRoundedIcon,
+} from '@mui/icons-material';
 import api from '../../../service/api';
 import { authService, type AuthUser } from '../../auth/services/authService';
 import { coachService } from '../../coaches/services/coachService';

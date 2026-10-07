@@ -21,9 +21,11 @@ import {
   Tabs,
   Typography,
 } from '@mui/material';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import EventBusyIcon from '@mui/icons-material/EventBusy';
+import {
+  AccessTime as AccessTimeIcon,
+  CalendarMonth as CalendarMonthIcon,
+  EventBusy as EventBusyIcon,
+} from '@mui/icons-material';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { racketService } from '../../rackets/services/racketService';

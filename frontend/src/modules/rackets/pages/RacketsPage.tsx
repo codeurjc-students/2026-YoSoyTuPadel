@@ -1,6 +1,19 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Button, CircularProgress } from '@mui/material';
+import {
+  Alert,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  InputAdornment,
+  Snackbar,
+  Stack,
+  TextField,
+} from '@mui/material';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { racketService, type RacketListDTO } from '../services/racketService';
 
@@ -57,6 +70,44 @@ function RacketsPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [moreError, setMoreError] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [confirmCreate, setConfirmCreate] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [createForm, setCreateForm] = useState({ brand: '', name: '', description: '', stock: '', price: '', image: null as File | null });
+
+  const refreshRackets = async () => {
+    const result = await racketService.getRackets(0, PAGE_SIZE);
+    setRackets(result.content);
+    setTotalModels(result.totalElements);
+    setPage(result.number);
+    setHasMore(!result.last && result.content.length === PAGE_SIZE);
+  };
+
+  const handleCreate = async () => {
+    setCreating(true);
+    setCreateError(null);
+    try {
+      const created = await racketService.createRacket({
+        brand: createForm.brand.trim(),
+        name: createForm.name.trim(),
+        description: createForm.description.trim(),
+        pricePerDay: Number(createForm.price),
+        stock: Number(createForm.stock),
+      });
+      if (createForm.image) await racketService.uploadRacketImage(created.id, createForm.image);
+      await refreshRackets();
+      setCreateOpen(false);
+      setConfirmCreate(false);
+      setCreateForm({ brand: '', name: '', description: '', stock: '', price: '', image: null });
+      setSuccessMessage('Pala creada correctamente.');
+    } catch {
+      setCreateError('No se ha podido crear la pala.');
+    } finally {
+      setCreating(false);
+    }
+  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -111,6 +162,11 @@ function RacketsPage() {
           <span className="w-fit rounded-full border border-white/10 bg-white/[0.08] px-4 py-2 text-sm font-semibold text-slate-200 shadow-sm backdrop-blur">
             {totalModels} {totalModels === 1 ? 'modelo' : 'modelos'}
           </span>
+        )}
+        {isAdmin && (
+          <Button variant="contained" color="error" startIcon={<AddRoundedIcon />} onClick={() => setCreateOpen(true)} sx={{ fontWeight: 800, textTransform: 'none', borderRadius: 2 }}>
+            Nueva pala
+          </Button>
         )}
       </div>
 
@@ -216,6 +272,37 @@ function RacketsPage() {
           </Button>
         </div>
       )}
+
+      <Dialog open={createOpen} onClose={() => !creating && setCreateOpen(false)} fullWidth maxWidth="sm" slotProps={{ paper: { sx: { bgcolor: 'white', borderRadius: 3 } } }}>
+        <DialogTitle sx={{ color: 'grey.900', fontWeight: 900 }}>Añadir nueva pala</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <TextField label="Marca" value={createForm.brand} onChange={(event) => setCreateForm((current) => ({ ...current, brand: event.target.value }))} fullWidth />
+            <TextField label="Nombre" value={createForm.name} onChange={(event) => setCreateForm((current) => ({ ...current, name: event.target.value }))} fullWidth />
+            <TextField label="Descripción" value={createForm.description} onChange={(event) => setCreateForm((current) => ({ ...current, description: event.target.value }))} multiline minRows={3} fullWidth />
+            <TextField label="Precio para 3 sesiones" type="number" value={createForm.price} onChange={(event) => setCreateForm((current) => ({ ...current, price: event.target.value }))} slotProps={{ input: { startAdornment: <InputAdornment position="start">€</InputAdornment> }, htmlInput: { min: 0, step: 0.01 } }} fullWidth />
+            <TextField label="Stock inicial" type="number" value={createForm.stock} onChange={(event) => setCreateForm((current) => ({ ...current, stock: event.target.value }))} slotProps={{ input: { startAdornment: <InputAdornment position="start">uds.</InputAdornment> }, htmlInput: { min: 0, step: 1 } }} fullWidth />
+            <Button component="label" variant="outlined" sx={{ justifyContent: 'flex-start', textTransform: 'none' }}>
+              {createForm.image?.name ?? 'Seleccionar imagen (opcional)'}
+              <input hidden type="file" accept="image/*" onChange={(event) => setCreateForm((current) => ({ ...current, image: event.target.files?.[0] ?? null }))} />
+            </Button>
+            {createError && <Alert severity="error">{createError}</Alert>}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setCreateOpen(false)} sx={{ color: 'grey.700', textTransform: 'none' }}>Cancelar</Button>
+          <Button variant="contained" color="error" disabled={!createForm.brand.trim() || !createForm.name.trim() || !createForm.description.trim() || createForm.stock === '' || Number(createForm.stock) < 0 || createForm.price === '' || Number(createForm.price) < 0} onClick={() => setConfirmCreate(true)} sx={{ textTransform: 'none', fontWeight: 800 }}>Continuar</Button>        </DialogActions>
+      </Dialog>
+      <Dialog open={confirmCreate} onClose={() => !creating && setConfirmCreate(false)} fullWidth maxWidth="xs" slotProps={{ paper: { sx: { bgcolor: 'white', borderRadius: 3 } } }}>
+        <DialogTitle sx={{ color: 'grey.900', fontWeight: 900 }}>¿Crear esta pala?</DialogTitle>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setConfirmCreate(false)} sx={{ color: 'grey.700', textTransform: 'none' }}>Volver</Button>
+          <Button variant="contained" color="error" disabled={creating} onClick={() => void handleCreate()} sx={{ textTransform: 'none', fontWeight: 800 }}>{creating ? 'Creando...' : 'Confirmar'}</Button>
+        </DialogActions>
+      </Dialog>
+      <Snackbar open={successMessage !== null} autoHideDuration={4000} onClose={() => setSuccessMessage(null)}>
+        <Alert severity="success" variant="filled" onClose={() => setSuccessMessage(null)}>{successMessage}</Alert>
+      </Snackbar>
     </section>
   );
 }

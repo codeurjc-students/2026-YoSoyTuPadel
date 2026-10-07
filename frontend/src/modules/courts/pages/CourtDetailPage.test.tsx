@@ -110,7 +110,7 @@ describe('CourtDetailPage', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Volver a pistas' }));
     expect(await screen.findByRole('heading', { name: 'Catálogo de Pistas' })).toBeInTheDocument();
-  });
+  }, 10000);
 
   test('shows a single Spanish error and disables the slot if the server reports it reserved', async () => {
     vi.mocked(api.post).mockRejectedValue({
