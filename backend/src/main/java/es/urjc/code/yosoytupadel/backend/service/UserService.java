@@ -8,8 +8,11 @@ import es.urjc.code.yosoytupadel.backend.entities.Racket;
 import es.urjc.code.yosoytupadel.backend.entities.UserRole;
 import es.urjc.code.yosoytupadel.backend.repository.BookingRepository;
 import es.urjc.code.yosoytupadel.backend.repository.RacketRepository;
+import org.hibernate.Hibernate;
 import org.hibernate.engine.jdbc.proxy.BlobProxy;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpStatus;
@@ -54,12 +57,21 @@ public class UserService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
     }
 
+
+    @Transactional(readOnly = true)
     public Collection<UserDTO> getAllUsers() {
         return userMapper.toDTOs(userRepository.findAll());
     }
 
+    @Transactional(readOnly = true)
     public Optional<UserDTO> getUserById(long id) {
-        return userRepository.findById(id).map(userMapper::toDTO);
+        Optional<User> user = userRepository.findById(id);
+        if (user.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Hibernate.initialize(user.get().getRacketHistory());
+        return Optional.of(userMapper.toDTO(user.get()));
     }
 
     @Transactional
@@ -158,6 +170,7 @@ public class UserService {
         Racket racket = user.getRacket();
 
         if (racket != null) {
+            user.addRacketToHistory(racket);
             racket.setStock(racket.getStock() + 1);
             racketRepository.save(racket);
 
@@ -176,9 +189,10 @@ public class UserService {
         if (user.getRacket() != null) {
             user.setRacketUsages(user.getRacketUsages() + 1);
 
-            // forzamos la devolución tras el tercer uso
+            // We forced a return after the third use
             if (user.getRacketUsages() >= 3) {
                 Racket racket = user.getRacket();
+                user.addRacketToHistory(racket);
                 racket.setStock(racket.getStock() + 1);
                 racketRepository.save(racket);
 
@@ -219,11 +233,12 @@ public class UserService {
         }
     }
 
+    @Transactional(readOnly = true)
     public Optional<UserDTO> getAuthenticatedUserDto() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication != null && authentication.getPrincipal() instanceof UserDetails userDetails) {
-            return userRepository.findByEmail(userDetails.getUsername())
+            return userRepository.findWithRacketHistoryByEmail(userDetails.getUsername())
                     .map(userMapper::toDTO);
         }
 
@@ -240,6 +255,16 @@ public class UserService {
         return userRepository.findByRole(UserRole.COACH).stream()
                 .map(userMapper::toCoachDTO)
                 .toList();
+    }
+
+    public Page<CoachDTO> getCoachs(Pageable pageable) {
+        return userRepository.findAllByRole(UserRole.COACH, pageable)
+                .map(userMapper::toCoachDTO);
+    }
+
+    public Optional<CoachDTO> getCoachById(long id) {
+        return userRepository.findByIdAndRole(id, UserRole.COACH)
+                .map(userMapper::toCoachDTO);
     }
 
     public boolean isMe(long id) {

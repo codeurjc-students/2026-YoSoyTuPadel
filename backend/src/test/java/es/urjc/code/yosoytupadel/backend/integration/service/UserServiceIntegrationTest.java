@@ -13,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.Collection;
@@ -75,11 +76,27 @@ class UserServiceIntegrationTest extends BaseIntegrationTest {
 
         userService.rentRacket(savedStudent.getId(), savedRacket.getId());
 
-        // Comprobamos directamente en la base de datos
+        //We check directly in the database
         User updatedStudent = userRepository.findById(savedStudent.getId()).orElseThrow();
         Racket updatedRacket = racketRepository.findById(savedRacket.getId()).orElseThrow();
 
         assertThat(updatedStudent.getRacket().getId()).isEqualTo(savedRacket.getId());
         assertThat(updatedRacket.getStock()).isEqualTo(2);
+    }
+
+    @Test
+    @Transactional
+    void returnRacket_ShouldPersistRacketRentalHistory() {
+        userService.rentRacket(savedStudent.getId(), savedRacket.getId());
+
+        userService.returnRacket(savedStudent.getId());
+        userService.rentRacket(savedStudent.getId(), savedRacket.getId());
+        userService.returnRacket(savedStudent.getId());
+
+        User updatedStudent = userRepository.findById(savedStudent.getId()).orElseThrow();
+        assertThat(updatedStudent.getRacket()).isNull();
+        assertThat(updatedStudent.getRacketHistory())
+                .extracting(Racket::getId)
+                .containsExactly(savedRacket.getId(), savedRacket.getId());
     }
 }

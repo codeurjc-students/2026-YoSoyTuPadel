@@ -6,6 +6,8 @@ import es.urjc.code.yosoytupadel.backend.dto.PreCourtDTO;
 import es.urjc.code.yosoytupadel.backend.entities.Court;
 import es.urjc.code.yosoytupadel.backend.repository.CourtRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -23,6 +25,10 @@ public class CourtService {
 
     public Collection<PreCourtDTO> getAllCourts() {
         return mapper.toPreDTOs(courtRepository.findAll());
+    }
+
+    public Page<PreCourtDTO> getCourts(Pageable pageable) {
+        return courtRepository.findAll(pageable).map(mapper::toPreDTO);
     }
 
     public Optional<CourtDTO> getCourtById(long id) {

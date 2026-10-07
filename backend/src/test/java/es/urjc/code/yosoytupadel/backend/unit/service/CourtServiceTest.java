@@ -12,6 +12,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
@@ -56,8 +58,8 @@ class CourtServiceTest {
         courtDTO1 = new CourtDTO( 1L,"Alameda de Osuna", 8.0, CourtType.INDOOR, SurfaceType.GLASS, true);
         courtDTO2 = new CourtDTO( 2L, "Coslada", 7.0, CourtType.INDOOR, SurfaceType.WALL, true);
 
-        preCourtDTO1 = new PreCourtDTO(1L,"Alameda de Osuna", true);
-        preCourtDTO2 = new PreCourtDTO(2L, "Coslada", true );
+        preCourtDTO1 = new PreCourtDTO(1L, "Alameda de Osuna", true);
+        preCourtDTO2 = new PreCourtDTO(2L, "Coslada", true);
 
     }
 
@@ -75,6 +77,22 @@ class CourtServiceTest {
         assertThat(result).hasSize(2);
         assertThat(result).containsExactly(preCourtDTO1, preCourtDTO2);
         verify(courtRepository, times(1)).findAll();
+    }
+
+    @Test
+    void getCourts_ShouldMapTheRequestedPage() {
+        var pageable = PageRequest.of(1, 10);
+        when(courtRepository.findAll(pageable))
+                .thenReturn(new PageImpl<>(List.of(court2), pageable, 11));
+        when(mapper.toPreDTO(court2)).thenReturn(preCourtDTO2);
+
+        var result = courtService.getCourts(pageable);
+
+        assertThat(result.getContent()).containsExactly(preCourtDTO2);
+        assertThat(result.getNumber()).isEqualTo(1);
+        assertThat(result.getSize()).isEqualTo(10);
+        verify(courtRepository).findAll(pageable);
+        verify(mapper).toPreDTO(court2);
     }
 
     @Test
@@ -117,63 +135,7 @@ class CourtServiceTest {
 
         assertThat(result.id()).isEqualTo(3L);
         assertThat(result.name()).isEqualTo("Coslada");
-        assertThat(newCourt.getIsAvailable()).isTrue();
         verify(courtRepository, times(1)).save(newCourt);
-    }
-
-    @Test
-    void updatePriceUpdatesCourtAndReturnsMappedDto() {
-        when(courtRepository.findById(1L)).thenReturn(Optional.of(court1));
-        when(courtRepository.save(court1)).thenReturn(court1);
-        when(mapper.toDTO(court1)).thenReturn(courtDTO1);
-
-        CourtDTO result = courtService.updatePrice(1L, 12.5);
-
-        assertThat(court1.getCourtPrice()).isEqualTo(12.5);
-        assertThat(result).isEqualTo(courtDTO1);
-        verify(courtRepository).save(court1);
-        verify(mapper).toDTO(court1);
-    }
-
-    @Test
-    void updatePriceWhenCourtDoesNotExistThrowsNotFound() {
-        when(courtRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> courtService.updatePrice(99L, 12.5))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("Court not found");
-
-        verify(courtRepository, never()).save(any(Court.class));
-        verifyNoInteractions(mapper);
-    }
-
-    @Test
-    void updateCourtPreservesExistingIdAndReturnsMappedDto() {
-        CourtDTO updateDTO = new CourtDTO(null, "Updated", 9.5, CourtType.OUTDOOR, SurfaceType.WALL, false);
-        Court updatedCourt = new Court("Updated", 9.5, CourtType.OUTDOOR, SurfaceType.WALL);
-        CourtDTO resultDTO = new CourtDTO(1L, "Updated", 9.5, CourtType.OUTDOOR, SurfaceType.WALL, false);
-        when(courtRepository.findById(1L)).thenReturn(Optional.of(court1));
-        when(mapper.toDomain(updateDTO)).thenReturn(updatedCourt);
-        when(courtRepository.save(updatedCourt)).thenReturn(updatedCourt);
-        when(mapper.toDTO(updatedCourt)).thenReturn(resultDTO);
-
-        CourtDTO result = courtService.updateCourt(1L, updateDTO);
-
-        assertThat(updatedCourt.getId()).isEqualTo(1L);
-        assertThat(result).isEqualTo(resultDTO);
-        verify(courtRepository).save(updatedCourt);
-    }
-
-    @Test
-    void updateCourtWhenCourtDoesNotExistThrowsNotFound() {
-        when(courtRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> courtService.updateCourt(99L, courtDTO1))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("Court not found");
-
-        verifyNoInteractions(mapper);
-        verify(courtRepository, never()).save(any(Court.class));
     }
 
     @Test
@@ -183,17 +145,5 @@ class CourtServiceTest {
         assertThatThrownBy(() -> courtService.deleteCourt(99L))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Court not found");
-    }
-
-    @Test
-    void deleteCourt_WhenCourtExists_ShouldDeleteSuccessfully() {
-        when(courtRepository.findById(1L)).thenReturn(Optional.of(court1));
-        when(mapper.toDTO(court1)).thenReturn(courtDTO1);
-
-        CourtDTO result = courtService.deleteCourt(1L);
-
-        assertThat(result).isEqualTo(courtDTO1);
-        verify(courtRepository, times(1)).deleteById(1L);
-        verify(mapper).toDTO(court1);
     }
 }

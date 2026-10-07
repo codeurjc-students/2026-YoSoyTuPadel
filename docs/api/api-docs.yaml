@@ -3,26 +3,1024 @@ info:
   title: OpenAPI definition
   version: v0
 servers:
-- url: http://localhost:8080
+- url: https://localhost:8443
   description: Generated server url
 paths:
-  /api/rackets:
+  /api/v1/users/{id}:
+    get:
+      tags:
+      - user-controller
+      summary: Get a user by id (Admin only)
+      operationId: getUser
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Found the user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDTO"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Admin rights required
+        "404":
+          description: User not found
+    put:
+      tags:
+      - user-controller
+      summary: Update an existing user
+      operationId: updateUser
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdateDTO"
+        required: true
+      responses:
+        "200":
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserUpdateDTO"
+        "400":
+          description: Invalid update data supplied
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Cannot modify other users
+        "404":
+          description: User not found
+    delete:
+      tags:
+      - user-controller
+      summary: Delete a user
+      operationId: deleteUser
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: User deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDTO"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Admin or self-access required
+        "404":
+          description: User not found
+  /api/v1/users/{id}/image:
+    get:
+      tags:
+      - user-controller
+      summary: Get user profile image
+      operationId: getUserImage
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Found the image
+          content:
+            image/jpeg: {}
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Access denied
+        "404":
+          description: Image or user not found
+    put:
+      tags:
+      - user-controller
+      summary: Replace or upload a user profile image
+      operationId: replaceUserImage
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                imageFile:
+                  type: string
+                  format: binary
+              required:
+              - imageFile
+      responses:
+        "204":
+          description: Image updated successfully
+        "400":
+          description: Invalid file supplied
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Cannot modify other users
+        "404":
+          description: User not found
+    delete:
+      tags:
+      - user-controller
+      summary: Delete user profile image
+      operationId: deleteUserImage
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: User image deleted successfully
+          content:
+            text/plain: {}
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Cannot delete for other users
+        "404":
+          description: User or image not found
+  /api/v1/rackets/{id}:
     get:
       tags:
       - racket-controller
+      summary: Get a racket by its id
+      operationId: getRacketById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Found the racket
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RacketDTO"
+        "400":
+          description: Invalid id supplied
+        "404":
+          description: Racket not found
+    put:
+      tags:
+      - racket-controller
+      summary: Update an existing racket (Admin only)
+      operationId: updateRacket
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RacketDTO"
+        required: true
+      responses:
+        "200":
+          description: Racket updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RacketDTO"
+        "400":
+          description: Invalid racket data supplied
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Admin rights required
+        "404":
+          description: Racket not found
+    delete:
+      tags:
+      - racket-controller
+      summary: Delete a racket by its id (Admin only)
+      operationId: deleteRacket
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Racket deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RacketDTO"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Admin rights required
+        "404":
+          description: Racket not found
+  /api/v1/rackets/{id}/image:
+    get:
+      tags:
+      - racket-controller
+      summary: Get the image of a racket
+      operationId: getRacketImage
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Found the image
+          content:
+            application/octet-stream: {}
+        "404":
+          description: Image or racket not found
+    put:
+      tags:
+      - racket-controller
+      summary: Replace or upload a racket image (Admin only)
+      operationId: replaceRacketImage
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                imageFile:
+                  type: string
+                  format: binary
+              required:
+              - imageFile
+      responses:
+        "204":
+          description: Image updated successfully
+        "400":
+          description: Invalid file supplied
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Admin rights required
+        "404":
+          description: Racket not found
+    delete:
+      tags:
+      - racket-controller
+      summary: Delete the image of a racket (Admin only)
+      operationId: deletePostImage
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "204":
+          description: Image deleted successfully
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Admin rights required
+        "404":
+          description: Racket or image not found
+  /api/v1/courts/{id}:
+    get:
+      tags:
+      - court-controller
+      summary: Get a court by its id
+      operationId: getCourt
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Found the court
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourtDTO"
+        "400":
+          description: Invalid id supplied
+        "401":
+          description: Unauthorized
+        "404":
+          description: Court not found
+    put:
+      tags:
+      - court-controller
+      summary: Update a court's details (Admin only)
+      operationId: updateCourt
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CourtDTO"
+        required: true
+      responses:
+        "200":
+          description: Court updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourtDTO"
+        "400":
+          description: Invalid court data supplied
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Admin rights required
+        "404":
+          description: Court not found
+    delete:
+      tags:
+      - court-controller
+      summary: Delete a court (Admin only)
+      operationId: deleteCourt
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Court deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourtDTO"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Admin rights required
+        "404":
+          description: Court not found
+  /api/v1/users/new:
+    post:
+      tags:
+      - user-controller
+      summary: Register a new user
+      operationId: createUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserDTO"
+        required: true
+      responses:
+        "201":
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDTO"
+        "400":
+          description: Invalid user data supplied
+  /api/v1/rackets:
+    get:
+      tags:
+      - racket-controller
+      summary: Get a paginated list of rackets
       operationId: getAllRackets
+      parameters:
+      - name: pageable
+        in: query
+        required: true
+        schema:
+          $ref: "#/components/schemas/Pageable"
+      responses:
+        "200":
+          description: Found the rackets
+          content:
+            application/json: {}
+    post:
+      tags:
+      - racket-controller
+      summary: Create a new racket (Admin only)
+      operationId: createRacket
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RacketDTO"
+        required: true
+      responses:
+        "201":
+          description: Racket created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RacketDTO"
+        "400":
+          description: Invalid racket data supplied
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Admin rights required
+  /api/v1/courts:
+    get:
+      tags:
+      - court-controller
+      summary: Get a paginated list of courts
+      operationId: getCourts
+      parameters:
+      - name: pageable
+        in: query
+        required: true
+        schema:
+          $ref: "#/components/schemas/Pageable"
+      responses:
+        "200":
+          description: Found the courts
+          content:
+            application/json: {}
+    post:
+      tags:
+      - court-controller
+      summary: Create a new court (Admin only)
+      operationId: createCourt
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CourtDTO"
+        required: true
+      responses:
+        "201":
+          description: Court created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourtDTO"
+        "400":
+          description: Invalid court data supplied
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Admin rights required
+  /api/v1/bookings:
+    get:
+      tags:
+      - booking-controller
+      summary: Get all bookings (Admin only)
+      operationId: getAllBookings
+      responses:
+        "200":
+          description: Found all bookings
+          content:
+            application/json: {}
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Admin rights required
+    post:
+      tags:
+      - booking-controller
+      summary: Create a new booking
+      operationId: createBooking
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingDTO"
+        required: true
+      responses:
+        "201":
+          description: Booking created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingDTO"
+        "400":
+          description: Invalid booking data supplied
+        "401":
+          description: Unauthorized
+  /api/v1/auth/refresh:
+    post:
+      tags:
+      - login-controller
+      operationId: refreshToken
+      parameters:
+      - name: RefreshToken
+        in: cookie
+        required: false
+        schema:
+          type: string
       responses:
         "200":
           description: OK
           content:
             '*/*':
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Racket"
+                $ref: "#/components/schemas/AuthResponse"
+  /api/v1/auth/logout:
+    post:
+      tags:
+      - login-controller
+      operationId: logOut
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+  /api/v1/auth/login:
+    post:
+      tags:
+      - login-controller
+      operationId: login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+  /api/v1/users/{id}/skill-level:
+    patch:
+      tags:
+      - user-controller
+      summary: Update user skill level
+      operationId: updateSkillLevel
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: change
+        in: query
+        required: true
+        schema:
+          type: number
+          format: double
+      responses:
+        "200":
+          description: Skill level updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDTO"
+        "400":
+          description: Invalid change value supplied
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Admin or Coach rights required
+        "404":
+          description: User not found
+  /api/v1/users/{id}/racket/{racketId}:
+    patch:
+      tags:
+      - user-controller
+      summary: Rent a racket for a user
+      operationId: rentRacket
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: racketId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Racket rented successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDTO"
+        "400":
+          description: Racket not available
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Cannot rent for other users
+        "404":
+          description: User or Racket not found
+  /api/v1/courts/{id}/price:
+    patch:
+      tags:
+      - court-controller
+      summary: Update the price of a court (Admin only)
+      operationId: updatePrice
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: newPrice
+        in: query
+        required: true
+        schema:
+          type: number
+          format: double
+      responses:
+        "200":
+          description: Court price updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourtDTO"
+        "400":
+          description: Invalid price supplied
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Admin rights required
+        "404":
+          description: Court not found
+  /api/v1/bookings/{id}:
+    get:
+      tags:
+      - booking-controller
+      summary: Get a booking by its id
+      operationId: getBooking
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Found the booking
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingDTO"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Access denied
+        "404":
+          description: Booking not found
+    delete:
+      tags:
+      - booking-controller
+      summary: Delete a booking completely (Admin only)
+      operationId: deleteBooking
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Booking deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingDTO"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Admin rights required
+        "404":
+          description: Booking not found
+    patch:
+      tags:
+      - booking-controller
+      summary: Cancel a booking by its id
+      operationId: cancelBooking
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Booking cancelled successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingDTO"
+        "400":
+          description: Booking cannot be cancelled
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Access denied
+        "404":
+          description: Booking not found
+  /api/v1/users:
+    get:
+      tags:
+      - user-controller
+      summary: Get all users (Admin only)
+      operationId: getAllUsers
+      responses:
+        "200":
+          description: Found all users
+          content:
+            application/json: {}
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Admin rights required
+  /api/v1/users/{id}/bookings:
+    get:
+      tags:
+      - user-controller
+      summary: Get all bookings for a specific user
+      operationId: getAllBookingsByUserId
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: type
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - MATCH
+          - TRAINING
+      responses:
+        "200":
+          description: Found user bookings
+          content:
+            application/json: {}
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Access denied
+        "404":
+          description: User not found
+  /api/v1/users/me:
+    get:
+      tags:
+      - user-controller
+      summary: Get the currently authenticated user's details
+      operationId: getAuthenticatedUser
+      responses:
+        "200":
+          description: Authenticated user retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDTO"
+        "401":
+          description: Unauthorized
+  /api/v1/users/coaches:
+    get:
+      tags:
+      - user-controller
+      summary: Get a paginated list of all coaches
+      operationId: getAllCoachs
+      parameters:
+      - name: pageable
+        in: query
+        required: true
+        schema:
+          $ref: "#/components/schemas/Pageable"
+      responses:
+        "200":
+          description: Found the coaches
+          content:
+            application/json: {}
+  /api/v1/users/coaches/{id}:
+    get:
+      tags:
+      - user-controller
+      summary: Get a specific coach by id
+      operationId: getCoach
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Found the coach
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoachDTO"
+        "404":
+          description: Coach not found
+  /api/v1/users/coaches/{id}/image:
+    get:
+      tags:
+      - user-controller
+      summary: Get a coach's profile image
+      operationId: getImageCoach
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Found the image
+          content:
+            image/jpeg: {}
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Not a coach
+        "404":
+          description: Coach or image not found
+  /api/v1/bookings/courts/{courtId}/availability:
+    get:
+      tags:
+      - booking-controller
+      summary: Get reserved time slots for a specific court on a given date
+      operationId: getReservedCourtSlots
+      parameters:
+      - name: courtId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: date
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+      responses:
+        "200":
+          description: Successfully retrieved reserved slots
+          content:
+            application/json: {}
+        "400":
+          description: Invalid parameters supplied
+        "401":
+          description: Unauthorized
+  /api/v1/bookings/coaches/{coachId}/availability:
+    get:
+      tags:
+      - booking-controller
+      summary: Get reserved time slots for a specific coach on a given date
+      operationId: getReservedCoachSlots
+      parameters:
+      - name: coachId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: date
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+      responses:
+        "200":
+          description: Successfully retrieved reserved slots
+          content:
+            application/json: {}
+        "400":
+          description: Invalid parameters supplied
+        "401":
+          description: Unauthorized
+  /api/v1/bookings/coach:
+    get:
+      tags:
+      - booking-controller
+      summary: Get all bookings for the authenticated coach
+      operationId: getCoachBookings
+      responses:
+        "200":
+          description: Found coach bookings
+          content:
+            application/json: {}
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Coach rights required
+  /api/v1/users/{id}/racket:
+    delete:
+      tags:
+      - user-controller
+      summary: Return a rented racket
+      operationId: returnRacket
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Racket returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDTO"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Cannot return for other users
+        "404":
+          description: User not found
 components:
   schemas:
-    Racket:
+    UserUpdateDTO:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 2147483647
+          minLength: 2
+        nickname:
+          type: string
+          maxLength: 2147483647
+          minLength: 2
+        email:
+          type: string
+        sessionPrice:
+          type: number
+          format: double
+    RacketDTO:
       type: object
       properties:
         id:
@@ -35,5 +1033,175 @@ components:
         description:
           type: string
         pricePerDay:
+          type: number
+          format: double
+        stock:
+          type: integer
+          format: int32
+    CourtDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        courtPrice:
+          type: number
+          format: double
+        type:
+          type: string
+          enum:
+          - INDOOR
+          - OUTDOOR
+        surface:
+          type: string
+          enum:
+          - GLASS
+          - WALL
+        isAvailable:
+          type: boolean
+    UserDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        nickname:
+          type: string
+        email:
+          type: string
+          description: Email address of the user
+          example: john.doe@example.com
+        password:
+          type: string
+          description: Password for authentication (write-only field)
+          writeOnly: true
+        role:
+          type: string
+          enum:
+          - USER
+          - COACH
+          - ADMIN
+        skillLevel:
+          type: number
+          format: double
+        racketId:
+          type: integer
+          format: int64
+        racketUsages:
+          type: integer
+          format: int32
+        racketHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/RacketDTO"
+        sessionPrice:
+          type: number
+          format: double
+      required:
+      - email
+      - password
+    BookingDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        bookingDate:
+          type: string
+          format: date
+        startTime:
+          $ref: "#/components/schemas/LocalTime"
+        endTime:
+          $ref: "#/components/schemas/LocalTime"
+        bookingPrice:
+          type: number
+          format: double
+        type:
+          type: string
+          enum:
+          - MATCH
+          - TRAINING
+        status:
+          type: string
+          enum:
+          - PENDING
+          - COMPLETED
+          - CANCELLED
+        score:
+          type: string
+        userId:
+          type: integer
+          format: int64
+        courtId:
+          type: integer
+          format: int64
+        coachId:
+          type: integer
+          format: int64
+    LocalTime:
+      type: object
+      properties:
+        hour:
+          type: integer
+          format: int32
+        minute:
+          type: integer
+          format: int32
+        second:
+          type: integer
+          format: int32
+        nano:
+          type: integer
+          format: int32
+    AuthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - SUCCESS
+          - FAILURE
+        message:
+          type: string
+        error:
+          type: string
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+    Pageable:
+      type: object
+      properties:
+        page:
+          type: integer
+          format: int32
+          minimum: 0
+        size:
+          type: integer
+          format: int32
+          minimum: 1
+        sort:
+          type: array
+          items:
+            type: string
+    CoachDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        skillLevel:
+          type: integer
+          format: int32
+        sessionPrice:
           type: number
           format: double

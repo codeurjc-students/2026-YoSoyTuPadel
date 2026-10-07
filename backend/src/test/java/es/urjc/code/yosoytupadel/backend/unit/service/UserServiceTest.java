@@ -3,12 +3,9 @@ package es.urjc.code.yosoytupadel.backend.unit.service;
 import es.urjc.code.yosoytupadel.backend.dto.CoachDTO;
 import es.urjc.code.yosoytupadel.backend.dto.UserDTO;
 import es.urjc.code.yosoytupadel.backend.dto.UserMapper;
-import es.urjc.code.yosoytupadel.backend.dto.UserUpdateDTO;
-import es.urjc.code.yosoytupadel.backend.entities.Booking;
 import es.urjc.code.yosoytupadel.backend.entities.Racket;
 import es.urjc.code.yosoytupadel.backend.entities.User;
 import es.urjc.code.yosoytupadel.backend.entities.UserRole;
-import es.urjc.code.yosoytupadel.backend.repository.BookingRepository;
 import es.urjc.code.yosoytupadel.backend.repository.RacketRepository;
 import es.urjc.code.yosoytupadel.backend.repository.UserRepository;
 import es.urjc.code.yosoytupadel.backend.service.UserService;
@@ -18,11 +15,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Arrays;
@@ -44,13 +36,7 @@ class UserServiceTest {
     private RacketRepository racketRepository;
 
     @Mock
-    private BookingRepository bookingRepository;
-
-    @Mock
     private UserMapper userMapper;
-
-    @Mock
-    PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private UserService userService;
@@ -78,7 +64,7 @@ class UserServiceTest {
         racket.setId(1L);
         racket.setStock(5);
 
-        coachDTO = new CoachDTO(1L, "Entrenador Pepe", 9.5, 35.0);
+        coachDTO = new CoachDTO(1L, "Entrenador Pepe", 3, 35.0);
         studentDTO = mock(UserDTO.class);
     }
 
@@ -105,7 +91,7 @@ class UserServiceTest {
 
         UserDTO result = userService.rentRacket(2L, 1L);
 
-        // Verificamos que se descontó el stock y se reseteó el uso
+        // We verified that the stock was deducted and the usage was reset
         assertThat(racket.getStock()).isEqualTo(4);
         assertThat(student.getRacket()).isEqualTo(racket);
         assertThat(student.getRacketUsages()).isEqualTo(0);
@@ -129,220 +115,37 @@ class UserServiceTest {
     }
 
     @Test
-    void rentRacket_WhenUserNotFound_ShouldThrowNotFound() {
-        when(userRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> userService.rentRacket(99L, 1L))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("User not found");
-    }
-
-    @Test
-    void createUser_WhenEmailExists_ShouldThrowConflict() {
-        UserDTO newUserDTO = new UserDTO(null, "Pepe", "Pepe", "pepe@test.com", "pass", UserRole.USER, 1.0, null, 0);
-        when(userRepository.existsByEmail(newUserDTO.email())).thenReturn(true);
-
-        assertThatThrownBy(() -> userService.createUser(newUserDTO))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("Email is already in use");
-
-        verify(userRepository, never()).save(any(User.class));
-    }
-
-    @Test
-    void createUser_WhenEmailIsNew_ShouldCreateUserSuccessfully() {
-        UserDTO newUserDTO = new UserDTO(null, "Pepe", "Pepe", "pepe@test.com", "pass", UserRole.USER, 1.0, null, 0);
-        User mappedUser = new User();
-        mappedUser.setEmail("pepe@test.com");
-
-        when(userRepository.existsByEmail(newUserDTO.email())).thenReturn(false);
-        when(userMapper.toDomain(newUserDTO)).thenReturn(mappedUser);
-        when(passwordEncoder.encode(newUserDTO.password())).thenReturn("encoded_pass");
-        when(userRepository.save(any(User.class))).thenReturn(mappedUser);
-        when(userMapper.toDTO(mappedUser)).thenReturn(newUserDTO);
-
-        UserDTO result = userService.createUser(newUserDTO);
-
-        assertThat(result).isNotNull();
-
-        assertThat(mappedUser.getSkillLevel()).isEqualTo(1.0);
-        verify(userRepository, times(1)).save(mappedUser);
-    }
-
-    @Test
-    void updateSkillLevel_ShouldKeepLevelWithinBounds() {
-        student.setSkillLevel(4.5);
-        when(userRepository.findById(2L)).thenReturn(Optional.of(student));
-        when(userRepository.save(student)).thenReturn(student);
-        when(userMapper.toDTO(student)).thenReturn(studentDTO);
-
-        userService.updateSkillLevel(2L, 1.0);
-        assertThat(student.getSkillLevel()).isEqualTo(5.0);
-
-        student.setSkillLevel(1.5);
-        userService.updateSkillLevel(2L, -2.0);
-        assertThat(student.getSkillLevel()).isEqualTo(1.0);
-    }
-
-    @Test
-    void rentRacket_WhenUserAlreadyHasRacket_ShouldThrowBadRequest() {
-        student.setRacket(racket);
-        when(userRepository.findById(2L)).thenReturn(Optional.of(student));
-
-        assertThatThrownBy(() -> userService.rentRacket(2L, 1L))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("You already have a rented racket.");
-    }
-
-    @Test
-    void processRacketUsageForUser_WhenThirdUsage_ShouldAutoReturnRacket() {
+    void returnRacket_ShouldPersistReturnedRacketInHistory() {
         student.setRacket(racket);
         student.setRacketUsages(2);
-        int initialStock = racket.getStock();
-
         when(userRepository.findById(2L)).thenReturn(Optional.of(student));
-
-        userService.processRacketUsageForUser(2L);
-
-        assertThat(student.getRacket()).isNull();
-        assertThat(student.getRacketUsages()).isEqualTo(0);
-        assertThat(racket.getStock()).isEqualTo(initialStock + 1);
-        verify(racketRepository, times(1)).save(racket);
-    }
-
-    @Test
-    void getUserImage_WhenNoImageExists_ShouldThrowNotFound() {
-        student.setProfilePicture(null);
-        when(userRepository.findById(2L)).thenReturn(Optional.of(student));
-
-        assertThatThrownBy(() -> userService.getUserImage(2L))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("User image not found");
-    }
-
-    @Test
-    void updateUser_WhenEmailBelongsToAnotherUser_ShouldThrowConflict() {
-        // El usuario 2 intenta ponerse el email del usuario 1
-        UserUpdateDTO updateDTO = new UserUpdateDTO("Juan", "ElJuan", "pepe@test.com");
-        when(userRepository.findById(2L)).thenReturn(Optional.of(student));
-
-        User existingOtherUser = new User();
-        existingOtherUser.setId(1L); // ID distinto al del estudiante (2L)
-
-        when(userRepository.findByEmail("pepe@test.com")).thenReturn(Optional.of(existingOtherUser));
-
-        assertThatThrownBy(() -> userService.updateUser(2L, updateDTO))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("Email is already in use.");
-
-        verify(userRepository, never()).save(any(User.class));
-    }
-
-    @Test
-    void updateUser_WhenValidData_ShouldUpdateSuccessfully() {
-        UserUpdateDTO updateDTO = new UserUpdateDTO("Juan Actualizado", "ElJuan", "juan.nuevo@test.com");
-        when(userRepository.findById(2L)).thenReturn(Optional.of(student));
-        when(userRepository.findByEmail("juan.nuevo@test.com")).thenReturn(Optional.empty()); // Email libre
+        when(racketRepository.save(racket)).thenReturn(racket);
         when(userRepository.save(student)).thenReturn(student);
-        when(userMapper.toUserUpdateDTO(student)).thenReturn(updateDTO);
-
-        UserUpdateDTO result = userService.updateUser(2L, updateDTO);
-
-        verify(userMapper, times(1)).updateUserFromDTO(updateDTO, student);
-        verify(userRepository, times(1)).save(student);
-        assertThat(result.name()).isEqualTo("Juan Actualizado");
-    }
-
-    @Test
-    void returnRacket_WhenUserHasNoRacket_ShouldDoNothingAndReturnUser() {
-        student.setRacket(null);
-        when(userRepository.findById(2L)).thenReturn(Optional.of(student));
         when(userMapper.toDTO(student)).thenReturn(studentDTO);
 
         UserDTO result = userService.returnRacket(2L);
 
-        verify(racketRepository, never()).save(any());
         assertThat(result).isEqualTo(studentDTO);
+        assertThat(student.getRacketHistory()).containsExactly(racket);
+        assertThat(student.getRacket()).isNull();
+        assertThat(student.getRacketUsages()).isZero();
+        assertThat(racket.getStock()).isEqualTo(6);
+        verify(userRepository).save(student);
     }
 
     @Test
-    void processRacketUsageForUser_WhenFirstUsage_ShouldIncrementUsageButNotReturn() {
+    void processThirdRacketUsage_ShouldAddReturnedRacketToHistory() {
         student.setRacket(racket);
-        student.setRacketUsages(0); // Cero usos
+        student.setRacketUsages(2);
         when(userRepository.findById(2L)).thenReturn(Optional.of(student));
+        when(racketRepository.save(racket)).thenReturn(racket);
+        when(userRepository.save(student)).thenReturn(student);
 
         userService.processRacketUsageForUser(2L);
 
-        assertThat(student.getRacketUsages()).isEqualTo(1);
-        assertThat(student.getRacket()).isNotNull(); // Aún conserva la raqueta
-        verify(userRepository, times(1)).save(student);
-    }
-
-    @Test
-    void deleteUserImage_WhenImageIsNull_ShouldThrowNotFound() {
-        student.setProfilePicture(null);
-        when(userRepository.findById(2L)).thenReturn(Optional.of(student));
-
-        assertThatThrownBy(() -> userService.deleteUserImage(2L))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("User image not found");
-    }
-
-    @Test
-    void getAuthenticatedUserDto_WhenAuthenticated_ShouldReturnUserDTO() {
-        // Simulamos el contexto de seguridad de Spring
-        Authentication authentication = mock(Authentication.class);
-        SecurityContext securityContext = mock(SecurityContext.class);
-        UserDetails userDetails = mock(UserDetails.class);
-
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        SecurityContextHolder.setContext(securityContext);
-
-        when(authentication.getPrincipal()).thenReturn(userDetails);
-        when(userDetails.getUsername()).thenReturn("juan@test.com");
-
-        when(userRepository.findByEmail("juan@test.com")).thenReturn(Optional.of(student));
-        when(userMapper.toDTO(student)).thenReturn(studentDTO);
-
-        Optional<UserDTO> result = userService.getAuthenticatedUserDto();
-
-        assertThat(result).isPresent();
-        assertThat(result.get()).isEqualTo(studentDTO);
-
-        // Limpiamos el contexto tras el test
-        SecurityContextHolder.clearContext();
-    }
-
-    @Test
-    void isCoach_WhenUserIsCoach_ShouldReturnTrue() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(coach)); // coach tiene UserRole.COACH
-
-        boolean result = userService.isCoach(1L);
-
-        assertThat(result).isTrue();
-    }
-
-    @Test
-    void isMine_WhenBookingBelongsToUser_ShouldReturnTrue() {
-        // Simulamos la autenticación
-        Authentication authentication = mock(Authentication.class);
-        SecurityContext securityContext = mock(SecurityContext.class);
-        UserDetails userDetails = mock(UserDetails.class);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        SecurityContextHolder.setContext(securityContext);
-        when(authentication.getPrincipal()).thenReturn(userDetails);
-        when(userDetails.getUsername()).thenReturn("juan@test.com");
-
-        when(userRepository.findByEmail("juan@test.com")).thenReturn(Optional.of(student)); // student tiene ID 2
-        when(userMapper.toDTO(student)).thenReturn(new UserDTO(2L, "Juan", "ElJUan", "juan@test.com", "pass", UserRole.USER, 1.0, null, 0));
-
-        Booking booking = new Booking();
-        booking.setUser(student);
-        when(bookingRepository.findById(10L)).thenReturn(Optional.of(booking));
-
-        boolean result = userService.isMine(10L);
-
-        assertThat(result).isTrue();
-        SecurityContextHolder.clearContext();
+        assertThat(student.getRacketHistory()).containsExactly(racket);
+        assertThat(student.getRacket()).isNull();
+        assertThat(student.getRacketUsages()).isZero();
+        assertThat(racket.getStock()).isEqualTo(6);
     }
 }

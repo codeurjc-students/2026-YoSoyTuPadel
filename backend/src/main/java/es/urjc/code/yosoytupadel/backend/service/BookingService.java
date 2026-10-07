@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import es.urjc.code.yosoytupadel.backend.dto.BookingDTO;
 import es.urjc.code.yosoytupadel.backend.dto.BookingMapper;
+import es.urjc.code.yosoytupadel.backend.dto.CoachBookingDTO;
 import es.urjc.code.yosoytupadel.backend.entities.*;
 import es.urjc.code.yosoytupadel.backend.repository.BookingRepository;
 import es.urjc.code.yosoytupadel.backend.repository.CourtRepository;
@@ -44,6 +45,63 @@ public class BookingService {
 
     public Collection<BookingDTO> getAllBookingsByUserId(Long userId) {
         return mapper.toDTOs(bookingRepository.findByUserId(userId));
+    }
+
+    public Collection<CoachBookingDTO> getBookingsForCoach(Long coachId) {
+        return bookingRepository.findByCoachId(coachId).stream()
+                .map(booking -> new CoachBookingDTO(
+                        mapper.toDTO(booking),
+                        userService.getUserById(booking.getUser().getId())
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found"))
+                ))
+                .toList();
+    }
+
+    public boolean isCoachForBooking(long bookingId) {
+        return userService.getAuthenticatedUserDto()
+                .filter(user -> user.role().name().equals("COACH"))
+                .flatMap(user -> bookingRepository.findById(bookingId)
+                        .filter(booking -> booking.getCoach() != null && booking.getCoach().getId().equals(user.id())))
+                .isPresent();
+    }
+
+    public Long getAuthenticatedCoachId() {
+        return userService.getAuthenticatedUserDto()
+                .filter(user -> user.role().name().equals("COACH"))
+                .map(user -> user.id())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Coach authentication required"));
+    }
+
+    public List<LocalTime> getReservedCourtSlots(Long courtId, LocalDate date) {
+        List<Booking> bookings = bookingRepository.findActiveCourtBookings(courtId, date);
+        List<LocalTime> reservedSlots = new java.util.ArrayList<>();
+
+        for (int hour = 9; hour <= 21; hour++) {
+            LocalTime slotStart = LocalTime.of(hour, 0);
+            LocalTime slotEnd = slotStart.plusHours(1);
+            boolean isReserved = bookings.stream().anyMatch(booking ->
+                    booking.getStartTime().isBefore(slotEnd) && booking.getEndTime().isAfter(slotStart));
+            if (isReserved) {
+                reservedSlots.add(slotStart);
+            }
+        }
+        return reservedSlots;
+    }
+
+    public List<LocalTime> getReservedCoachSlots(Long coachId, LocalDate date) {
+        List<Booking> bookings = bookingRepository.findActiveCoachBookings(coachId, date);
+        List<LocalTime> reservedSlots = new java.util.ArrayList<>();
+
+        for (int hour = 9; hour <= 19; hour += 2) {
+            LocalTime slotStart = LocalTime.of(hour, 0);
+            LocalTime slotEnd = slotStart.plusHours(2);
+            boolean isReserved = bookings.stream().anyMatch(booking ->
+                    booking.getStartTime().isBefore(slotEnd) && booking.getEndTime().isAfter(slotStart));
+            if (isReserved) {
+                reservedSlots.add(slotStart);
+            }
+        }
+        return reservedSlots;
     }
 
     public Optional<BookingDTO> getBookingById(long id) {
@@ -183,13 +241,16 @@ public class BookingService {
         return mapper.toDTOs(bookingRepository.findByUserIdAndType(userId, BookingType.TRAINING));
     }
 
-    @Scheduled(fixedDelay = 600000) // Se ejecuta automáticamente cada 10 minutos (600000 ms)
+    /**
+     * Automatically complete finished bookings.
+     */
+    @Scheduled(fixedDelay = 600000) // It runs automatically every 10 minutes (600,000 ms)
     @Transactional
     public void autoCompleteFinishedBookings() {
         LocalDate today = LocalDate.now();
         LocalTime now = LocalTime.now();
 
-        // reservas que acaban de terminar
+        // Reservations that have just ended
         List<Booking> finishedBookings = bookingRepository.findFinishedPendingBookings(today, now);
 
         for (Booking booking : finishedBookings) {

@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.sql.Blob;
+import java.util.ArrayList;
+import java.util.List;
 
 
 @Entity
@@ -45,6 +47,15 @@ public class User {
     @JoinColumn(name = "racket_id")
     private Racket racket;
 
+    @ManyToMany
+    @JoinTable(
+            name = "user_racket_history",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "racket_id")
+    )
+    @OrderColumn(name = "history_order")
+    private List<Racket> racketHistory = new ArrayList<>();
+
 
     @Column(nullable = false)
     private Integer racketUsages = 0;
@@ -72,7 +83,7 @@ public class User {
         this.name = name;
     }
 
-    // Getters y Setters
+    // Getters & Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getName() { return name; }
@@ -91,6 +102,9 @@ public class User {
     public void setProfilePicture(Blob profilePicture) { this.profilePicture = profilePicture; }
     public Racket getRacket() { return racket; }
     public void setRacket(Racket racket) { this.racket = racket; }
+    public List<Racket> getRacketHistory() { return racketHistory; }
+    public void setRacketHistory(List<Racket> racketHistory) {this.racketHistory = racketHistory == null ? new ArrayList<>() : new ArrayList<>(racketHistory);}
+    public void addRacketToHistory(Racket racket) { this.racketHistory.add(racket); }
     public String getImgUserPath() {return imgUserPath;}
     public void setImgUserPath(String imgUserPath) {this.imgUserPath = imgUserPath;}
     public Integer getRacketUsages() {return racketUsages;}

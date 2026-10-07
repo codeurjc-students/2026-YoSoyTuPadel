@@ -7,6 +7,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public record CoachDTO(
         Long id,
         String name,
-        Double skillLevel,
+        Integer skillLevel,
         Double sessionPrice
 ) {}

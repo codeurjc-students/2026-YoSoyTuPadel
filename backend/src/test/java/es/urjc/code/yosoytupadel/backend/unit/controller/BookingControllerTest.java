@@ -7,9 +7,9 @@ import es.urjc.code.yosoytupadel.backend.entities.BookingType;
 import es.urjc.code.yosoytupadel.backend.service.BookingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -19,15 +19,18 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.hamcrest.Matchers.hasSize;
 import org.springframework.http.MediaType;
+import org.springframework.http.HttpHeaders;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.Mockito.*;
@@ -85,6 +88,34 @@ class BookingControllerTest {
     }
 
     @Test
+    void getReservedCourtSlots_ShouldReturnReservedTimesForDate() throws Exception {
+        LocalDate date = LocalDate.now().plusDays(1);
+        when(bookingService.getReservedCourtSlots(1L, date)).thenReturn(List.of(LocalTime.of(10, 0)));
+
+        mockMvc.perform(get("/api/v1/bookings/courts/1/availability")
+                        .param("date", date.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0]").value("10:00"));
+
+        verify(bookingService).getReservedCourtSlots(1L, date);
+    }
+
+    @Test
+    void getReservedCoachSlots_ShouldReturnReservedTimesForDate() throws Exception {
+        LocalDate date = LocalDate.now().plusDays(1);
+        when(bookingService.getReservedCoachSlots(3L, date)).thenReturn(List.of(LocalTime.of(11, 0)));
+
+        mockMvc.perform(get("/api/v1/bookings/coaches/3/availability")
+                        .param("date", date.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0]").value("11:00"));
+
+        verify(bookingService).getReservedCoachSlots(3L, date);
+    }
+
+    @Test
     void getBooking_ShouldReturnBooking() throws Exception {
         when(bookingService.getBookingById(1L)).thenReturn(Optional.of(dto1));
 
@@ -120,5 +151,32 @@ class BookingControllerTest {
         verify(bookingService, times(1)).cancelBooking(1L);
     }
 
+    @Test
+    void createBooking_ShouldReturnLocationHeader() throws Exception {
+        BookingDTO newBooking = new BookingDTO(null, LocalDate.now().plusDays(1), LocalTime.of(10, 0),
+                LocalTime.of(11, 0), 20.0, BookingType.MATCH, BookingStatus.PENDING, null, 2L, 1L, null);
+        BookingDTO savedBooking = new BookingDTO(7L, newBooking.bookingDate(), newBooking.startTime(),
+                newBooking.endTime(), newBooking.bookingPrice(), newBooking.type(), newBooking.status(),
+                newBooking.score(), newBooking.userId(), newBooking.courtId(), newBooking.coachId());
+        when(bookingService.createBooking(any(BookingDTO.class))).thenReturn(savedBooking);
+
+        mockMvc.perform(post("/api/v1/bookings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "bookingDate": "%s",
+                                  "startTime": "10:00:00",
+                                  "endTime": "11:00:00",
+                                  "bookingPrice": 20.0,
+                                  "type": "MATCH",
+                                  "status": "PENDING",
+                                  "userId": 2,
+                                  "courtId": 1
+                                }
+                                """.formatted(newBooking.bookingDate())))
+                .andExpect(status().isCreated())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header()
+                        .string(HttpHeaders.LOCATION, org.hamcrest.Matchers.endsWith("/api/v1/bookings/7")));
+    }
 
 }
