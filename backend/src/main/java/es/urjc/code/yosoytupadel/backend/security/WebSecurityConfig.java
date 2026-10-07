@@ -80,7 +80,7 @@ public class WebSecurityConfig {
         http.authorizeHttpRequests(authorize -> authorize
 
                 // AUTH ENDPOINTS
-                .requestMatchers(HttpMethod.POST, "/api/v1/auth/login", "/api/v1/auth/refresh","/api/v1/auth/logout","/api/v1/users/new").permitAll()
+                .requestMatchers("/v3/api-docs", "/v3/api-docs*/**", "/v3/api-docs.yaml", "/swagger-ui/**", "/swagger-ui.html").permitAll()                .requestMatchers(HttpMethod.POST, "/api/v1/auth/login", "/api/v1/auth/refresh","/api/v1/auth/logout","/api/v1/users/new").permitAll()
                 .requestMatchers("/error").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/rackets").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/rackets/*/image").permitAll()

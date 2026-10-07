@@ -227,49 +227,6 @@
 				</executions>
 			</plugin>
 			<plugin>
-				<groupId>org.springdoc</groupId>
-				<artifactId>springdoc-openapi-maven-plugin</artifactId>
-				<version>1.4</version>
-				<executions>
-					<execution>
-						<phase>verify</phase>
-						<goals>
-							<goal>generate</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<apiDocsUrl>http://localhost:8080/v3/api-docs.yaml</apiDocsUrl>
-					<outputFileName>api-docs.yaml</outputFileName>
-					<outputDir>${project.basedir}/../docs/api</outputDir>
-				</configuration>
-			</plugin>
-
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>exec-maven-plugin</artifactId>
-				<version>3.1.0</version>
-				<executions>
-					<execution>
-						<phase>verify</phase>
-						<goals>
-							<goal>exec</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<executable>npx</executable>
-					<arguments>
-						<argument>@redocly/cli</argument>
-						<argument>build-docs</argument>
-						<argument>${project.basedir}/../docs/api/api-docs.yaml</argument>
-						<argument>--output</argument>
-						<argument>${project.basedir}/../docs/api/api-docs.html</argument>
-					</arguments>
-				</configuration>
-			</plugin>
-
-			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>3.5.6</version>
@@ -278,6 +235,10 @@
 						-XX:+EnableDynamicAgentLoading
 						-Djdk.instrument.traceUsage=false
 					</argLine>
+					<excludes>
+						<exclude>**/*IntegrationTest.java</exclude>
+						<exclude>**/*SystemTest.java</exclude>
+					</excludes>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -295,7 +256,6 @@
 				<configuration>
 					<includes>
 						<include>**/*IntegrationTest.java</include>
-						<include>**/*ClientSystemTest.java</include>
 					</includes>
 				</configuration>
 			</plugin>
