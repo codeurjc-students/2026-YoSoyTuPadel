@@ -32,6 +32,10 @@ export interface RacketRentalUser {
 }
 
 export const racketService = {
+  async createRacket(details: Omit<RacketDTO, 'id'>): Promise<RacketDTO> {
+    const { data } = await api.post<RacketDTO>('/api/v1/rackets', details);
+    return data;
+  },
   async getRackets(page = 0, size = 10, signal?: AbortSignal): Promise<RacketPage> {
     const { data } = await api.get<RacketPage>('/api/v1/rackets', {
       params: { page, size },

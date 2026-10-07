@@ -7,9 +7,18 @@ import {
   CardContent,
   CardMedia,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Grid,
+  MenuItem,
+  Snackbar,
+  Stack,
+  TextField,
   Typography,
 } from '@mui/material';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { courtService, type PreCourtDTO } from '../services/courtService';
@@ -27,6 +36,42 @@ function CourtListPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [confirmCreate, setConfirmCreate] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [createForm, setCreateForm] = useState({ name: '', courtPrice: '', type: 'INDOOR', surface: 'GLASS' });
+
+  const refreshCourts = async () => {
+    const result = await courtService.getCourts(0, PAGE_SIZE);
+    setCourts(result.content);
+    setTotalCourts(result.totalElements);
+    setPage(result.number);
+    setHasMore(!result.last && result.content.length === PAGE_SIZE);
+  };
+
+  const handleCreate = async () => {
+    setCreating(true);
+    setCreateError(null);
+    try {
+      await courtService.createCourt({
+        name: createForm.name.trim(),
+        courtPrice: Number(createForm.courtPrice),
+        type: createForm.type,
+        surface: createForm.surface,
+      });
+      await refreshCourts();
+      setCreateOpen(false);
+      setConfirmCreate(false);
+      setCreateForm({ name: '', courtPrice: '', type: 'INDOOR', surface: 'GLASS' });
+      setSuccessMessage('Pista creada correctamente.');
+    } catch {
+      setCreateError('No se ha podido crear la pista.');
+    } finally {
+      setCreating(false);
+    }
+  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -100,6 +145,11 @@ function CourtListPage() {
           <Box component="span" sx={{ width: 'fit-content', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 99, bgcolor: 'rgba(255,255,255,0.08)', px: 2, py: 1, color: '#e2e8f0', fontSize: 14, fontWeight: 700, boxShadow: 1, backdropFilter: 'blur(8px)' }}>
             {totalCourts} {totalCourts === 1 ? 'pista' : 'pistas'}
           </Box>
+        )}
+        {isAdmin && (
+          <Button variant="contained" color="error" startIcon={<AddRoundedIcon />} onClick={() => setCreateOpen(true)} sx={{ fontWeight: 800, textTransform: 'none', borderRadius: 2 }}>
+            Nueva pista
+          </Button>
         )}
       </Box>
 
@@ -225,6 +275,39 @@ function CourtListPage() {
           </Button>
         </Box>
       )}
+
+      <Dialog open={createOpen} onClose={() => !creating && setCreateOpen(false)} fullWidth maxWidth="sm" slotProps={{ paper: { sx: { bgcolor: 'white', borderRadius: 3 } } }}>
+        <DialogTitle sx={{ color: 'grey.900', fontWeight: 900 }}>Añadir nueva pista</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <TextField label="Nombre" value={createForm.name} onChange={(event) => setCreateForm((current) => ({ ...current, name: event.target.value }))} fullWidth />
+            <TextField label="Precio por hora" type="number" value={createForm.courtPrice} onChange={(event) => setCreateForm((current) => ({ ...current, courtPrice: event.target.value }))} slotProps={{ htmlInput: { min: 0, step: 0.01 } }} fullWidth />
+            <TextField select label="Tipo" value={createForm.type} onChange={(event) => setCreateForm((current) => ({ ...current, type: event.target.value }))} fullWidth>
+              <MenuItem value="INDOOR">INDOOR</MenuItem>
+              <MenuItem value="OUTDOOR">OUTDOOR</MenuItem>
+            </TextField>
+            <TextField select label="Superficie" value={createForm.surface} onChange={(event) => setCreateForm((current) => ({ ...current, surface: event.target.value }))} fullWidth>
+              <MenuItem value="GLASS">GLASS</MenuItem>
+              <MenuItem value="WALL">WALL</MenuItem>
+            </TextField>
+            {createError && <Alert severity="error">{createError}</Alert>}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setCreateOpen(false)} sx={{ color: 'grey.700', textTransform: 'none' }}>Cancelar</Button>
+          <Button variant="contained" color="error" disabled={!createForm.name.trim() || createForm.courtPrice === '' || Number(createForm.courtPrice) < 0} onClick={() => setConfirmCreate(true)} sx={{ textTransform: 'none', fontWeight: 800 }}>Continuar</Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog open={confirmCreate} onClose={() => !creating && setConfirmCreate(false)} fullWidth maxWidth="xs" slotProps={{ paper: { sx: { bgcolor: 'white', borderRadius: 3 } } }}>
+        <DialogTitle sx={{ color: 'grey.900', fontWeight: 900 }}>¿Crear esta pista?</DialogTitle>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setConfirmCreate(false)} sx={{ color: 'grey.700', textTransform: 'none' }}>Volver</Button>
+          <Button variant="contained" color="error" disabled={creating} onClick={() => void handleCreate()} sx={{ textTransform: 'none', fontWeight: 800 }}>{creating ? 'Creando...' : 'Confirmar'}</Button>
+        </DialogActions>
+      </Dialog>
+      <Snackbar open={successMessage !== null} autoHideDuration={4000} onClose={() => setSuccessMessage(null)}>
+        <Alert severity="success" variant="filled" onClose={() => setSuccessMessage(null)}>{successMessage}</Alert>
+      </Snackbar>
     </Box>
   );
 }

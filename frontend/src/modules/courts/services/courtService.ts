@@ -35,6 +35,13 @@ export interface BookingDTO {
 }
 
 export const courtService = {
+  async createCourt(details: Omit<CourtDTO, 'id' | 'isAvailable'>): Promise<CourtDTO> {
+    const { data } = await api.post<CourtDTO>('/api/v1/courts', {
+      ...details,
+      isAvailable: true,
+    });
+    return data;
+  },
   async getCourts(page = 0, size = 10, signal?: AbortSignal): Promise<CourtPage> {
     const { data } = await api.get<CourtPage>('/api/v1/courts', {
       params: { page, size },
