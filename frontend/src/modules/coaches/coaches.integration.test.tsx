@@ -66,7 +66,7 @@ describe('Integración de entrenadores', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: 'María López' })).toBeInTheDocument();
     const date = new Date();
-    date.setDate(date.getDate() + 1);
+    date.setDate(date.getDate() + 2);
     fireEvent.click(screen.getByRole('button', {
       name: new Intl.DateTimeFormat('es-ES', { weekday: 'short', day: '2-digit', month: 'short' }).format(date),
     }));
