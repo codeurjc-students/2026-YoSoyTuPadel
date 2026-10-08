@@ -34,7 +34,7 @@ function RoleGuard({ children, allowedRoles }: { children: ReactNode; allowedRol
       return;
     }
 
-    navigate('/403', { replace: true });
+    void navigate('/403', { replace: true });
   }, [hasAccess, navigate]);
 
   return hasAccess ? <>{children}</> : null;

@@ -129,7 +129,7 @@ function MyBookingsPage() {
 
   useEffect(() => {
     if (!isAuthLoading && !isAuthenticated) {
-      navigate('/login', { replace: true, state: { from: '/bookings' } });
+      void navigate('/login', { replace: true, state: { from: '/bookings' } });
     }
   }, [isAuthLoading, isAuthenticated, navigate]);
 

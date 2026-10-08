@@ -49,7 +49,7 @@ function AuthPage() {
     }
 
     if (await login({ email, password })) {
-      navigate('/', { replace: true });
+      void navigate('/', { replace: true });
     }
   };
 
@@ -206,7 +206,7 @@ function AuthPage() {
                   {isRegistering ? 'Empieza hoy a disfrutar del pádel.' : 'Accede para gestionar tus reservas.'}
                 </Typography>
 
-                <Box component="form" onSubmit={handleSubmit} noValidate={false} sx={{ mt: 3.5 }}>
+                <Box component="form" onSubmit={(e) => void handleSubmit(e)} noValidate={false} sx={{ mt: 3.5 }}>
                   <Stack spacing={2.25}>
                     {isRegistering && (
                       <>

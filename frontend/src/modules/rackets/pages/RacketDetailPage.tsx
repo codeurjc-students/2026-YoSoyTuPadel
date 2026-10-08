@@ -63,7 +63,7 @@ function RacketDetailPage() {
       icon: '🎾',
       style: { fontSize: '1.1rem', lineHeight: 1.5, padding: '18px 24px', maxWidth: 440 },
     });
-    navigate('/bookings?tab=material');
+    void navigate('/bookings?tab=material');
   };
 
   useEffect(() => {

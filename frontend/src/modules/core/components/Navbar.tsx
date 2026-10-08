@@ -43,7 +43,7 @@ function Navbar() {
   const confirmLogout = async () => {
     setLogoutDialogOpen(false);
     setMenuOpen(false);
-    navigate('/', { replace: true });
+    void navigate('/', { replace: true });
     await logout();
   };
 
