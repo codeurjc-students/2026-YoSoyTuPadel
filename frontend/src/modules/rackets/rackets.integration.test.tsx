@@ -21,10 +21,10 @@ const guestAuth: AuthContextValue = {
     clearError: vi.fn(),
 };
 
-describe('Integración del catálogo de palas', () => {
+describe('Integration of the paddle catalog', () => {
     beforeEach(() => vi.clearAllMocks());
 
-    test('carga el catálogo para un visitante sin depender de la API real', async () => {
+    test('loads the catalog for a visitor without relying on the actual API', async () => {
         vi.mocked(racketService.getRackets).mockResolvedValue({
             content: [{ id: 1, brand: 'Bullpadel', name: 'Vertex 04', stock: 2 }],
             number: 0,

@@ -135,7 +135,7 @@ function CourtDetailPage() {
   }, []);
   useEffect(() => {
     if (!isAuthLoading && (!isAuthenticated || !user)) {
-      navigate('/login', { replace: true, state: { from: `/courts/${id ?? ''}` } });
+      void navigate('/login', { replace: true, state: { from: `/courts/${id ?? ''}` } });
     }
   }, [id, isAuthLoading, isAuthenticated, user, navigate]);
 
@@ -601,7 +601,7 @@ function CourtDetailPage() {
             color="error"
             onClick={() => {
               setIsSuccessDialogOpen(false);
-              navigate('/courts');
+              void navigate('/courts');
             }}
             sx={{ mt: 2.5, minHeight: 46, borderRadius: 2, fontWeight: 900, textTransform: 'none' }}
           >

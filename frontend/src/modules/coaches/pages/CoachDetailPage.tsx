@@ -106,7 +106,7 @@ function CoachDetailPage() {
 
   useEffect(() => {
     if (!isAuthLoading && !isAuthenticated) {
-      navigate('/login', { replace: true, state: { from: `/coaches/${id ?? ''}` } });
+      void navigate('/login', { replace: true, state: { from: `/coaches/${id ?? ''}` } });
     }
   }, [id, isAuthLoading, isAuthenticated, navigate]);
 
@@ -401,7 +401,7 @@ function CoachDetailPage() {
             color="error"
             onClick={() => {
               setIsSuccessDialogOpen(false);
-              navigate('/coaches');
+              void navigate('/coaches');
             }}
             sx={{ mt: 2.5, minHeight: 46, borderRadius: 2, fontWeight: 900, textTransform: 'none' }}
           >

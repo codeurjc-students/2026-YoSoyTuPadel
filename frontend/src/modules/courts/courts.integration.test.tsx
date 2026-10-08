@@ -43,7 +43,7 @@ function tomorrowLabel() {
   return new Intl.DateTimeFormat('es-ES', { weekday: 'short', day: '2-digit', month: 'short' }).format(date);
 }
 
-describe('Integración de pistas', () => {
+describe('Courts integration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(api.get).mockImplementation((url: string) => Promise.resolve({
@@ -58,14 +58,14 @@ describe('Integración de pistas', () => {
     }));
   });
 
-  test('carga el catálogo y navega al detalle de una pista', async () => {
+  test('load the catalog and navigate to the details of a track', async () => {
     renderListAndDetail();
 
     fireEvent.click(await screen.findByRole('link', { name: 'Ver disponibilidad' }));
     expect(await screen.findByRole('heading', { level: 1, name: 'Pista central' })).toBeInTheDocument();
   });
 
-  test('consulta disponibilidad y bloquea una franja ya ocupada', async () => {
+  test('check availability and block a time slot that is already taken', async () => {
     renderListAndDetail();
     fireEvent.click(await screen.findByRole('link', { name: 'Ver disponibilidad' }));
     expect(await screen.findByRole('heading', { level: 1, name: 'Pista central' })).toBeInTheDocument();
@@ -74,7 +74,7 @@ describe('Integración de pistas', () => {
     expect(await screen.findByRole('button', { name: '11:00, reservada' })).toBeDisabled();
   });
 
-  test('envía una reserva y muestra el resumen de confirmación', async () => {
+  test('submit a reservation and show the confirmation summary', async () => {
     vi.mocked(api.get).mockImplementation((url: string) => Promise.resolve({
       data: url.includes('/availability') ? [] : court,
     }));

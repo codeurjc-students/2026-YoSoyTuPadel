@@ -31,13 +31,13 @@ function setupApi() {
   }));
 }
 
-describe('Integración de entrenadores', () => {
+describe('Coaches integration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     setupApi();
   });
 
-  test('lista entrenadores y abre su vista de detalle', async () => {
+  test('list of coaches and opens its detail view', async () => {
     render(
       <MemoryRouter initialEntries={['/coaches']}>
         <AuthContext.Provider value={auth}>
@@ -54,7 +54,7 @@ describe('Integración de entrenadores', () => {
     expect(await screen.findByText('FEP Nivel 2')).toBeInTheDocument();
   });
 
-  test('comprueba horarios y reserva una sesión de entrenamiento', async () => {
+  test('check the schedule and book a training session', async () => {
     vi.mocked(api.post).mockResolvedValue({ data: { id: 55 } });
     render(
       <MemoryRouter initialEntries={['/coaches/3']}>
@@ -70,7 +70,7 @@ describe('Integración de entrenadores', () => {
     fireEvent.click(screen.getByRole('button', {
       name: new Intl.DateTimeFormat('es-ES', { weekday: 'short', day: '2-digit', month: 'short' }).format(date),
     }));
-    expect(await screen.findByRole('button', { name: '09:00' })).toBeEnabled();
+    await waitFor(() => expect(screen.getByRole('button', { name: '09:00' })).toBeEnabled());
     fireEvent.click(screen.getByRole('button', { name: '09:00' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Reservar sesión · 09:00' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Confirmar' }));

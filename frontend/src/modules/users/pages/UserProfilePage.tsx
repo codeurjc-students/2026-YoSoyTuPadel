@@ -191,7 +191,7 @@ function UserProfilePage() {
       setIsEditOpen(false);
       if (emailChanged) {
         await logout();
-        navigate('/login', { replace: true });
+        void navigate('/login', { replace: true });
       } else {
         setSuccessMessage('Perfil actualizado con éxito');
       }
@@ -216,7 +216,7 @@ function UserProfilePage() {
       await logout();
       setIsDeleteOpen(false);
       setSuccessMessage('Operación realizada con éxito');
-      navigate('/');
+      void navigate('/');
     } catch (error: unknown) {
       toast.error(authService.getErrorMessage(error));
     } finally {

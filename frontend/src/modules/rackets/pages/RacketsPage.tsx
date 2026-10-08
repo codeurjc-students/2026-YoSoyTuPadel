@@ -231,7 +231,7 @@ function RacketsPage() {
                       aria-label={`Ver detalles de ${racket.brand} ${racket.name}`}
                       className="rounded-xl bg-brand-red px-4 py-2.5 text-xs font-bold text-white transition hover:bg-red-600"
                     >
-                      {isAdmin ? 'Ver detalles' : 'Ver detalles'}
+                      Ver detalles
                     </Link>
                   ) : (
                     <Link
