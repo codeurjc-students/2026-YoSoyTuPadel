@@ -370,10 +370,9 @@ class UserServiceTest {
         Authentication authentication = mock(Authentication.class);
         when(authentication.getPrincipal()).thenReturn(details);
         when(details.getUsername()).thenReturn("student@example.com");
-        when(userRepository.findWithRacketHistoryByEmail("student@example.com"))
+
+        when(userRepository.findByEmail("student@example.com"))
                 .thenReturn(Optional.of(student));
-        when(userMapper.toDTO(student)).thenReturn(studentDTO);
-        when(studentDTO.id()).thenReturn(2L);
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // When / Then
