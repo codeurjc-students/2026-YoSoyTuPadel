@@ -85,7 +85,7 @@ describe('Integración de reservas', () => {
     renderBookings();
 
     fireEvent.click(await screen.findByRole('button', { name: 'Cancelar reserva' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar cancelación' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirmar cancelación' }));
 
     await waitFor(() => expect(bookingService.cancelBooking).toHaveBeenCalledWith('court-12', 'court'));
     expect(await screen.findByText('Reserva cancelada con éxito')).toBeInTheDocument();

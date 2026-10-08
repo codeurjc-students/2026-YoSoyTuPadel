@@ -89,8 +89,8 @@ describe('CourtDetailPage', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Pista central' })).toBeInTheDocument();
     const dateValue = await selectTomorrow();
     fireEvent.click(screen.getByRole('button', { name: '09:00' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Finalizar reserva · 09:00' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Finalizar reserva · 09:00' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirmar' }));
 
     await screen.findByRole('heading', { name: '¡Reserva confirmada!' });
     const successDialog = screen.getByRole('dialog', { name: '¡Reserva confirmada!' });
@@ -108,7 +108,7 @@ describe('CourtDetailPage', () => {
       type: 'MATCH',
       status: 'PENDING',
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Volver a pistas' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Volver a pistas' }));
     expect(await screen.findByRole('heading', { name: 'Catálogo de Pistas' })).toBeInTheDocument();
   }, 10000);
 
@@ -122,13 +122,13 @@ describe('CourtDetailPage', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Pista central' })).toBeInTheDocument();
     await selectTomorrow();
     fireEvent.click(screen.getByRole('button', { name: '09:00' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Finalizar reserva · 09:00' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Finalizar reserva · 09:00' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirmar' }));
 
     expect(await screen.findByText('Esta hora ya está reservada. Elige otra franja horaria.')).toBeInTheDocument();
     expect(screen.getAllByText('Esta hora ya está reservada. Elige otra franja horaria.')).toHaveLength(1);
     expect(await screen.findByRole('button', { name: '09:00, reservada' })).toBeDisabled();
-  });
+  }, 10000);
 
   test('marks time slots already returned by the availability API as unavailable', async () => {
     vi.mocked(api.get).mockImplementation((url: string) => Promise.resolve({

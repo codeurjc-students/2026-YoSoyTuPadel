@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
@@ -30,8 +30,9 @@ describe('Navbar logout confirmation', () => {
     );
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Cerrar sesión' })[0]);
-    expect(screen.getByRole('dialog')).toHaveTextContent('¿Estás seguro de que deseas cerrar sesión?');
-    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveTextContent('¿Estás seguro de que deseas cerrar sesión?');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancelar' }));
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(authMocks.logout).not.toHaveBeenCalled();
@@ -45,7 +46,7 @@ describe('Navbar logout confirmation', () => {
     );
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Cerrar sesión' })[0]);
-    fireEvent.click(screen.getByRole('button', { name: 'Sí, cerrar sesión' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Sí, cerrar sesión' }));
 
     expect(authMocks.logout).toHaveBeenCalledOnce();
   });

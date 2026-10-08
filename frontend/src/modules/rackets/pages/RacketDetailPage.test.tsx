@@ -80,7 +80,7 @@ describe('RacketDetailPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Reservar' }));
     expect(screen.getByRole('dialog')).toHaveTextContent('¿Seguro que quieres alquilar la pala Bullpadel Vertex 04?');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirmar' }));
     expect(screen.getByRole('progressbar', { name: 'Confirmando reserva' })).toBeInTheDocument();
     expect(racketService.rentRacket).toHaveBeenCalledWith(1, 3);
     expect(await screen.findByText('¡Pala reservada con éxito!', {}, { timeout: 2000 })).toBeInTheDocument();
@@ -137,7 +137,7 @@ describe('RacketDetailPage', () => {
 
     await screen.findByRole('heading', { name: 'Bullpadel Vertex 04' });
     fireEvent.click(screen.getByRole('button', { name: 'Reservar' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirmar' }));
 
     expect(await screen.findByRole('heading', { name: 'Material de mis reservas' })).toBeInTheDocument();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -155,7 +155,7 @@ describe('RacketDetailPage', () => {
 
     await screen.findByRole('heading', { name: 'Bullpadel Vertex 04' });
     fireEvent.click(screen.getByRole('button', { name: 'Reservar' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirmar' }));
 
     expect(await screen.findByText('No se ha podido reservar la pala. Inténtalo de nuevo.')).toBeInTheDocument();
     expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -223,7 +223,7 @@ describe('RacketDetailPage', () => {
     fireEvent.change(screen.getByLabelText('Actualizar foto'), {
       target: { files: [imageFile] },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirmar' }));
 
     await waitFor(() => expect(racketService.uploadRacketImage).toHaveBeenCalledWith(3, imageFile));
   });
