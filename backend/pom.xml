@@ -28,8 +28,7 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
-		<sonar.coverage.exclusions>**/dto/**, **/entities/**, **/model/**, **/config/**, **/security/**, **/*Application.java</sonar.coverage.exclusions>
-	</properties>
+		<sonar.coverage.exclusions>**/entities/**,**/dto/**,**/config/**,**/security/jwt/AuthResponse.java,**/security/jwt/LoginRequest.java,**/*Application.java,**/*Exception.java</sonar.coverage.exclusions>	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
