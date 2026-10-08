@@ -39,7 +39,7 @@ function renderListAndDetail() {
 
 function tomorrowLabel() {
   const date = new Date();
-  date.setDate(date.getDate() + 1);
+  date.setDate(date.getDate() + 2);
   return new Intl.DateTimeFormat('es-ES', { weekday: 'short', day: '2-digit', month: 'short' }).format(date);
 }
 
@@ -90,7 +90,7 @@ describe('Integración de pistas', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Pista central' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: tomorrowLabel() }));
     fireEvent.click(await screen.findByRole('button', { name: '09:00' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Finalizar reserva · 09:00' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Finalizar reserva · 09:00' }));
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
 
     const dialog = await screen.findByRole('dialog', { name: '¡Reserva confirmada!' });
