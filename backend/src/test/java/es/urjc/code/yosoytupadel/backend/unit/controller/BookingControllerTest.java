@@ -179,4 +179,47 @@ class BookingControllerTest {
                         .string(HttpHeaders.LOCATION, org.hamcrest.Matchers.endsWith("/api/v1/bookings/7")));
     }
 
+    @Test
+    void getCoachBookings_ShouldUseAuthenticatedCoachId() throws Exception {
+        // Given
+        when(bookingService.getAuthenticatedCoachId()).thenReturn(3L);
+        when(bookingService.getBookingsForCoach(3L)).thenReturn(Collections.emptyList());
+
+        // When / Then
+        mockMvc.perform(get("/api/v1/bookings/coach"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+        verify(bookingService).getAuthenticatedCoachId();
+        verify(bookingService).getBookingsForCoach(3L);
+    }
+
+    @Test
+    void cancelBooking_ShouldDelegateToService() throws Exception {
+        // Given
+        when(bookingService.cancelBooking(1L)).thenReturn(dto1);
+
+        // When / Then
+        mockMvc.perform(patch("/api/v1/bookings/1"))
+                .andExpect(status().isOk());
+        verify(bookingService).cancelBooking(1L);
+    }
+
+    @Test
+    void deleteBooking_ShouldDelegateToService() throws Exception {
+        // Given
+        when(bookingService.deleteBooking(1L)).thenReturn(dto1);
+
+        // When / Then
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/api/v1/bookings/1"))
+                .andExpect(status().isOk());
+        verify(bookingService).deleteBooking(1L);
+    }
+
+    @Test
+    void getReservedCourtSlots_WhenDateIsInvalid_ShouldReturn400() throws Exception {
+        // Given / When / Then
+        mockMvc.perform(get("/api/v1/bookings/courts/1/availability").param("date", "invalid"))
+                .andExpect(status().isBadRequest());
+        verify(bookingService, never()).getReservedCourtSlots(anyLong(), any());
+    }
 }

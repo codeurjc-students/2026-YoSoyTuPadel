@@ -23,6 +23,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.hamcrest.Matchers.hasSize;
@@ -129,5 +132,54 @@ class CourtControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header()
                         .string(HttpHeaders.LOCATION, org.hamcrest.Matchers.endsWith("/api/v1/courts/1")));
+    }
+
+    @Test
+    void getCourt_WhenNotFound_ShouldReturn404() throws Exception {
+        // Given
+        when(courtService.getCourtById(99L)).thenReturn(java.util.Optional.empty());
+
+        // When / Then
+        mockMvc.perform(get("/api/v1/courts/99"))
+                .andExpect(status().isNotFound());
+        verify(courtService).getCourtById(99L);
+    }
+
+    @Test
+    void updatePrice_ShouldReturnUpdatedCourt() throws Exception {
+        // Given
+        when(courtService.updatePrice(1L, 12.5)).thenReturn(dto1);
+
+        // When / Then
+        mockMvc.perform(patch("/api/v1/courts/1/price").param("newPrice", "12.5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1));
+        verify(courtService).updatePrice(1L, 12.5);
+    }
+
+    @Test
+    void updateCourt_ShouldReturnUpdatedCourt() throws Exception {
+        // Given
+        when(courtService.updateCourt(1L, dto2)).thenReturn(dto1);
+
+        // When / Then
+        mockMvc.perform(put("/api/v1/courts/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto2)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1));
+        verify(courtService).updateCourt(eq(1L), any(CourtDTO.class));
+    }
+
+    @Test
+    void deleteCourt_ShouldReturnDeletedCourt() throws Exception {
+        // Given
+        when(courtService.deleteCourt(1L)).thenReturn(dto1);
+
+        // When / Then
+        mockMvc.perform(delete("/api/v1/courts/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Alameda de Osuna"));
+        verify(courtService).deleteCourt(1L);
     }
 }

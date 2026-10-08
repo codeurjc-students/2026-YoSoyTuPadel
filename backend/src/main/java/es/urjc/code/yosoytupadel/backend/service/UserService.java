@@ -268,16 +268,24 @@ public class UserService {
     }
 
     public boolean isMe(long id) {
-        return getAuthenticatedUserDto()
-                .map(user -> user.id().equals(id))
-                .orElse(false);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof UserDetails userDetails) {
+            return userRepository.findByEmail(userDetails.getUsername())
+                    .map(user -> user.getId().equals(id))
+                    .orElse(false);
+        }
+        return false;
     }
 
     public boolean isMine(long id) {
-        return bookingRepository.findById(id)
-                .flatMap(booking -> getAuthenticatedUserDto()
-                        .map(user -> user.id().equals(booking.getUser().getId())))
-                .orElse(false);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof UserDetails userDetails) {
+            return bookingRepository.findById(id)
+                    .flatMap(booking -> userRepository.findByEmail(userDetails.getUsername())
+                            .map(user -> user.getId().equals(booking.getUser().getId())))
+                    .orElse(false);
+        }
+        return false;
     }
 
     public boolean isCoach(long id) {
