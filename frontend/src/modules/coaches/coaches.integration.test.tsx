@@ -72,8 +72,8 @@ describe('Integración de entrenadores', () => {
     }));
     expect(await screen.findByRole('button', { name: '09:00' })).toBeEnabled();
     fireEvent.click(screen.getByRole('button', { name: '09:00' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Reservar sesión · 09:00' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Reservar sesión · 09:00' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirmar' }));
 
     const dialog = await screen.findByRole('dialog', { name: '¡Reserva confirmada!' });
     expect(within(dialog).getByText('Entrenamiento')).toBeInTheDocument();

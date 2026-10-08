@@ -99,7 +99,7 @@ describe('UserProfilePage', () => {
     expect(screen.getByRole('button', { name: 'GUARDAR' })).toBeEnabled();
 
     fireEvent.click(screen.getByRole('button', { name: 'GUARDAR' }));
-    fireEvent.click(screen.getByRole('button', { name: 'CONFIRMAR' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'CONFIRMAR' }));
 
     await waitFor(() => expect(authService.updateUser).toHaveBeenCalledWith(4, {
       name: 'Alex Updated',

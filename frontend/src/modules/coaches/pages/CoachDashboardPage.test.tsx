@@ -110,7 +110,7 @@ describe('CoachDashboardPage', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Cancelar' }));
     expect(screen.getByRole('dialog')).toHaveTextContent('¿Estás seguro de cancelar esta sesión?');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Sí, cancelar' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Sí, cancelar' }));
 
     await waitFor(() => expect(api.patch).toHaveBeenCalledWith('/api/v1/bookings/11'));
     expect(await screen.findByText('Cancelada')).toBeInTheDocument();
@@ -124,7 +124,7 @@ describe('CoachDashboardPage', () => {
     renderDashboard();
 
     fireEvent.click(await screen.findByRole('button', { name: 'Cancelar' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Volver' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Volver' }));
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(api.patch).not.toHaveBeenCalled();
@@ -148,7 +148,7 @@ describe('CoachDashboardPage', () => {
     renderDashboard();
 
     fireEvent.click(await screen.findByRole('button', { name: 'Cancelar' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Sí, cancelar' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Sí, cancelar' }));
 
     expect(await screen.findByText('Unable to cancel booking')).toBeInTheDocument();
     expect(authService.getErrorMessage).toHaveBeenCalledWith(error);

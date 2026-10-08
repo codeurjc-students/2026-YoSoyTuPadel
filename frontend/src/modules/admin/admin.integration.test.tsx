@@ -57,7 +57,7 @@ describe('Integración de perfil y administración', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Editar' }));
     fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'Ana Actualizada' } });
     fireEvent.click(screen.getByRole('button', { name: 'GUARDAR' }));
-    fireEvent.click(screen.getByRole('button', { name: 'CONFIRMAR' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'CONFIRMAR' }));
 
     await waitFor(() => expect(authService.updateUser).toHaveBeenCalledWith(7, expect.objectContaining({
       name: 'Ana Actualizada',

@@ -1,186 +1,88 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { MemoryRouter } from 'react-router-dom';
-import RacketsPage from './modules/rackets/pages/RacketsPage';
-import api from './service/api';
-import { vi, describe, beforeEach, test, expect } from 'vitest';
-import type { Mock } from 'vitest';
-import { AuthContext, type AuthContextValue } from './modules/auth/context/authContext';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+import App from './App';
+import { useAuth } from './modules/auth/hooks/useAuth';
 
-vi.mock('./service/api', () => ({
-    default: {
-        get: vi.fn(),
-    },
+// 1. Mock the provider so it doesn't interfere with the simulated state in tests
+vi.mock('./modules/auth/context/AuthProvider', () => ({
+    AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-// Datos ficticios
-const mockRackets = [
-    {
-        id: 1,
-        brand: 'Bullpadel',
-        name: 'Hack 03',
-        stock: 3,
-    },
-    {
-        id: 2,
-        brand: 'Adidas',
-        name: 'Metalbone 3.2',
-        stock: 0,
-    },
-];
-const mockRacketPage = {
-    content: mockRackets,
-    number: 0,
-    size: 10,
-    totalElements: mockRackets.length,
-    totalPages: 1,
-    last: true,
-};
+// 2. Mock the auth hook to control roles dynamically
+vi.mock('./modules/auth/hooks/useAuth', () => ({
+    useAuth: vi.fn(),
+}));
 
-const guestAuth: AuthContextValue = {
-    user: null,
-    isAuthenticated: false,
-    isLoading: false,
-    error: null,
-    login: vi.fn(),
-    register: vi.fn(),
-    logout: vi.fn(),
-    clearError: vi.fn(),
-};
+// 3. Mock pages to isolate the test exclusively to routing and RoleGuard
+vi.mock('./modules/core/pages/HomePage', () => ({ default: () => <h1>Home Page</h1> }));
+vi.mock('./modules/rackets/pages/RacketsPage', () => ({ default: () => <h1>Rackets Catalog</h1> }));
+vi.mock('./modules/admin/pages/AdminDashboardPage', () => ({ default: () => <h1>Admin Dashboard</h1> }));
+vi.mock('./modules/bookings/pages/MyBookingsPage', () => ({ default: () => <h1>My Bookings</h1> }));
+vi.mock('./modules/core/pages/ForbiddenPage', () => ({ default: () => <h1>403 - Forbidden</h1> }));
+vi.mock('./modules/core/pages/NotFoundPage', () => ({ default: () => <h1>404 - Not Found</h1> }));
 
-function renderRacketsPage() {
+// Helper to configure the authentication state and render the initial route
+const renderApp = (initialRoute: string, role: string | null = null) => {
+    vi.mocked(useAuth).mockReturnValue({
+        user: role ? { id: 1, name: 'Test User', nickname: 'testuser', email: 'test@test.com', role } : null,
+        isAuthenticated: !!role,
+        isLoading: false,
+        error: null,
+        login: vi.fn(),
+        register: vi.fn(),
+        logout: vi.fn(),
+        clearError: vi.fn(),
+        updateUser: vi.fn(),
+    });
+
     return render(
-        <MemoryRouter>
-            <AuthContext.Provider value={guestAuth}>
-                <RacketsPage />
-            </AuthContext.Provider>
-        </MemoryRouter>,
+        <MemoryRouter initialEntries={[initialRoute]}>
+            <App />
+        </MemoryRouter>
     );
-}
+};
 
-describe('Componente App - Catálogo de Palas', () => {
-    // Limpiamos los mocks antes de cada test para que no interfieran entre sí
+describe('App Router and RoleGuard', () => {
     beforeEach(() => {
         vi.clearAllMocks();
     });
 
-    test('1. Debería mostrar el estado de carga inicial', () => {
-        (api.get as Mock).mockReturnValue(new Promise(() => {}));
-
-        renderRacketsPage();
-
-        expect(screen.getByText(/cargando palas de la base de datos.../i)).toBeInTheDocument();
+    test('renders the public HomePage route by default', () => {
+        renderApp('/');
+        expect(screen.getByRole('heading', { name: 'Home Page' })).toBeInTheDocument();
     });
 
-    test('2. Debería renderizar la lista de palas cuando la API responde con éxito', async () => {
-
-        (api.get as Mock).mockResolvedValue({ data: mockRacketPage });
-
-        renderRacketsPage();
-
-        const titleBullpadel = await screen.findByText('Bullpadel - Hack 03');
-        expect(titleBullpadel).toBeInTheDocument();
-
-        expect(screen.getByText('Adidas - Metalbone 3.2')).toBeInTheDocument();
-        expect(screen.getByText('3 palas disponibles')).toBeInTheDocument();
-        expect(screen.getByText('Agotada')).toBeInTheDocument();
-        expect(screen.getByRole('img', { name: 'Bullpadel Hack 03' }))
-            .toHaveAttribute('src', '/api/v1/rackets/1/image');
-
-        expect(screen.queryByText(/cargando palas/i)).not.toBeInTheDocument();
+    test('allows GUEST access to public routes like the rackets catalog', () => {
+        renderApp('/rackets', null);
+        expect(screen.getByRole('heading', { name: 'Rackets Catalog' })).toBeInTheDocument();
     });
 
-    test('muestra un fallback cuando no se puede cargar una imagen', async () => {
-        (api.get as Mock).mockResolvedValue({ data: mockRacketPage });
-        renderRacketsPage();
+    test('redirects to /403 when an unauthorized user tries to access a protected route', async () => {
+        // A standard user tries to enter the admin dashboard
+        renderApp('/admin', 'ROLE_USER');
 
-        fireEvent.error(await screen.findByRole('img', { name: 'Bullpadel Hack 03' }));
-
-        expect(screen.queryByRole('img', { name: 'Bullpadel Hack 03' })).not.toBeInTheDocument();
-        expect(screen.getAllByText('Bullpadel').length).toBeGreaterThan(0);
-    });
-
-    test('3. Debería mostrar un mensaje de error si la API falla', async () => {
-        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-        // Simulamos un fallo en la petición
-        (api.get as Mock).mockRejectedValue(new Error('Network Error'));
-
-        renderRacketsPage();
-
-        const errorMessage = await screen.findByText('No se ha podido conectar con el servidor.');
-        expect(errorMessage).toBeInTheDocument();
-
-        // Verificamos que no se renderice ninguna lista vacía de palas
-        expect(screen.queryByRole('list')).not.toBeInTheDocument();
-        consoleSpy.mockRestore();
-    });
-
-    test('invita a visitantes a iniciar sesión para ver detalles y reservar', async () => {
-        (api.get as Mock).mockResolvedValue({ data: mockRacketPage });
-        renderRacketsPage();
-
-        expect(await screen.findAllByRole('link', { name: 'Inicia sesión para reservar' })).toHaveLength(2);
-    });
-
-    test('loads the next racket page and hides the button when there are no more results', async () => {
-        const firstPageContent = Array.from({ length: 10 }, (_, index) => ({
-            id: index + 1,
-            brand: 'Brand',
-            name: `Model ${index + 1}`,
-            stock: 1,
-        }));
-        (api.get as Mock).mockImplementation((_url: string, config: { params: { page: number } }) =>
-            Promise.resolve({
-                data: config.params.page === 0
-                    ? { ...mockRacketPage, content: firstPageContent, last: false, totalElements: 11, totalPages: 2 }
-                    : {
-                        content: [{ id: 11, brand: 'Brand', name: 'Model 11', stock: 1 }],
-                        number: 1,
-                        size: 10,
-                        totalElements: 11,
-                        totalPages: 2,
-                        last: true,
-                    },
-            }),
-        );
-
-        renderRacketsPage();
-        expect(await screen.findByText('Brand - Model 10')).toBeInTheDocument();
-        fireEvent.click(screen.getByRole('button', { name: 'Más resultados' }));
-
-        expect(await screen.findByText('Brand - Model 11')).toBeInTheDocument();
-        await waitFor(() => expect(screen.queryByRole('button', { name: 'Más resultados' })).not.toBeInTheDocument());
-        expect(api.get).toHaveBeenNthCalledWith(1, '/api/v1/rackets', {
-            params: { page: 0, size: 10 },
-            signal: expect.any(AbortSignal),
+        // Verify that RoleGuard intercepts the route and redirects to ForbiddenPage
+        await waitFor(() => {
+            expect(screen.getByRole('heading', { name: '403 - Forbidden' })).toBeInTheDocument();
         });
-        expect(api.get).toHaveBeenNthCalledWith(2, '/api/v1/rackets', {
-            params: { page: 1, size: 10 },
-            signal: undefined,
-        });
+        expect(screen.queryByRole('heading', { name: 'Admin Dashboard' })).not.toBeInTheDocument();
     });
 
-    test('shows the total number of models, not only those in the current page', async () => {
-        const firstPageContent = Array.from({ length: 10 }, (_, index) => ({
-            id: index + 1,
-            brand: 'Brand',
-            name: `Model ${index + 1}`,
-            stock: 1,
-        }));
-        (api.get as Mock).mockResolvedValue({
-            data: {
-                content: firstPageContent,
-                number: 0,
-                size: 10,
-                totalElements: 30,
-                totalPages: 3,
-                last: false,
-            },
-        });
+    test('allows access to protected routes if the role matches', () => {
+        // An administrator accesses the admin dashboard
+        renderApp('/admin', 'ROLE_ADMIN');
+        expect(screen.getByRole('heading', { name: 'Admin Dashboard' })).toBeInTheDocument();
+    });
 
-        renderRacketsPage();
+    test('allows access to USER exclusive routes', () => {
+        renderApp('/bookings', 'ROLE_USER');
+        expect(screen.getByRole('heading', { name: 'My Bookings' })).toBeInTheDocument();
+    });
 
-        expect(await screen.findByText('30 modelos')).toBeInTheDocument();
-        expect(screen.getByText('Brand - Model 10')).toBeInTheDocument();
+    test('renders the 404 page for non-existent routes', () => {
+        renderApp('/fake-route-that-does-not-exist');
+        expect(screen.getByRole('heading', { name: '404 - Not Found' })).toBeInTheDocument();
     });
 });

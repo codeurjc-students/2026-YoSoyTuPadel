@@ -100,7 +100,7 @@ describe('AdminDashboardPage', () => {
       target: { value: 'Updated Client' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirmar' }));
 
     await waitFor(() => expect(authService.updateUser).toHaveBeenCalledWith(1, {
       name: 'Updated Client',
@@ -118,7 +118,7 @@ describe('AdminDashboardPage', () => {
     render(<AdminDashboardPage />);
 
     fireEvent.click(await screen.findByRole('button', { name: 'Eliminar' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirmar' }));
 
     await waitFor(() => expect(api.delete).toHaveBeenCalledWith('/api/v1/users/1'));
     expect(await screen.findByText('Usuario eliminado con éxito.')).toBeInTheDocument();
@@ -157,7 +157,7 @@ describe('AdminDashboardPage', () => {
 
     expect(await screen.findByText('Pista: Central court')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirmar' }));
 
     await waitFor(() => expect(api.patch).toHaveBeenCalledWith('/api/v1/bookings/21'));
     expect(await screen.findByText('Reserva cancelada con éxito.')).toBeInTheDocument();

@@ -224,7 +224,7 @@ describe('MyBookingsPage', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Cancelar reserva' }));
     expect(screen.getByText('¿Estás seguro de que quieres cancelar esta reserva de Pista central?')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar cancelación' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirmar cancelación' }));
 
     expect(await screen.findByText('Reserva cancelada con éxito')).toBeInTheDocument();
     expect(bookingService.cancelBooking).toHaveBeenCalledWith('booking-1', 'court');
@@ -253,7 +253,7 @@ describe('MyBookingsPage', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Material' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Devolver raqueta' }));
     expect(screen.getByText('¿Estás seguro de que quieres devolver la raqueta Bullpadel Vertex?')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar devolución' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirmar devolución' }));
 
     expect(await screen.findByText('Raqueta devuelta con éxito')).toBeInTheDocument();
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
