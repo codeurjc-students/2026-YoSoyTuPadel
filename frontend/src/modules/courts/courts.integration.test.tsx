@@ -91,8 +91,9 @@ describe('Integración de pistas', () => {
     fireEvent.click(screen.getByRole('button', { name: tomorrowLabel() }));
     const timeSlotButton = await screen.findByRole('button', { name: '09:00' });
     fireEvent.click(timeSlotButton);
-    fireEvent.click(await screen.findByRole('button', { name: /Finalizar reserva.*09:00/i }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Confirmar' }));
+    fireEvent.click(await screen.findByRole('button', { name: /Finalizar/i }));
+
+    fireEvent.click(await screen.findByRole('button', { name: /Confirmar/i }));
 
     const dialog = await screen.findByRole('dialog', { name: '¡Reserva confirmada!' });
     expect(within(dialog).getByText('Pista central')).toBeInTheDocument();
