@@ -232,8 +232,7 @@
 				<version>3.5.6</version>
 				<configuration>
 					<argLine>
-						-XX:+EnableDynamicAgentLoading
-						-Djdk.instrument.traceUsage=false
+						@{argLine} -XX:+EnableDynamicAgentLoading -Djdk.instrument.traceUsage=false
 					</argLine>
 					<excludes>
 						<exclude>**/*IntegrationTest.java</exclude>
