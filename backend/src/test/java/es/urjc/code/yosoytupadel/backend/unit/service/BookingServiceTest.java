@@ -364,4 +364,149 @@ class BookingServiceTest {
                 .hasMessageContaining("Booking not found");
         verify(bookingRepository, never()).delete(any());
     }
+
+    @Test
+    void getAllBookingsByUserId_ShouldReturnList() {
+        List<Booking> bookings = Arrays.asList(booking1);
+        List<BookingDTO> dtos = Arrays.asList(bookingDTO1);
+
+        when(bookingRepository.findByUserId(2L)).thenReturn(bookings);
+        when(mapper.toDTOs(bookings)).thenReturn(dtos);
+
+        Collection<BookingDTO> result = bookingService.getAllBookingsByUserId(2L);
+
+        assertThat(result).hasSize(1);
+        verify(bookingRepository, times(1)).findByUserId(2L);
+    }
+
+    @Test
+    void getBookingsForCoach_ShouldReturnCoachBookings() {
+        User client = new User();
+        client.setId(5L);
+        booking1.setUser(client);
+
+        List<Booking> bookings = Arrays.asList(booking1);
+        es.urjc.code.yosoytupadel.backend.dto.UserDTO clientDto = mock(es.urjc.code.yosoytupadel.backend.dto.UserDTO.class);
+
+        when(bookingRepository.findByCoachId(3L)).thenReturn(bookings);
+        when(mapper.toDTO(booking1)).thenReturn(bookingDTO1);
+        when(userService.getUserById(5L)).thenReturn(Optional.of(clientDto));
+
+        Collection<es.urjc.code.yosoytupadel.backend.dto.CoachBookingDTO> result = bookingService.getBookingsForCoach(3L);
+
+        assertThat(result).hasSize(1);
+        verify(bookingRepository, times(1)).findByCoachId(3L);
+    }
+
+    @Test
+    void getBookingsForCoach_WhenClientNotFound_ShouldThrowNotFound() {
+        User client = new User();
+        client.setId(5L);
+        booking1.setUser(client);
+
+        List<Booking> bookings = Arrays.asList(booking1);
+
+        when(bookingRepository.findByCoachId(3L)).thenReturn(bookings);
+        when(userService.getUserById(5L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> bookingService.getBookingsForCoach(3L))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Client not found");
+    }
+
+    @Test
+    void getBookingById_WhenExists_ShouldReturnDTO() {
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking1));
+        when(mapper.toDTO(booking1)).thenReturn(bookingDTO1);
+
+        Optional<BookingDTO> result = bookingService.getBookingById(1L);
+
+        assertThat(result).isPresent();
+        assertThat(result.get()).isEqualTo(bookingDTO1);
+    }
+
+    @Test
+    void deleteBooking_ShouldDeleteAndReturnDTO() {
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking1));
+        when(mapper.toDTO(booking1)).thenReturn(bookingDTO1);
+
+        BookingDTO result = bookingService.deleteBooking(1L);
+
+        assertThat(result).isEqualTo(bookingDTO1);
+        verify(bookingRepository, times(1)).delete(booking1);
+    }
+
+    @Test
+    void getMatchBookingsByUserId_ShouldReturnList() {
+        List<Booking> bookings = Arrays.asList(booking1);
+        List<BookingDTO> dtos = Arrays.asList(bookingDTO1);
+
+        when(bookingRepository.findByUserIdAndType(2L, BookingType.MATCH)).thenReturn(bookings);
+        when(mapper.toDTOs(bookings)).thenReturn(dtos);
+
+        Collection<BookingDTO> result = bookingService.getMatchBookingsByUserId(2L);
+
+        assertThat(result).hasSize(1);
+    }
+
+    @Test
+    void getTrainingBookingsByUserId_ShouldReturnList() {
+        List<Booking> bookings = Arrays.asList(booking1);
+        List<BookingDTO> dtos = Arrays.asList(bookingDTO1);
+
+        when(bookingRepository.findByUserIdAndType(2L, BookingType.TRAINING)).thenReturn(bookings);
+        when(mapper.toDTOs(bookings)).thenReturn(dtos);
+
+        Collection<BookingDTO> result = bookingService.getTrainingBookingsByUserId(2L);
+
+        assertThat(result).hasSize(1);
+    }
+
+    @Test
+    void autoCompleteFinishedBookings_ShouldCompleteAndProcessUsage() {
+        User client = new User();
+        client.setId(2L);
+        booking1.setUser(client);
+        booking1.setStatus(BookingStatus.PENDING);
+
+        when(bookingRepository.findFinishedPendingBookings(any(), any()))
+                .thenReturn(List.of(booking1));
+
+        bookingService.autoCompleteFinishedBookings();
+
+        assertThat(booking1.getStatus()).isEqualTo(BookingStatus.COMPLETED);
+        verify(userService, times(1)).processRacketUsageForUser(2L);
+        verify(bookingRepository, times(1)).saveAll(anyList());
+    }
+
+    @Test
+    void createBooking_WhenCoachPriceIsNull_ShouldDefaultToZero() {
+        User coach = new User();
+        coach.setId(3L);
+        coach.setRole(UserRole.COACH);
+        coach.setSessionPrice(null);
+
+        when(bookingDTO1.bookingDate()).thenReturn(LocalDate.now().plusDays(2));
+        when(bookingDTO1.courtId()).thenReturn(null);
+        when(bookingDTO1.coachId()).thenReturn(3L);
+        when(bookingDTO1.startTime()).thenReturn(LocalTime.of(10, 0));
+        when(bookingDTO1.endTime()).thenReturn(LocalTime.of(12, 0));
+        when(bookingDTO1.userId()).thenReturn(2L);
+        when(bookingDTO1.bookingPrice()).thenReturn(null);
+
+        when(mapper.toDomain(bookingDTO1)).thenReturn(booking1);
+
+        when(userRepository.findById(3L)).thenReturn(Optional.of(coach));
+        User student = new User();
+        student.setId(2L);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(student));
+
+        when(bookingRepository.existsOverlappingCoachBooking(anyLong(), any(), any(), any())).thenReturn(false);
+        when(bookingRepository.save(any(Booking.class))).thenReturn(booking1);
+        when(mapper.toDTO(booking1)).thenReturn(bookingDTO1);
+
+        bookingService.createBooking(bookingDTO1);
+
+        assertThat(booking1.getBookingPrice()).isEqualTo(0.0);
+    }
 }

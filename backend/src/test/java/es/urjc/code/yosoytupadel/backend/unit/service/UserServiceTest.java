@@ -387,4 +387,73 @@ class UserServiceTest {
         // When / Then
         assertThat(userService.isCoach(1L)).isTrue();
     }
+
+    @Test
+    void isMe_WhenNoAuthentication_ShouldReturnFalse() {
+        // Given
+        SecurityContextHolder.getContext().setAuthentication(null);
+
+        // When / Then
+        assertThat(userService.isMe(1L)).isFalse();
+    }
+
+    @Test
+    void isMine_WhenAuthenticatedUserOwnsBooking_ShouldReturnTrue() {
+        // Given
+        UserDetails details = mock(UserDetails.class);
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(details);
+        when(details.getUsername()).thenReturn("student@example.com");
+
+        when(userRepository.findByEmail("student@example.com"))
+                .thenReturn(Optional.of(student)); // student tiene id 2L en los mocks globales
+
+        es.urjc.code.yosoytupadel.backend.entities.Booking booking = new es.urjc.code.yosoytupadel.backend.entities.Booking();
+        booking.setId(10L);
+        booking.setUser(student);
+
+        when(bookingRepository.findById(10L)).thenReturn(Optional.of(booking));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        // When / Then
+        assertThat(userService.isMine(10L)).isTrue();
+    }
+
+    @Test
+    void isMine_WhenNoAuthentication_ShouldReturnFalse() {
+        // Given
+        SecurityContextHolder.getContext().setAuthentication(null);
+
+        // When / Then
+        assertThat(userService.isMine(10L)).isFalse();
+    }
+
+    @Test
+    void updateUser_WhenEmailAlreadyInUseByAnotherUser_ShouldThrowConflict() {
+        // Given
+        UserUpdateDTO updateDTO = new UserUpdateDTO("other@example.com", "other", "New Name", null);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(student));
+
+        User anotherUser = new User();
+        anotherUser.setId(99L);
+        anotherUser.setEmail("other@example.com");
+        when(userRepository.findByEmail("other@example.com")).thenReturn(Optional.of(anotherUser));
+
+        // When / Then
+        assertThatThrownBy(() -> userService.updateUser(2L, updateDTO))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Email is already in use.");
+    }
+
+    @Test
+    void deleteUserImage_WhenImageIsNull_ShouldThrowNotFound() {
+        // Given
+        student.setProfilePicture(null);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(student));
+
+        // When / Then
+        assertThatThrownBy(() -> userService.deleteUserImage(2L))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("User image not found");
+    }
 }
