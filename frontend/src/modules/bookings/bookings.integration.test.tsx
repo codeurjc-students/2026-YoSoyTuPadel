@@ -62,13 +62,13 @@ function renderBookings(value: AuthContextValue = auth) {
   );
 }
 
-describe('Integración de reservas', () => {
+describe('Bookings integration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(bookingService.getUserBookings).mockResolvedValue(bookings);
   });
 
-  test('obtiene las reservas y las filtra por categoría', async () => {
+  test('retrieves the reservations and filters them by category', async () => {
     renderBookings();
 
     expect(await screen.findByRole('heading', { name: 'Pista central' })).toBeInTheDocument();
@@ -80,7 +80,7 @@ describe('Integración de reservas', () => {
     expect(bookingService.getUserBookings).toHaveBeenCalledWith(12, expect.any(AbortSignal));
   });
 
-  test('cancela una reserva y actualiza la vista sin recargar', async () => {
+  test('cancels a reservation and updates the view without reloading', async () => {
     vi.mocked(bookingService.cancelBooking).mockResolvedValue();
     renderBookings();
 
@@ -92,7 +92,7 @@ describe('Integración de reservas', () => {
     expect(screen.getByText('Cancelada')).toBeInTheDocument();
   });
 
-  test('muestra el acceso de autenticación cuando el visitante intenta ver reservas', async () => {
+  test('displays the authentication prompt when the visitor attempts to view reservations', async () => {
     renderBookings({ ...auth, user: null, isAuthenticated: false });
 
     expect(await screen.findByRole('heading', { name: 'Inicia sesión' })).toBeInTheDocument();

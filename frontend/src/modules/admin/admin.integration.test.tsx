@@ -39,13 +39,13 @@ const auth = (currentUser = user): AuthContextValue => ({
   updateUser: vi.fn(),
 });
 
-describe('Integración de perfil y administración', () => {
+describe('Profile integration and administration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(authService.getCurrentUser).mockResolvedValue(user);
   });
 
-  test('actualiza el perfil autenticado y refleja el resultado', async () => {
+  test('updates the authenticated profile and reflects the result', async () => {
     vi.mocked(authService.updateUser).mockResolvedValue({ ...user });
     const value = auth();
     render(
@@ -65,7 +65,7 @@ describe('Integración de perfil y administración', () => {
     expect(await screen.findByText('Perfil actualizado con éxito')).toBeInTheDocument();
   });
 
-  test('muestra un error cuando falla la actualización con datos inválidos', async () => {
+  test('displays an error when the update fails due to invalid data', async () => {
     vi.mocked(authService.updateUser).mockRejectedValue(new Error('invalid'));
     render(
       <MemoryRouter>
@@ -81,7 +81,7 @@ describe('Integración de perfil y administración', () => {
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Los datos no son válidos'));
   });
 
-  test('administra usuarios y reservas desde sus pestañas', async () => {
+  test('manages users and reservations from their respective tabs', async () => {
     vi.mocked(api.get)
       .mockResolvedValueOnce({ data: [user] })
       .mockResolvedValueOnce({ data: [] })
