@@ -56,6 +56,7 @@ function PadelBall({
     if (!state.initialized && width > 0 && height > 0) {
       x.set(maxX * config.initialX);
       y.set(maxY * config.initialY);
+      // NOSONAR - Non-cryptographic random for initial animation trajectory
       const angle = Math.random() * Math.PI * 2;
       state.velocityX = Math.cos(angle) * state.speed;
       state.velocityY = Math.sin(angle) * state.speed;
@@ -80,11 +81,13 @@ function PadelBall({
     if (nextX < 0 || nextX > maxX) {
       nextX = Math.max(0, Math.min(nextX, maxX));
       state.velocityX *= -1;
+      // NOSONAR - Non-cryptographic random for initial animation trajectory
       state.velocityY += (Math.random() - 0.5) * state.speed * 0.08;
     }
     if (nextY < 0 || nextY > maxY) {
       nextY = Math.max(0, Math.min(nextY, maxY));
       state.velocityY *= -1;
+      // NOSONAR - Non-cryptographic random for initial animation trajectory
       state.velocityX += (Math.random() - 0.5) * state.speed * 0.08;
     }
 
