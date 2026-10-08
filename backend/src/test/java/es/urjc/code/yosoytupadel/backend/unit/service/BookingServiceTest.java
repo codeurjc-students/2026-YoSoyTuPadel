@@ -492,7 +492,6 @@ class BookingServiceTest {
         when(bookingDTO1.startTime()).thenReturn(LocalTime.of(10, 0));
         when(bookingDTO1.endTime()).thenReturn(LocalTime.of(12, 0));
         when(bookingDTO1.userId()).thenReturn(2L);
-        when(bookingDTO1.bookingPrice()).thenReturn(null);
 
         when(mapper.toDomain(bookingDTO1)).thenReturn(booking1);
 

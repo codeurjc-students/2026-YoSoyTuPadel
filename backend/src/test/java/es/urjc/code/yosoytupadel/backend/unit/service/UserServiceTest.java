@@ -431,7 +431,9 @@ class UserServiceTest {
     @Test
     void updateUser_WhenEmailAlreadyInUseByAnotherUser_ShouldThrowConflict() {
         // Given
-        UserUpdateDTO updateDTO = new UserUpdateDTO("other@example.com", "other", "New Name", null);
+        UserUpdateDTO updateDTO = mock(UserUpdateDTO.class);
+        when(updateDTO.email()).thenReturn("other@example.com");
+
         when(userRepository.findById(2L)).thenReturn(Optional.of(student));
 
         User anotherUser = new User();
