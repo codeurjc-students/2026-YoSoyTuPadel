@@ -7,6 +7,7 @@ import es.urjc.code.yosoytupadel.backend.repository.BookingRepository;
 import es.urjc.code.yosoytupadel.backend.repository.CourtRepository;
 import es.urjc.code.yosoytupadel.backend.repository.UserRepository;
 import es.urjc.code.yosoytupadel.backend.service.BookingService;
+import es.urjc.code.yosoytupadel.backend.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,6 +41,9 @@ class BookingServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private UserService userService;
 
     @InjectMocks
     private BookingService bookingService;
@@ -217,5 +221,147 @@ class BookingServiceTest {
                 .hasMessageContaining("already has a class");
 
         verify(bookingRepository, never()).save(any());
+    }
+
+    @Test
+    void createBooking_WhenDateIsNull_ShouldThrowBadRequest() {
+        // Given
+        when(bookingDTO1.bookingDate()).thenReturn(null);
+
+        // When / Then
+        assertThatThrownBy(() -> bookingService.createBooking(bookingDTO1))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("past");
+        verify(courtRepository, never()).findById(anyLong());
+        verify(bookingRepository, never()).save(any());
+    }
+
+    @Test
+    void createBooking_WhenDateIsTooFar_ShouldThrowBadRequest() {
+        // Given
+        when(bookingDTO1.bookingDate()).thenReturn(LocalDate.now().plusWeeks(2).plusDays(1));
+
+        // When / Then
+        assertThatThrownBy(() -> bookingService.createBooking(bookingDTO1))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("14 days");
+        verify(bookingRepository, never()).save(any());
+    }
+
+    @Test
+    void createBooking_WhenCourtAndCoachAreBothPresent_ShouldThrowBadRequest() {
+        // Given
+        when(bookingDTO1.bookingDate()).thenReturn(LocalDate.now().plusDays(1));
+        when(bookingDTO1.courtId()).thenReturn(1L);
+        when(bookingDTO1.coachId()).thenReturn(3L);
+
+        // When / Then
+        assertThatThrownBy(() -> bookingService.createBooking(bookingDTO1))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("both");
+        verify(courtRepository, never()).findById(anyLong());
+        verify(userRepository, never()).findById(anyLong());
+    }
+
+    @Test
+    void createBooking_WhenCourtAndCoachAreMissing_ShouldThrowBadRequest() {
+        // Given
+        when(bookingDTO1.bookingDate()).thenReturn(LocalDate.now().plusDays(1));
+        when(bookingDTO1.courtId()).thenReturn(null);
+        when(bookingDTO1.coachId()).thenReturn(null);
+
+        // When / Then
+        assertThatThrownBy(() -> bookingService.createBooking(bookingDTO1))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("either");
+        verify(bookingRepository, never()).save(any());
+    }
+
+    @Test
+    void createBooking_WhenCourtIsClosed_ShouldThrowBadRequest() {
+        // Given
+        court.setIsAvailable(false);
+        when(bookingDTO1.bookingDate()).thenReturn(LocalDate.now().plusDays(1));
+        when(bookingDTO1.courtId()).thenReturn(1L);
+        when(bookingDTO1.coachId()).thenReturn(null);
+        when(courtRepository.findById(1L)).thenReturn(Optional.of(court));
+
+        // When / Then
+        assertThatThrownBy(() -> bookingService.createBooking(bookingDTO1))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("closed");
+        verify(bookingRepository, never()).existsOverlappingBooking(anyLong(), any(), any(), any());
+        verify(bookingRepository, never()).save(any());
+    }
+
+    @Test
+    void createBooking_WhenCourtDoesNotExist_ShouldThrowNotFound() {
+        // Given
+        when(bookingDTO1.bookingDate()).thenReturn(LocalDate.now().plusDays(1));
+        when(bookingDTO1.courtId()).thenReturn(1L);
+        when(bookingDTO1.coachId()).thenReturn(null);
+        when(courtRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // When / Then
+        assertThatThrownBy(() -> bookingService.createBooking(bookingDTO1))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Court not found");
+        verify(bookingRepository, never()).save(any());
+    }
+
+    @Test
+    void createBooking_WhenUserIsNotAuthenticated_ShouldThrowUnauthorized() {
+        // Given
+        when(bookingDTO1.bookingDate()).thenReturn(LocalDate.now().plusDays(1));
+        when(bookingDTO1.courtId()).thenReturn(1L);
+        when(bookingDTO1.coachId()).thenReturn(null);
+        when(bookingDTO1.userId()).thenReturn(null);
+        when(courtRepository.findById(1L)).thenReturn(Optional.of(court));
+        when(bookingRepository.existsOverlappingBooking(anyLong(), any(), any(), any())).thenReturn(false);
+        when(userService.getAuthenticatedUserDto()).thenReturn(Optional.empty());
+
+        // When / Then
+        assertThatThrownBy(() -> bookingService.createBooking(bookingDTO1))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("not authenticated");
+        verify(bookingRepository, never()).save(any());
+    }
+
+    @Test
+    void cancelBooking_WhenAlreadyCancelled_ShouldThrowBadRequest() {
+        // Given
+        booking1.setStatus(BookingStatus.CANCELLED);
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking1));
+
+        // When / Then
+        assertThatThrownBy(() -> bookingService.cancelBooking(1L))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("already been cancelled");
+        verify(bookingRepository, never()).save(any());
+    }
+
+    @Test
+    void cancelBooking_WhenCompleted_ShouldThrowBadRequest() {
+        // Given
+        booking1.setStatus(BookingStatus.COMPLETED);
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking1));
+
+        // When / Then
+        assertThatThrownBy(() -> bookingService.cancelBooking(1L))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("already finished");
+        verify(bookingRepository, never()).save(any());
+    }
+
+    @Test
+    void deleteBooking_WhenBookingDoesNotExist_ShouldThrowNotFound() {
+        // Given
+        when(bookingRepository.findById(99L)).thenReturn(Optional.empty());
+
+        // When / Then
+        assertThatThrownBy(() -> bookingService.deleteBooking(99L))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Booking not found");
+        verify(bookingRepository, never()).delete(any());
     }
 }

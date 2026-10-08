@@ -4,7 +4,9 @@ import es.urjc.code.yosoytupadel.backend.dto.PreRacketDTO;
 import es.urjc.code.yosoytupadel.backend.dto.RacketDTO;
 import es.urjc.code.yosoytupadel.backend.dto.RacketMapper;
 import es.urjc.code.yosoytupadel.backend.entities.Racket;
+import es.urjc.code.yosoytupadel.backend.entities.User;
 import es.urjc.code.yosoytupadel.backend.repository.RacketRepository;
+import es.urjc.code.yosoytupadel.backend.repository.UserRepository;
 import es.urjc.code.yosoytupadel.backend.service.RacketService;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,6 +37,9 @@ class RacketServiceTest {
 
     @Mock
     private RacketMapper mapper;
+
+    @Mock
+    private UserRepository userRepository;
 
     @InjectMocks
     private RacketService racketService;
@@ -145,5 +150,88 @@ class RacketServiceTest {
         AssertionsForClassTypes.assertThatThrownBy(() -> racketService.deleteRacket(99L))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Racket not found");
+    }
+
+    @Test
+    void updateRacket_WhenRacketDoesNotExist_ShouldThrowNotFoundException() {
+        // Given
+        when(racketRepository.findById(99L)).thenReturn(Optional.empty());
+
+        // When / Then
+        AssertionsForClassTypes.assertThatThrownBy(() -> racketService.updateRacket(99L, racketDTO1))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Racket not found");
+        verify(mapper, never()).toDomain(any());
+        verify(racketRepository, never()).save(any());
+    }
+
+    @Test
+    void deleteRacket_WhenRacketExists_ShouldRemoveItFromAffectedUsers() {
+        // Given
+        User user = new User();
+        user.setRacket(racket1);
+        user.setRacketHistory(List.of(racket1));
+        when(racketRepository.findById(1L)).thenReturn(Optional.of(racket1));
+        when(mapper.toDTO(racket1)).thenReturn(racketDTO1);
+        when(userRepository.findByRacketOrRacketHistoryContaining(racket1, racket1))
+                .thenReturn(List.of(user));
+
+        // When
+        RacketDTO result = racketService.deleteRacket(1L);
+
+        // Then
+        assertThat(result).isEqualTo(racketDTO1);
+        assertThat(user.getRacket()).isNull();
+        assertThat(user.getRacketHistory()).isEmpty();
+        verify(userRepository).saveAll(any());
+        verify(userRepository).flush();
+        verify(racketRepository).delete(racket1);
+    }
+
+    @Test
+    void getRacketImage_WhenImageIsMissing_ShouldThrowNoSuchElementException() throws SQLException {
+        // Given
+        racket1.setImage(null);
+        when(racketRepository.findById(1L)).thenReturn(Optional.of(racket1));
+
+        // When / Then
+        AssertionsForClassTypes.assertThatThrownBy(() -> racketService.getRacketImage(1L))
+                .isInstanceOf(java.util.NoSuchElementException.class);
+    }
+
+    @Test
+    void getRacketImage_WhenRacketDoesNotExist_ShouldThrowNotFoundException() {
+        // Given
+        when(racketRepository.findById(99L)).thenReturn(Optional.empty());
+
+        // When / Then
+        AssertionsForClassTypes.assertThatThrownBy(() -> racketService.getRacketImage(99L))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Racket not found");
+    }
+
+    @Test
+    void replaceRacketImage_WhenRacketDoesNotExist_ShouldNotSave() {
+        // Given
+        when(racketRepository.findById(99L)).thenReturn(Optional.empty());
+
+        // When / Then
+        AssertionsForClassTypes.assertThatThrownBy(() ->
+                racketService.replaceRacketImage(99L, new java.io.ByteArrayInputStream(new byte[0]), 0))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Racket not found");
+        verify(racketRepository, never()).save(any());
+    }
+
+    @Test
+    void deleteRacketImage_WhenImageIsMissing_ShouldThrowNoSuchElementException() throws Exception {
+        // Given
+        racket1.setImage(null);
+        when(racketRepository.findById(1L)).thenReturn(Optional.of(racket1));
+
+        // When / Then
+        AssertionsForClassTypes.assertThatThrownBy(() -> racketService.deleteRacketImage(1L))
+                .isInstanceOf(java.util.NoSuchElementException.class);
+        verify(racketRepository, never()).save(any());
     }
 }

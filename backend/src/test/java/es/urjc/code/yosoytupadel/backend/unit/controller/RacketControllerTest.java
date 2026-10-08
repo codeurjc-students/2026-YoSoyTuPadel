@@ -27,6 +27,9 @@ import java.util.Collections;
 import java.util.Optional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -167,5 +170,96 @@ class RacketControllerTest {
 
         mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/api/v1/rackets/1"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void updateRacket_ShouldReturnUpdatedRacket() throws Exception {
+        // Given
+        when(racketService.updateRacket(1L, dto2)).thenReturn(dto1);
+
+        // When / Then
+        mockMvc.perform(put("/api/v1/rackets/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto2)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1));
+        verify(racketService).updateRacket(eq(1L), any(RacketDTO.class));
+    }
+
+    @Test
+    void getRacketImage_WhenJpeg_ShouldReturnJpegContentType() throws Exception {
+        // Given
+        byte[] jpeg = HexFormat.of().parseHex("ffd8ffff");
+        when(racketService.getRacketImage(1L))
+                .thenReturn(new InputStreamResource(new ByteArrayInputStream(jpeg)));
+
+        // When / Then
+        mockMvc.perform(get("/api/v1/rackets/1/image"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.CONTENT_TYPE, MediaType.IMAGE_JPEG_VALUE));
+    }
+
+    @Test
+    void getRacketImage_WhenGif_ShouldReturnGifContentType() throws Exception {
+        // Given
+        when(racketService.getRacketImage(1L))
+                .thenReturn(new InputStreamResource(new ByteArrayInputStream("GIF89a".getBytes())));
+
+        // When / Then
+        mockMvc.perform(get("/api/v1/rackets/1/image"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.CONTENT_TYPE, MediaType.IMAGE_GIF_VALUE));
+    }
+
+    @Test
+    void getRacketImage_WhenWebp_ShouldReturnWebpContentType() throws Exception {
+        // Given
+        byte[] webp = "RIFFxxxxWEBP".getBytes();
+        when(racketService.getRacketImage(1L))
+                .thenReturn(new InputStreamResource(new ByteArrayInputStream(webp)));
+
+        // When / Then
+        mockMvc.perform(get("/api/v1/rackets/1/image"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.CONTENT_TYPE, "image/webp"));
+    }
+
+    @Test
+    void getRacketImage_WhenUnknownFormat_ShouldReturnOctetStream() throws Exception {
+        // Given
+        when(racketService.getRacketImage(1L))
+                .thenReturn(new InputStreamResource(new ByteArrayInputStream(new byte[]{1, 2, 3})));
+
+        // When / Then
+        mockMvc.perform(get("/api/v1/rackets/1/image"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM_VALUE));
+    }
+
+    @Test
+    void replaceRacketImage_ShouldReturnNoContent() throws Exception {
+        // Given
+        org.springframework.mock.web.MockMultipartFile image =
+                new org.springframework.mock.web.MockMultipartFile("imageFile", "racket.png",
+                        MediaType.IMAGE_PNG_VALUE, new byte[]{1, 2, 3});
+
+        // When / Then
+        mockMvc.perform(multipart("/api/v1/rackets/1/image").file(image).with(request -> {
+                    request.setMethod("PUT");
+                    return request;
+                }))
+                .andExpect(status().isNoContent());
+        verify(racketService).replaceRacketImage(eq(1L), any(), eq(3L));
+    }
+
+    @Test
+    void deleteRacketImage_ShouldReturnNoContent() throws Exception {
+        // Given
+        doNothing().when(racketService).deleteRacketImage(1L);
+
+        // When / Then
+        mockMvc.perform(delete("/api/v1/rackets/1/image"))
+                .andExpect(status().isNoContent());
+        verify(racketService).deleteRacketImage(1L);
     }
 }
