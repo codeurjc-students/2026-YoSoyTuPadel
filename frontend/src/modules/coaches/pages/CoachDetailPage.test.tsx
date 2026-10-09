@@ -38,7 +38,7 @@ function renderCoachDetail() {
   );
 }
 
-function selectTomorrow() {
+async function selectTomorrow() {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const label = new Intl.DateTimeFormat('es-ES', {
@@ -46,7 +46,9 @@ function selectTomorrow() {
     day: '2-digit',
     month: 'short',
   }).format(tomorrow);
-  fireEvent.click(screen.getByRole('button', { name: label }));
+
+  const dayButton = await screen.findByRole('button', { name: label });
+  fireEvent.click(dayButton);
 }
 
 describe('CoachDetailPage', () => {
@@ -88,33 +90,47 @@ describe('CoachDetailPage', () => {
     renderCoachDetail();
 
     expect(await screen.findByRole('heading', { level: 1, name: 'María López' })).toBeInTheDocument();
-    selectTomorrow();
-    await waitFor(() => expect(screen.getByRole('button', { name: '09:00' })).toBeEnabled());
-    fireEvent.click(screen.getByRole('button', { name: '09:00' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Reservar sesión · 09:00' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+
+    await selectTomorrow();
+
+    const timeSlot = await screen.findByRole('button', { name: '09:00' });
+    fireEvent.click(timeSlot);
+
+    const reserveBtn = await screen.findByRole('button', { name: 'Reservar sesión · 09:00' });
+    fireEvent.click(reserveBtn);
+
+    const confirmBtn = await screen.findByRole('button', { name: 'Confirmar' });
+    fireEvent.click(confirmBtn);
 
     const successDialog = await screen.findByRole('dialog', { name: '¡Reserva confirmada!' });
     expect(within(successDialog).getByText('María López')).toBeInTheDocument();
     expect(within(successDialog).getByText('2 horas')).toBeInTheDocument();
     expect(within(successDialog).getByText('Entrenamiento')).toBeInTheDocument();
-    fireEvent.click(within(successDialog).getByRole('button', { name: 'Volver a entrenadores' }));
+
+    const returnBtn = await within(successDialog).findByRole('button', { name: 'Volver a entrenadores' });
+    fireEvent.click(returnBtn);
+
     expect(await screen.findByRole('heading', { name: 'Catálogo de Entrenadores' })).toBeInTheDocument();
   });
 
   test('disables slots already reserved with the coach', async () => {
     vi.mocked(api.get).mockImplementation((url: string) => Promise.resolve({
       data: url.includes('/availability')
-        ? ['09:00', '13:00']
-        : { id: 3, name: 'María López', skillLevel: 2, sessionPrice: 35 },
+          ? ['09:00', '13:00']
+          : { id: 3, name: 'María López', skillLevel: 2, sessionPrice: 35 },
     }));
     renderCoachDetail();
 
     expect(await screen.findByRole('heading', { level: 1, name: 'María López' })).toBeInTheDocument();
-    selectTomorrow();
+
+    await selectTomorrow();
+
     expect(await screen.findByRole('button', { name: '09:00, reservada' })).toBeDisabled();
     expect(screen.getByRole('button', { name: '13:00, reservada' })).toBeDisabled();
-    await waitFor(() => expect(screen.getByRole('button', { name: '11:00' })).toBeEnabled());
+
+    const availableBtn = await screen.findByRole('button', { name: '11:00' });
+    expect(availableBtn).toBeEnabled();
+
     expect(screen.getByRole('button', { name: 'Reservar sesión' })).toBeDisabled();
   });
 });

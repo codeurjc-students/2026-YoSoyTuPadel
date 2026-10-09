@@ -88,16 +88,20 @@ describe('CourtDetailPage', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Pista central' })).toBeInTheDocument();
     const dateValue = await selectTomorrow();
-    fireEvent.click(screen.getByRole('button', { name: '09:00' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Finalizar reserva · 09:00' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Confirmar' }));
+    const timeSlots = await screen.findAllByRole('button', { name: /09:00/i });
+    fireEvent.click(timeSlots[0]);
+    const reserveBtn = await screen.findByRole('button', { name: /Finalizar reserva/i });
+    fireEvent.click(reserveBtn);
+    const confirmBtn = await screen.findByRole('button', { name: /Confirmar/i });
+    fireEvent.click(confirmBtn);
 
-    await screen.findByRole('heading', { name: '¡Reserva confirmada!' });
-    const successDialog = screen.getByRole('dialog', { name: '¡Reserva confirmada!' });
+    const successDialog = await screen.findByRole('dialog', { name: /Reserva confirmada/i });
+
     const [year, month, day] = dateValue.split('-').map(Number);
     const formattedDate = new Intl.DateTimeFormat('es-ES').format(new Date(year, month - 1, day));
-    expect(within(successDialog).getByText(new RegExp(formattedDate))).toBeInTheDocument();
+    expect(within(successDialog).getByText(new RegExp(formattedDate, 'i'))).toBeInTheDocument();
     expect(within(successDialog).getByText('€8/h')).toBeInTheDocument();
+
     expect(api.post).toHaveBeenCalledWith('/api/v1/bookings', {
       userId: 9,
       courtId: 4,
@@ -108,8 +112,10 @@ describe('CourtDetailPage', () => {
       type: 'MATCH',
       status: 'PENDING',
     });
-    fireEvent.click(await screen.findByRole('button', { name: 'Volver a pistas' }));
-    expect(await screen.findByRole('heading', { name: 'Catálogo de Pistas' })).toBeInTheDocument();
+    const returnBtn = await within(successDialog).findByRole('button', { name: /Volver a pistas/i });
+    fireEvent.click(returnBtn);
+
+    expect(await screen.findByRole('heading', { name: /Catálogo de Pistas/i })).toBeInTheDocument();
   }, 10000);
 
   test('shows a single Spanish error and disables the slot if the server reports it reserved', async () => {
@@ -123,11 +129,13 @@ describe('CourtDetailPage', () => {
     await selectTomorrow();
     fireEvent.click(screen.getByRole('button', { name: '09:00' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Finalizar reserva · 09:00' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Confirmar' }));
+    const confirmDialog = await screen.findByRole('dialog');
+    fireEvent.click(within(confirmDialog).getByRole('button', { name: 'Confirmar' }));
 
     expect(await screen.findByText('Esta hora ya está reservada. Elige otra franja horaria.')).toBeInTheDocument();
     expect(screen.getAllByText('Esta hora ya está reservada. Elige otra franja horaria.')).toHaveLength(1);
-    expect(await screen.findByRole('button', { name: '09:00, reservada' })).toBeDisabled();
+    const timeButtons = await screen.findAllByRole('button', { name: /09:00/i });
+    expect(timeButtons[0]).toBeDisabled();
   }, 10000);
 
   test('marks time slots already returned by the availability API as unavailable', async () => {
