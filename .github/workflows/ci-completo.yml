@@ -38,6 +38,27 @@ jobs:
       - name: Ejecutar Tests de Integración (Testcontainers / Failsafe)
         run: mvn verify -B
 
+      - name: Análisis de Código Estático del Backend
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -n "${{ github.event.pull_request.number }}" ]; then
+            mvn org.sonarsource.scanner.maven:sonar-maven-plugin:4.0.0.4121:sonar \
+              -Dsonar.projectKey=urjc-yosoytupadel-backend \
+              -Dsonar.organization=victorcc02 \
+              -Dsonar.host.url=https://sonarcloud.io \
+              -Dsonar.pullrequest.key=${{ github.event.pull_request.number }} \
+              -Dsonar.pullrequest.branch=${{ github.head_ref }} \
+              -Dsonar.pullrequest.base=${{ github.base_ref }} \
+              -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+          else
+            mvn org.sonarsource.scanner.maven:sonar-maven-plugin:4.0.0.4121:sonar \
+              -Dsonar.projectKey=urjc-yosoytupadel-backend \
+              -Dsonar.organization=victorcc02 \
+              -Dsonar.host.url=https://sonarcloud.io \
+              -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+          fi
 
 
   # --- JOB 2: FRONTEND (Unitarios y Build) ---
@@ -70,6 +91,18 @@ jobs:
 
       - name: Construir aplicación (Build Prod)
         run: npm run build
+
+      - name: Análisis de Código Estático con SonarCloud
+        uses: SonarSource/sonarcloud-github-action@v3.1.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          projectBaseDir: ./frontend
+          args: >
+            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
+            -Dsonar.pullrequest.branch=${{ github.head_ref }}
+            -Dsonar.pullrequest.base=${{ github.base_ref }}
 
 
 
