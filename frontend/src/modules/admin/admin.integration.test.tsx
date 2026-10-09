@@ -54,10 +54,14 @@ describe('Profile integration and administration', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Editar' }));
-    fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'Ana Actualizada' } });
+    const editBtn = await screen.findByRole('button', { name: 'Editar' });
+    fireEvent.click(editBtn);
+    const nameInput = await screen.findByRole('textbox', { name: 'Name' });
+    fireEvent.change(nameInput, { target: { value: 'Ana Actualizada' } });
     fireEvent.click(screen.getByRole('button', { name: 'GUARDAR' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'CONFIRMAR' }));
+
+    const confirmBtn = await screen.findByRole('button', { name: 'CONFIRMAR' });
+    fireEvent.click(confirmBtn);
 
     await waitFor(() => expect(authService.updateUser).toHaveBeenCalledWith(7, expect.objectContaining({
       name: 'Ana Actualizada',
@@ -73,10 +77,13 @@ describe('Profile integration and administration', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Editar' }));
-    fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: '' } });
+    const editBtn = await screen.findByRole('button', { name: 'Editar' });
+    fireEvent.click(editBtn);
+    const nameInput = await screen.findByRole('textbox', { name: 'Name' });
+    fireEvent.change(nameInput, { target: { value: '' } });
     fireEvent.click(screen.getByRole('button', { name: 'GUARDAR' }));
-    fireEvent.click(screen.getByRole('button', { name: 'CONFIRMAR' }));
+    const confirmBtn = await screen.findByRole('button', { name: 'CONFIRMAR' });
+    fireEvent.click(confirmBtn);
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Los datos no son válidos'));
   });

@@ -129,4 +129,56 @@ describe('UserProfilePage', () => {
     expect(screen.getByText('Head Alpha')).toBeInTheDocument();
     expect(racketService.getRacketById).toHaveBeenCalledWith(8, expect.any(AbortSignal));
   });
+
+  it('prompts to log in if the user is unauthenticated', () => {
+    renderProfile({ ...authValue, isAuthenticated: false, user: null });
+
+    expect(screen.getByText('Inicia sesión para ver tu perfil')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ir a iniciar sesión' })).toBeInTheDocument();
+  });
+
+  it('renders session price if the user is a coach', async () => {
+    const coachUser = { ...user, role: 'COACH', sessionPrice: 25 };
+    vi.mocked(authService.getCurrentUser).mockResolvedValue(coachUser);
+    renderProfile({ ...authValue, user: coachUser });
+
+    expect(await screen.findByText('Precio por sesión')).toBeInTheDocument();
+    expect(screen.getByText('25 €')).toBeInTheDocument();
+  });
+
+  it('logs out and redirects to login if the email is changed', async () => {
+    vi.mocked(authService.updateUser).mockResolvedValue({
+      name: 'Alex', nickname: 'alex', email: 'cambio@example.com', sessionPrice: undefined
+    });
+    renderProfile();
+
+    const editButton = await screen.findByRole('button', { name: 'Editar' });
+    fireEvent.click(editButton);
+
+    const emailInput = await screen.findByRole('textbox', { name: 'Email' });
+    fireEvent.change(emailInput, { target: { value: 'cambio@example.com' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'GUARDAR' }));
+    const confirmBtn = await screen.findByRole('button', { name: 'CONFIRMAR' });
+    fireEvent.click(confirmBtn);
+
+    await waitFor(() => {
+      expect(authValue.logout).toHaveBeenCalled();
+    });
+  });
+
+  it('allows permanently deleting the account', async () => {
+    renderProfile();
+
+    const deleteButton = await screen.findByRole('button', { name: /Eliminar Cuenta/i });
+    deleteButton.click();
+
+    const confirmDelete = await screen.findByRole('button', { name: 'ELIMINAR' });
+    confirmDelete.click();
+
+    await waitFor(() => {
+      expect(authService.deleteUser).toHaveBeenCalledWith(4);
+      expect(authValue.logout).toHaveBeenCalled();
+    });
+  });
 });
