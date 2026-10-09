@@ -1,0 +1,28 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: yosoytupadel-db-prod
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-yosoytupadel_db}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-pass}
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-pass}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    image: vcandel/yosoytupadel:0.1
+    container_name: yosoytupadel-app-prod
+    ports:
+      - "443:443"
+    environment:
+      SERVER_PORT: 443
+      DB_URL: jdbc:mysql://db:3306/${DB_NAME:-yosoytupadel_db}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Europe/Madrid
+      DB_USER: ${DB_USER:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-pass}
+    depends_on:
+      db:
+        condition: service_healthy
