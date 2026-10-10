@@ -53,6 +53,9 @@ async function selectTomorrow() {
 
 describe('CoachDetailPage', () => {
   beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-10T08:00:00'));
+    
     vi.clearAllMocks();
     vi.mocked(api.get).mockImplementation((url: string) => Promise.resolve({
       data: url.includes('/availability')

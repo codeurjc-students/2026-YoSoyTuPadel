@@ -1,0 +1,32 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  on-main-push:
+    if: github.event_name == 'push'
+    uses: ./.github/workflows/reusable-deploy.yml
+    with:
+      tag: 'dev'
+    secrets: inherit
+
+  on-release:
+    if: github.event_name == 'release'
+    uses: ./.github/workflows/reusable-deploy.yml
+    with:
+      tag: ${{ github.event.release.tag_name }}
+      update_latest: true
+    secrets: inherit
+
+  on-dispatch:
+    if: github.event_name == 'workflow_dispatch'
+    uses: ./.github/workflows/reusable-deploy.yml
+    with:
+      tag: ${{ github.ref_name }}-${{ github.sha }}
+    secrets: inherit
