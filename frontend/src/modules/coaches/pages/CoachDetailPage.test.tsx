@@ -53,7 +53,7 @@ async function selectTomorrow() {
 
 describe('CoachDetailPage', () => {
   beforeEach(() => {
-    vi.useFakeTimers();
+    vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-10-10T08:00:00'));
     
     vi.clearAllMocks();
