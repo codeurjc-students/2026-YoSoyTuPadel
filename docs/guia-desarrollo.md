@@ -42,6 +42,41 @@ La especificación técnica y documentación interactiva de la API REST se gener
 
 * **[Ver Documentación Interactiva de la API REST en HTML (vía RawGithack)](https://raw.githack.com/codeurjc-students/2026-YoSoyTuPadel/main/docs/api/api-docs.html)**
 
+### Modelo del dominio
+El sistema se modela en torno a entidades persistentes que interactúan entre sí. Las entidades principales son:
+* **User:** Posee atributos como nombre, email, contraseña y un Rol. Se relaciona 1:N con las reservas.
+* **Racket:** Inventario de palas con atributos de marca, modelo y precio.
+* **Court:** Instalaciones con tipo de superficie, modalidad y precio.
+* **Booking:** Entidad que vincula a un User con una Court o un User de tipo "Coach" en una franja temporal específica.
+  
+  <img width="1095" height="760" alt="image" src="https://github.com/user-attachments/assets/893417be-15d4-4944-992a-09690e5198d1" />
+
+
+### Arquitectura del servidor
+El backend sigue una arquitectura multicapa estricta:
+* **Capa de Controladores (Controllers):** Gestiona las peticiones HTTP REST y devuelve DTOs.
+* **Capa de Servicios (Services):** Contiene la lógica de negocio y validaciones.
+* **Capa de Repositorios (Repositories):** Interfaces JPA que abstraen el acceso a MySQL.
+  
+  <img width="1381" height="415" alt="image" src="https://github.com/user-attachments/assets/7e182dbb-f140-44cb-b7cc-0098e49cb289" />
+
+
+### Arquitectura del cliente
+El frontend React se organiza en una arquitectura basada en componentes modulares:
+* **Componentes de Vista (Pages):** Representan las rutas principales de la SPA.
+* **Componentes UI (Components):** Elementos reutilizables.
+* **Servicios API (Services):** Capa de cliente HTTP (Axios/Fetch) para comunicarse con el servidor.
+  
+  <img width="774" height="719" alt="image" src="https://github.com/user-attachments/assets/26e43c18-85b0-403a-9a58-c4079d541750" />
+
+
+## Despliegue
+**Empaquetado y distribución:** 
+El proyecto se empaqueta utilizando una única imagen Docker que sirve tanto el código compilado del cliente React como el servidor de Spring Boot. Se utiliza `docker-compose` para coordinar el contenedor de la aplicación con el contenedor de la base de datos MySQL.
+El artefacto completo está publicado y accesible en DockerHub en la siguiente URL: 
+
+[🔗 vcandel/yosoytupadel-compose](https://hub.docker.com/repository/docker/vcandel/yosoytupadel-compose/general)
+
 ## Ejecución y Edición de Código
 
 Esta sección detalla las instrucciones para clonar, configurar, ejecutar localmente y probar la aplicación **YoSoyTuPadel** partiendo desde el código fuente del repositorio.
@@ -84,4 +119,4 @@ npm run dev
 
 #### Acceso a la Página Web Ejecutada en Local
 
-Una vez levantados ambos servicios (Backend en puerto 8080 y Frontend en el servidor de desarrollo de Vite), abre cualquier navegador e ingresa a la URL: http://localhost:5173
+Una vez levantados ambos servicios (Backend en puerto 8443 y Frontend en el servidor de desarrollo de Vite), abre cualquier navegador e ingresa a la URL: http://localhost:5173
