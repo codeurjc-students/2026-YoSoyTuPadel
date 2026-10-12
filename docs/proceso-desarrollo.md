@@ -66,3 +66,18 @@ Se han automatizado los flujos de integración continua a través de **GitHub Ac
 2.  **Compilación y Tests de Backend:** Ejecución del comando Maven para validar la compilación y pasar la suite de pruebas unitarias y de integración.
 3.  **Análisis Estático (SonarCloud):** Envío de las métricas de código, cobertura de tests y detección de vulnerabilidades (*code smells*, *security hotspots*) a la plataforma SonarCloud.
 4.  **Verificación de Frontend:** Instalación de dependencias de React (`npm install`) y comprobación de la compilación de producción (`npm run build`).
+
+### Entrega Continua (CD) y Despliegue
+Se ha implementado un sistema de entrega continua sin duplicación de código mediante el uso de *Workflows Reutilizables* en GitHub Actions (`reusable-deploy.yml` y `main-ci-cd.yml`):
+* Cada vez que se integra código en la rama `main`, se genera y publica automáticamente una imagen Docker y el artefacto OCI del `docker-compose.yml` etiquetados con el tag `dev`.
+* Al realizar una release en GitHub, se etiquetan automáticamente los artefactos con la versión de la release y se actualiza el tag `latest`.
+* Se permite la generación de *builds* manuales partiendo de cualquier rama mediante el trigger `workflow_dispatch`.
+
+### Versionado
+El procedimiento de lanzamiento de versiones se realiza coordinando el código fuente con las releases de GitHub.
+1. Se actualizan los ficheros `pom.xml`, `package.json` y `docker-compose.yml` para coincidir con la versión de la release.
+2. Se publica la Release oficial en GitHub.
+3. Se actualiza nuevamente la rama principal a la siguiente versión iterativa en desarrollo (añadiendo el sufijo `-SNAPSHOT` en Maven).
+
+**Historial de Versiones:**
+* **v0.1 (10 de Octubre de 2026):** Versión inicial de la arquitectura. Incluye las operaciones CRUD de todas las entidades e implementación de todo el pipeline CI/CD.
