@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import api from '../../service/api';
 import { AuthContext, type AuthContextValue } from '../auth/context/authContext';
 import CourtDetailPage from './pages/CourtDetailPage';
@@ -45,6 +45,9 @@ function tomorrowLabel() {
 
 describe('Courts integration', () => {
   beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-10T08:00:00'));
+
     vi.clearAllMocks();
     vi.mocked(api.get).mockImplementation((url: string) => Promise.resolve({
       data: url.includes('/availability') ? ['11:00'] : url.endsWith('/courts/4') ? court : {
@@ -56,6 +59,10 @@ describe('Courts integration', () => {
         last: true,
       },
     }));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   test('load the catalog and navigate to the details of a track', async () => {
