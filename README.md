@@ -1,13 +1,14 @@
-# 🎾 2026-YoSoyTuPadel
-
-**YoSoyTuPadel** es una aplicación web diseñada para digitalizar y gestionar la actividad diaria de una academia de pádel. 
+# 🎾 2026-YoSoyTuPadel:  Una aplicación web diseñada para digitalizar y gestionar la actividad diaria de una academia de pádel. 
 
 En su **versión 0.1**, la aplicación ofrece al usuario estudiante un catálogo funcional donde se pueden visualizar las pistas disponibles, consultar la plantilla de entrenadores de la academia y explorar el inventario de palas, pudiendo hacer reservas de todos ellos y pudiendo acceder tanto a su perfil como a una vista resumen de todas sus reservas, tanto pendientes como terminadas. Por otro lado los entrenadores podrán ver las reservas que tienen con el usuario correspondiente pudiendo cancelarlas. El administrador podrá acceder a los catálogos pudiendo editar, añadir y eliminar todas las entidades, cuenta también con su propdio padel de administración en el que puede ver y modificar cualquier usuario y reserva. Asentando así la base de la infraestructura técnica, la interfaz de usuario (SPA) y los pipelines automatizados de entrega continua.
 
 > 🚧 **Estado del proyecto:** La aplicación se encuentra en desarrollo activo continuo. Se siguen implementando mejoras y nuevas funcionalidades iterativamente.
 
 ## 🎥 Vídeo de la Versión 0.1
-En el siguiente vídeo se muestran las funcionalidades principales actuales, diferenciadas por los roles de usuario:
+En el siguiente enlace se puede encontrar el vídeo que muestran las funcionalidades principales actuales, diferenciadas por los roles de usuario:
+
+[VÍDEO YoSoyTuPadel Versión 0.1](https://urjc-my.sharepoint.com/:v:/r/personal/v_candel_2020_alumnos_urjc_es/_layouts/15/stream.aspx?id=%2Fpersonal%2Fv%5Fcandel%5F2020%5Falumnos%5Furjc%5Fes%2FDocuments%2FEscritorio%2FURJC%2FTFG%2Fvideos%2FVideo%2Dv%2D0%2D1%2Emp4&share=cQoNsGeTuRSfQKf91wIG6jj1EgUCi2M3ho0hEdTc%5FuGKY1cEjw)
+
 
 ## 📸 Capturas de Pantallas Principales (v0.1)
 * Vista principal o Menú:
@@ -77,4 +78,5 @@ Toda la documentación técnica y el proceso de desarrollo del proyecto se encue
 4. [Funcionalidades y Roles de Usuario](./docs/funcionalidades.md)
 5. [Guía de Desarrollo y Arquitectura](./docs/guia-desarrollo.md)
 6. [Proceso de Desarrollo y Calidad (CI/CD)](./docs/proceso-desarrollo.md)
+7. [Ejecución y Despliegue de la Aplicación](./docs/ejecucion.md)
 
