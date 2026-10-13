@@ -97,6 +97,7 @@ describe('Courts integration', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Pista central' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: tomorrowLabel() }));
     const timeSlotButton = await screen.findByRole('button', { name: '09:00' });
+    await waitFor(() => expect(timeSlotButton).not.toBeDisabled());
     fireEvent.click(timeSlotButton);
     fireEvent.click(await screen.findByRole('button', { name: /Finalizar/i }));
 
