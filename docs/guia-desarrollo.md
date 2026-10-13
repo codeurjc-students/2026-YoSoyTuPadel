@@ -120,3 +120,9 @@ npm run dev
 #### Acceso a la Página Web Ejecutada en Local
 
 Una vez levantados ambos servicios (Backend en puerto 8443 y Frontend en el servidor de desarrollo de Vite), abre cualquier navegador e ingresa a la URL: http://localhost:5173
+
+### Uso de herramientas de prueba (Postman)
+Para interactuar y realizar pruebas manuales sobre la API REST sin utilizar el frontend, se provee una colección de peticiones.
+* Esta colección incluye ejemplos preconfigurados con cuerpos de petición JSON válidos para todas las operaciones (CRUD de pistas, palas, gestión de usuarios, login y generación de reservas):
+* Se encuentra en la raiz del repositorio del proyecto:
+  [YoSoyTuPadel-Postman](https://github.com/codeurjc-students/2026-YoSoyTuPadel/blob/main/2026-YoSoyTuPadel.postman_collection.json)
