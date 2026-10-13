@@ -79,7 +79,7 @@ El control de versiones del software se ha gestionado mediante **GitHub**, aloja
     *   `fix/*`: Ramas destinadas a la corrección de errores.
 
 *   **Métricas de uso de Git:**
-    *   **Número total de commits:** 195
+    *   **Número total de commits:** 200
     *   **Número de ramas creadas:** 25
     *   **Pull Requests integradas:** 24
 
