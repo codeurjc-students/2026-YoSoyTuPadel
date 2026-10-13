@@ -2,6 +2,10 @@
 
 ## Entidades de la aplicación
 
+
+> 💡 En esta sección se definen conceptualmente las entidades y las acciones que pueden realizar. Para consultar los atributos detallados, tipos de datos y el esquema relacional definitivo implementado en base de datos, véase la sección [Modelo del Dominio en la sección de Arquitectura](./guia-desarrollo.md#modelo-del-dominio).
+
+
 | Entidad | Descripción | Acciones |
 | :--- | :--- | :--- |
 | **User (Usuario)** | Almacena toda la información sobre un usuario específico en la plataforma, podrá hacer y cancelar reservas y alquilar palas. Puede ser de los siguientes tipos: Usuario no registrado, Alumno, Entrenador o Administrador | - Registrarse (Usuario no registrado)<br> - Iniciar sesión<br>- Cerrar sesión<br>- Editar perfil<br>- Eliminar usuario |
@@ -9,7 +13,7 @@
 | **Court (Pista)** | Representa las instalaciones físicas de las pistas de pádel en el club. | - Ver detalles <br> Para el admin :<br> - Crear pista<br>- Eliminar pista<br>- Editar pista |
 | **Booking (Reserva)** | Vincula a un usuario alumno y una pista en una fecha y un intervalo de tiempo concretos. | - Crear reserva<br>- Cancelar reserva  |
 
-### Diagrama inicial de clases
+### Diagrama conceptual inicial
 
 <img width="920" height="573" alt="DiagramaDeClasesInicial" src="https://github.com/user-attachments/assets/bd4d9a4f-d187-4469-ba4e-02d63e52b1a4" />
 
