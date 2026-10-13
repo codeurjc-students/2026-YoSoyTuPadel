@@ -42,7 +42,12 @@ La aplicación se distribuye empaquetada. Para ejecutarla partiendo del `docker-
 ## Acceso a la Aplicación
 Una vez iniciados los contenedores, accede mediante tu navegador web a: `http://localhost:443`.
 
+Al arrancar la aplicación con la carga de datos activada, la base de datos se inicializa con un volumen de información funcional para pruebas: 20 pistas de diferentes características, un catálogo de 30 palas con stock disponible, 9 entrenadores con disponibilidad horaria y un usuario de prueba con historial de reservas generado.
+
 **Credenciales de los datos de ejemplo:**
 * **Administrador:** Email: `admin@yosoytupadel.com` / Contraseña: `admin`
 * **Entrenador:** Email: `coach@yosoytupadel.com` / Contraseña: `coach`
 * **Alumno:** Email: `victor@alumno.com` / Contraseña: `pass`
+
+## Despliegue en Servidor Externo o Cloud
+Actualmente la distribución se realiza mediante el artefacto OCI local. Las instrucciones detalladas para el despliegue automático en un servidor externo (IaaS/PaaS) y la configuración de certificados HTTPS en producción se abordarán e incluirán en la versión 0.2.
