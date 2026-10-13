@@ -97,6 +97,7 @@ describe('CoachDetailPage', () => {
     await selectTomorrow();
 
     const timeSlot = await screen.findByRole('button', { name: '09:00' });
+    await waitFor(() => expect(timeSlot).toBeEnabled());
     fireEvent.click(timeSlot);
 
     const reserveBtn = await screen.findByRole('button', { name: 'Reservar sesión · 09:00' });
