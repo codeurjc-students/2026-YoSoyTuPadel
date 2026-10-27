@@ -117,6 +117,9 @@ public class UserService {
         }
 
         userMapper.updateUserFromDTO(updateDTO, existingUser);
+        if (updateDTO.password() != null && !updateDTO.password().trim().isBlank()) {
+            existingUser.setEncodedPassword(passwordEncoder.encode(updateDTO.password().trim()));
+        }
         User savedUser = userRepository.save(existingUser);
 
         return userMapper.toUserUpdateDTO(savedUser);
@@ -136,6 +139,20 @@ public class UserService {
 
     @Transactional
     public UserDTO deleteUser(long id) {
+        UserDTO currentUser = getAuthenticatedUserDto()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no autenticado"));
+
+        boolean isCurrentUserAdmin = UserRole.ADMIN.equals(currentUser.role());
+
+
+        if (isCurrentUserAdmin && currentUser.id() == id) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Un administrador no puede eliminar su propia cuenta.");
+        }
+
+        if (!isCurrentUserAdmin && currentUser.id() != id) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permisos para eliminar la cuenta de otro usuario.");
+        }
+
         User user = getUserEntityById(id);
         userRepository.deleteById(id);
         return userMapper.toDTO(user);

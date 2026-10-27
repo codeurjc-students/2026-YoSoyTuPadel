@@ -56,6 +56,7 @@ function UserProfilePage() {
     name: authenticatedUser?.name ?? '',
     nickname: authenticatedUser?.nickname ?? '',
     email: authenticatedUser?.email ?? '',
+    password: '',
     sessionPrice: authenticatedUser?.sessionPrice ?? null,
   });
 
@@ -71,6 +72,7 @@ function UserProfilePage() {
             name: currentUser.name ?? '',
             nickname: currentUser.nickname ?? '',
             email: currentUser.email ?? '',
+            password: '',
             sessionPrice: currentUser.sessionPrice ?? null,
           });
           setImageVersion((version) => version + 1);
@@ -129,9 +131,20 @@ function UserProfilePage() {
   }
 
   const isCoach = profile.role.toUpperCase().replace(/^ROLE_/, '') === 'COACH';
+  const isAdmin = profile.role.toUpperCase().replace(/^ROLE_/, '') === 'ADMIN';
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const nameIsValid = form.name.trim().length >= 4;
+  const nicknameIsValid = form.nickname.trim().length >= 4;
+  const emailIsValid = form.email.trim().length > 0 && emailPattern.test(form.email.trim());
+  const passwordIsValid = !form.password || form.password.length >= 8;
+  const formIsValid = nameIsValid
+    && nicknameIsValid
+    && emailIsValid
+    && passwordIsValid;
   const hasChanges = form.name !== (profile.name ?? '')
     || form.nickname !== (profile.nickname ?? '')
     || form.email !== profile.email
+    || (form.password !== undefined && form.password.trim().length > 0)
     || form.sessionPrice !== (profile.sessionPrice ?? null);
   const activeRacket = profile.racketId ? loadedRacket : undefined;
 
@@ -165,15 +178,23 @@ function UserProfilePage() {
     }
   };
 
-  const handleSaveProfile = async (emailChanged: boolean) => {
+  const handleSaveProfile = async (requiresRelogin: boolean) => {
+    if (!formIsValid) {
+      return;
+    }
+
     setIsSaving(true);
     try {
-      const details = {
+      const details: UserUpdateDetails = {
         name: form.name.trim(),
         nickname: isCoach ? profile.nickname ?? '' : form.nickname.trim(),
         email: form.email.trim(),
         sessionPrice: isCoach ? form.sessionPrice ?? null : undefined,
       };
+
+      if (form.password && form.password.trim().length > 0) {
+        details.password = form.password.trim();
+      }
 
       const updatedDetails = await authService.updateUser(profile.id, details);
       const updatedUser: AuthUser = { ...profile, ...updatedDetails };
@@ -189,7 +210,7 @@ function UserProfilePage() {
       authService.storeUser(updatedUser);
       updateUser?.(updatedUser);
       setIsEditOpen(false);
-      if (emailChanged) {
+      if (requiresRelogin) {
         await logout();
         void navigate('/login', { replace: true });
       } else {
@@ -204,9 +225,10 @@ function UserProfilePage() {
 
   const handleConfirmEdit = async () => {
     const emailChanged = form.email.trim() !== profile.email.trim();
+    const passwordChanged = form.password !== undefined && form.password.trim().length > 0;
     setIsConfirmEditOpen(false);
     setIsEditOpen(false);
-    await handleSaveProfile(emailChanged);
+    await handleSaveProfile(emailChanged || passwordChanged);
   };
 
   const handleDeleteAccount = async () => {
@@ -387,17 +409,19 @@ function UserProfilePage() {
         )}
       </Stack>
 
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 6 }}>
-        <Button
-          startIcon={<DeleteOutlineRoundedIcon />}
-          variant="contained"
-          color="error"
-          onClick={() => setIsDeleteOpen(true)}
-          sx={{ fontWeight: 'bold', borderRadius: 2, textTransform: 'none' }}
-        >
-          Eliminar Cuenta
-        </Button>
-      </Box>
+      {!isAdmin && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 6 }}>
+          <Button
+            startIcon={<DeleteOutlineRoundedIcon />}
+            variant="contained"
+            color="error"
+            onClick={() => setIsDeleteOpen(true)}
+            sx={{ fontWeight: 'bold', borderRadius: 2, textTransform: 'none' }}
+          >
+            Eliminar Cuenta
+          </Button>
+        </Box>
+      )}
 
       <Dialog
         open={isPhotoConfirmOpen}
@@ -447,9 +471,25 @@ function UserProfilePage() {
         <DialogTitle sx={{ color: 'grey.900', fontWeight: 800 }}>Editar Perfil</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
-            <TextField variant="outlined" label="Name" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} fullWidth />
+            <TextField
+              variant="outlined"
+              label="Name"
+              value={form.name}
+              onChange={(event) => setForm({ ...form, name: event.target.value })}
+              error={!nameIsValid}
+              helperText={nameIsValid ? '' : 'El nombre debe tener al menos 4 caracteres.'}
+              fullWidth
+            />
             {!isCoach && (
-              <TextField variant="outlined" label="Nickname" value={form.nickname} onChange={(event) => setForm({ ...form, nickname: event.target.value })} fullWidth />
+              <TextField
+                variant="outlined"
+                label="Nickname"
+                value={form.nickname}
+                onChange={(event) => setForm({ ...form, nickname: event.target.value })}
+                error={!nicknameIsValid}
+                helperText={nicknameIsValid ? '' : 'El nickname debe tener al menos 4 caracteres.'}
+                fullWidth
+              />
             )}
             {isCoach && (
               <TextField
@@ -465,14 +505,35 @@ function UserProfilePage() {
                 fullWidth
               />
             )}
-            <TextField variant="outlined" label="Email" type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} fullWidth />
+            <TextField
+              variant="outlined"
+              label="Email"
+              type="email"
+              value={form.email}
+              onChange={(event) => setForm({ ...form, email: event.target.value })}
+              error={!emailIsValid}
+              helperText={emailIsValid ? '' : 'Introduce un correo electrónico válido.'}
+              fullWidth
+            />
+            <TextField
+              variant="outlined"
+              label="Nueva contraseña"
+              type="password"
+              value={form.password ?? ''}
+              onChange={(event) => setForm({ ...form, password: event.target.value })}
+              error={!passwordIsValid}
+              helperText={passwordIsValid
+                ? 'Déjalo en blanco si no quieres cambiarla'
+                : 'La contraseña debe tener al menos 8 caracteres.'}
+              fullWidth
+            />
           </Stack>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setIsEditOpen(false)} disabled={isSaving} variant="text" sx={{ color: 'grey.700', textTransform: 'uppercase' }}>
             VOLVER
           </Button>
-          <Button onClick={() => setIsConfirmEditOpen(true)} disabled={isSaving || !hasChanges} variant="contained" color="error" disableElevation sx={{ fontWeight: 800, textTransform: 'uppercase' }}>
+          <Button onClick={() => setIsConfirmEditOpen(true)} disabled={isSaving || !hasChanges || !formIsValid} variant="contained" color="error" disableElevation sx={{ fontWeight: 800, textTransform: 'uppercase' }}>
             GUARDAR
           </Button>
         </DialogActions>
@@ -495,7 +556,7 @@ function UserProfilePage() {
           <Button onClick={() => setIsConfirmEditOpen(false)} disabled={isSaving} variant="text" sx={{ color: 'grey.700', textTransform: 'uppercase' }}>
             VOLVER
           </Button>
-          <Button onClick={() => void handleConfirmEdit()} disabled={isSaving || !hasChanges} variant="contained" color="error" disableElevation sx={{ fontWeight: 800, textTransform: 'uppercase' }}>
+          <Button onClick={() => void handleConfirmEdit()} disabled={isSaving || !hasChanges || !formIsValid} variant="contained" color="error" disableElevation sx={{ fontWeight: 800, textTransform: 'uppercase' }}>
             CONFIRMAR
           </Button>
         </DialogActions>

@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -105,7 +106,7 @@ public class UserController {
     @PutMapping("/{id}")
     public ResponseEntity<UserUpdateDTO> updateUser(
             @PathVariable Long id,
-            @RequestBody UserUpdateDTO updateDTO,
+            @Valid @RequestBody UserUpdateDTO updateDTO,
             HttpServletResponse response) {
 
 

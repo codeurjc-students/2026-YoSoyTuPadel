@@ -3,16 +3,22 @@ import {
   Box,
   Button,
   Checkbox,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControlLabel,
   Grid,
   IconButton,
   InputAdornment,
+  Link as MuiLink,
   Paper,
   Stack,
   TextField,
   Typography,
 } from '@mui/material';
 import {  useState, type FormEvent } from 'react';
+import { toast } from 'react-hot-toast';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import PadelBallField from '../../core/components/PadelBallField';
@@ -31,6 +37,7 @@ function AuthPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [isTermsDialogOpen, setIsTermsDialogOpen] = useState(false);
   const { login, register, isLoading, error, clearError } = useAuth();
   const navigate = useNavigate();
   const isRegistering = mode === 'register';
@@ -48,8 +55,15 @@ function AuthPage() {
       return;
     }
 
-    if (await login({ email, password })) {
-      void navigate('/', { replace: true });
+    try {
+      if (await login({ email, password })) {
+        void navigate('/', { replace: true });
+      } else {
+        setPassword('');
+      }
+    } catch {
+      setPassword('');
+      toast.error('Usuario o contraseña incorrectos');
     }
   };
 
@@ -291,9 +305,31 @@ function AuthPage() {
                         }
                         label={
                           <Typography
-                              component="span"
-                              sx={{ fontSize: 12, lineHeight: 1.5, color: 'text.secondary' }}>
-                            Acepto los términos del servicio y la política de privacidad.
+                            component="span"
+                            sx={{ fontSize: 12, lineHeight: 1.5, color: 'text.secondary' }}
+                          >
+                            Acepto los{' '}
+                            <MuiLink
+                              component="button"
+                              type="button"
+                              onClick={(event) => {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                setIsTermsDialogOpen(true);
+                              }}
+                              sx={{
+                                border: 0,
+                                padding: 0,
+                                background: 'none',
+                                font: 'inherit',
+                                color: 'primary.main',
+                                cursor: 'pointer',
+                                textDecoration: 'underline',
+                              }}
+                            >
+                              términos del servicio y la política de privacidad
+                            </MuiLink>
+                            .
                           </Typography>
                         }
                         sx={{ alignItems: 'center', ml: 0 }}
@@ -310,7 +346,7 @@ function AuthPage() {
                       type="submit"
                       variant="contained"
                       color="error"
-                      disabled={isLoading}
+                      disabled={isLoading || (isRegistering && !acceptedTerms)}
                       fullWidth
                       sx={{
                         mt: 0.5,
@@ -343,6 +379,105 @@ function AuthPage() {
           </Paper>
         </Grid>
       </Grid>
+      <Dialog
+        open={isTermsDialogOpen}
+        onClose={() => setIsTermsDialogOpen(false)}
+        aria-labelledby="terms-dialog-title"
+        fullWidth
+        maxWidth="sm"
+      >
+          <DialogTitle id="terms-dialog-title" sx={{ fontWeight: 800 }}>
+              Términos y Condiciones
+          </DialogTitle>
+          <DialogContent dividers sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Typography variant="body2" color="text.secondary">
+                  <strong>Última actualización:</strong> Octubre de 2026
+              </Typography>
+
+              <Typography variant="body1">
+                  Bienvenido a <strong>YoSoyTuPadel</strong>. Las presentes Condiciones Generales de Uso regulan el acceso y la utilización de la aplicación web y los servicios de gestión de nuestra academia de pádel. Al registrarte y utilizar nuestra plataforma, aceptas expresamente los siguientes términos:
+              </Typography>
+
+              <Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                      1. Descripción del Servicio
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                      YoSoyTuPadel es una plataforma digital que permite a los usuarios gestionar su actividad en la academia, incluyendo la reserva de pistas, la contratación de sesiones de entrenamiento con el cuerpo técnico y el alquiler de material deportivo (palas).
+                  </Typography>
+              </Box>
+
+              <Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                      2. Cuentas de Usuario y Registro
+                  </Typography>
+                  <Typography variant="body2" component="ul" color="text.secondary" sx={{ pl: 3, m: 0, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                      <li><strong>Veracidad de los datos:</strong> Debes registrarte proporcionando un nombre, un nickname y un correo electrónico válido. Te comprometes a que los datos proporcionados sean veraces.</li>
+                      <li><strong>Roles de usuario:</strong> La aplicación distingue entre Usuarios, Entrenadores y Administradores. Los permisos y el acceso a ciertas funcionalidades dependerán estrictamente del rol asignado.</li>
+                      <li><strong>Seguridad de la cuenta:</strong> Eres responsable de mantener la confidencialidad de tu contraseña mediante nuestra encriptación BCrypt segura.</li>
+                  </Typography>
+              </Box>
+
+              <Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                      3. Sistema de Reservas
+                  </Typography>
+                  <Typography variant="body2" component="ul" color="text.secondary" sx={{ pl: 3, m: 0, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                      <li><strong>Disponibilidad:</strong> Todas las reservas están sujetas a la disponibilidad mostrada en tiempo real.</li>
+                      <li><strong>Confirmación:</strong> Una vez seleccionada la franja horaria, la reserva quedará confirmada de forma inmediata.</li>
+                      <li><strong>Solapamientos:</strong> El sistema bloquea automáticamente los horarios ya ocupados garantizando que no haya duplicidades.</li>
+                  </Typography>
+              </Box>
+
+              <Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                      4. Alquiler de Material (Palas)
+                  </Typography>
+                  <Typography variant="body2" component="ul" color="text.secondary" sx={{ pl: 3, m: 0, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                      <li><strong>Límite de alquiler:</strong> Cada usuario solo podrá tener alquilada <strong>una (1) pala</strong> de forma simultánea.</li>
+                      <li><strong>Uso y Devolución:</strong> Tras alcanzar el límite de <strong>tres (3) usos</strong> registrados en pista, el sistema tramitará la devolución automática de la pala al stock general.</li>
+                  </Typography>
+              </Box>
+
+              <Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                      5. Nivel de Juego (Skill Level)
+                  </Typography>
+                  <Typography variant="body2" component="ul" color="text.secondary" sx={{ pl: 3, m: 0, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                      <li>El sistema asigna un nivel de juego inicial en una escala del 1.0 al 5.0.</li>
+                      <li>Al participar en entrenamientos, aceptas que los Entrenadores evalúen tu rendimiento y puedan <strong>modificar tu nivel de juego</strong> en la plataforma para reflejar tu desempeño real.</li>
+                  </Typography>
+              </Box>
+
+              <Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                      6. Política de Privacidad
+                  </Typography>
+                  <Typography variant="body2" component="ul" color="text.secondary" sx={{ pl: 3, m: 0, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                      <li><strong>Finalidad:</strong> Los datos se utilizan exclusivamente para la gestión de reservas, autenticación y comunicación de la academia.</li>
+                      <li><strong>Imágenes:</strong> Al subir una foto de perfil, autorizas su almacenamiento para ser mostrada en la interfaz.</li>
+                  </Typography>
+              </Box>
+
+              <Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                      7. Cancelación de la Cuenta
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                      Tienes derecho a eliminar tu cuenta de forma permanente desde tu perfil personal. Esta acción es irreversible y borrará tus datos y el acceso a tus reservas. Los administradores se reservan el derecho de suspender cuentas por uso fraudulento.
+                  </Typography>
+              </Box>
+          </DialogContent>
+        <DialogActions>
+            <Button
+              onClick={() => setIsTermsDialogOpen(false)}
+              variant="contained"
+              color="error"
+            >
+              Cerrar
+            </Button>
+          </DialogActions>
+      </Dialog>
     </Box>
   );
 }

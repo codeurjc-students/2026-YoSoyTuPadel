@@ -37,6 +37,7 @@ export interface UserUpdateDetails {
   name: string;
   nickname: string;
   email: string;
+  password?: string;
   sessionPrice?: number | null;
 }
 

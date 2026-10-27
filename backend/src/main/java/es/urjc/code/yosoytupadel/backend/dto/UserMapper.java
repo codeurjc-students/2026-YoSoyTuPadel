@@ -44,7 +44,8 @@ public interface UserMapper {
                 user.getName(),
                 user.getNickname(),
                 user.getEmail(),
-                user.getSessionPrice()
+                user.getSessionPrice(),
+                null
         );
     }
 
