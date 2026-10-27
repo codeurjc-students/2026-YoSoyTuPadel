@@ -25,7 +25,7 @@ vi.mock('../courts/services/courtService', () => ({
 }));
 vi.mock('react-hot-toast', () => ({ default: { success: vi.fn(), error: vi.fn() } }));
 
-const user = { id: 7, name: 'Ana López', nickname: 'ana', email: 'ana@example.com', role: 'USER' };
+const user = { id: 7, name: 'Ana López', nickname: 'anita', email: 'ana@example.com', role: 'USER' };
 const admin = { ...user, role: 'ADMIN' };
 const auth = (currentUser = user): AuthContextValue => ({
   user: currentUser,
@@ -80,7 +80,8 @@ describe('Profile integration and administration', () => {
     const editBtn = await screen.findByRole('button', { name: 'Editar' });
     fireEvent.click(editBtn);
     const nameInput = await screen.findByRole('textbox', { name: 'Name' });
-    fireEvent.change(nameInput, { target: { value: '' } });
+
+    fireEvent.change(nameInput, { target: { value: 'Ana Act' } });
     fireEvent.click(screen.getByRole('button', { name: 'GUARDAR' }));
     const confirmBtn = await screen.findByRole('button', { name: 'CONFIRMAR' });
     fireEvent.click(confirmBtn);
@@ -104,5 +105,25 @@ describe('Profile integration and administration', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Reservas' }));
     expect(await screen.findByRole('tab', { name: 'Reservas' })).toHaveAttribute('aria-selected', 'true');
     expect(api.get).toHaveBeenCalled();
+  });
+
+  test('disables the save button when client-side validation fails', async () => {
+    render(
+        <MemoryRouter>
+          <AuthContext.Provider value={auth()}><UserProfilePage /></AuthContext.Provider>
+        </MemoryRouter>,
+    );
+
+    const editBtn = await screen.findByRole('button', { name: 'Editar' });
+    fireEvent.click(editBtn);
+
+    const nameInput = await screen.findByRole('textbox', { name: 'Name' });
+
+    // Provide invalid data (less than 4 characters)
+    fireEvent.change(nameInput, { target: { value: 'A' } });
+
+    // Check if the save button is successfully disabled
+    const guardarBtn = screen.getByRole('button', { name: 'GUARDAR' });
+    expect(guardarBtn).toBeDisabled();
   });
 });

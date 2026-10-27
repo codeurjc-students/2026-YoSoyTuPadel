@@ -307,7 +307,7 @@ class UserControllerTest {
     void updateUser_WhenUserDoesNotExist_ShouldReturn404() throws Exception {
         // Given
         when(userService.getUserById(99L)).thenReturn(Optional.empty());
-        UserUpdateDTO update = new UserUpdateDTO("Name", "nick", "new@example.com", 20.0);
+        UserUpdateDTO update = new UserUpdateDTO("Name", "nick", "new@example.com", 20.0, null);
 
         // When / Then
         mockMvc.perform(put("/api/v1/users/99")
@@ -332,8 +332,8 @@ class UserControllerTest {
     @Test
     void updateUser_WhenEmailChangesForAuthenticatedUser_ShouldClearTokens() throws Exception {
         // Given
-        UserUpdateDTO update = new UserUpdateDTO("Name", "nick", "new@example.com", 20.0);
-        UserUpdateDTO saved = new UserUpdateDTO("Name", "nick", "new@example.com", 20.0);
+        UserUpdateDTO update = new UserUpdateDTO("Name", "nick", "new@example.com", 20.0, null);
+        UserUpdateDTO saved = new UserUpdateDTO("Name", "nick", "new@example.com", 20.0, null);
         when(userService.getUserById(1L)).thenReturn(Optional.of(userDTO));
         when(userDTO.email()).thenReturn("old@example.com");
         when(userService.updateUser(eq(1L), any(UserUpdateDTO.class))).thenReturn(saved);
