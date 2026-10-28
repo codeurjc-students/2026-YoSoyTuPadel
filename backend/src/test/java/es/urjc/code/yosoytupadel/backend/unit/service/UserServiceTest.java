@@ -435,19 +435,6 @@ class UserServiceTest {
     }
 
     @Test
-    void deleteUserImage_WhenImageIsMissing_ShouldThrowNotFound() {
-        // Given
-        student.setProfilePicture(null);
-        when(userRepository.findById(2L)).thenReturn(Optional.of(student));
-
-        // When / Then
-        assertThatThrownBy(() -> userService.deleteUserImage(2L))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("User image not found");
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
     void isMe_WhenAuthenticatedUserHasDifferentId_ShouldReturnFalse() {
         // Given
         UserDetails details = mock(UserDetails.class);
@@ -532,14 +519,20 @@ class UserServiceTest {
     }
 
     @Test
-    void deleteUserImage_WhenImageIsNull_ShouldThrowNotFound() {
+    void deleteUserImage_ShouldSetDefaultImageAndSave() {
         // Given
+        // Configure the user to simulate missing or existing image
         student.setProfilePicture(null);
         when(userRepository.findById(2L)).thenReturn(Optional.of(student));
 
-        // When / Then
-        assertThatThrownBy(() -> userService.deleteUserImage(2L))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("User image not found");
+        // When
+        userService.deleteUserImage(2L);
+
+        // Then
+        // Verify that the user is saved in the database
+        verify(userRepository, times(1)).save(student);
+
+        // Verify that a default image has been assigned
+        assertThat(student.getProfilePicture()).isNotNull();
     }
 }
