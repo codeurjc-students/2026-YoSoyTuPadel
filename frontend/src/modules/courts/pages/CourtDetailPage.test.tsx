@@ -57,7 +57,11 @@ async function selectTomorrow() {
   }).format(tomorrow);
 
   fireEvent.click(await screen.findByRole('button', { name: dateLabel }));
-  await waitFor(() => expect(screen.getByRole('button', { name: '09:00' })).toBeEnabled());
+  await waitFor(() => {
+    const availableSlot = screen.getAllByRole('button', { name: /09:00/i })
+      .find((button) => !button.hasAttribute('disabled'));
+    expect(availableSlot).toBeDefined();
+  });
   return dateValue;
 }
 
@@ -127,14 +131,17 @@ describe('CourtDetailPage', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Pista central' })).toBeInTheDocument();
     await selectTomorrow();
-    fireEvent.click(screen.getByRole('button', { name: '09:00' }));
+    const availableSlot = (await screen.findAllByRole('button', { name: /09:00/i }))
+      .find((button) => !button.hasAttribute('disabled'));
+    expect(availableSlot).toBeDefined();
+    fireEvent.click(availableSlot!);
     fireEvent.click(await screen.findByRole('button', { name: 'Finalizar reserva · 09:00' }));
     const confirmDialog = await screen.findByRole('dialog');
     fireEvent.click(within(confirmDialog).getByRole('button', { name: 'Confirmar' }));
 
     expect(await screen.findByText('Esta hora ya está reservada. Elige otra franja horaria.')).toBeInTheDocument();
     expect(screen.getAllByText('Esta hora ya está reservada. Elige otra franja horaria.')).toHaveLength(1);
-    const timeButtons = await screen.findAllByRole('button', { name: /09:00/i });
+    const timeButtons = await screen.findAllByRole('button', { name: /09:00/i, hidden: true });
     expect(timeButtons[0]).toBeDisabled();
   }, 10000);
 

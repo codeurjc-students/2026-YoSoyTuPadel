@@ -8,6 +8,7 @@ export interface AuthUser {
   nickname: string | null;
   email: string;
   role: string;
+  skillLevel?: number | null;
   racketId?: number | null;
   racketUsages?: number;
   racketHistory?: RacketHistoryEntry[];
@@ -35,7 +36,7 @@ export interface RegistrationDetails extends LoginCredentials {
 
 export interface UserUpdateDetails {
   name: string;
-  nickname: string;
+  nickname?: string;
   email: string;
   password?: string;
   sessionPrice?: number | null;
@@ -71,6 +72,7 @@ function isAuthUser(value: unknown): value is AuthUser {
     && (candidate.racketId === undefined || typeof candidate.racketId === 'number' || candidate.racketId === null)
     && (candidate.racketUsages === undefined || typeof candidate.racketUsages === 'number')
     && (candidate.sessionPrice === undefined || typeof candidate.sessionPrice === 'number' || candidate.sessionPrice === null)
+    && (candidate.skillLevel === undefined || typeof candidate.skillLevel === 'number' || candidate.skillLevel === null)
     && (candidate.racketHistory === undefined || (
       Array.isArray(candidate.racketHistory)
       && candidate.racketHistory.every((entry: unknown) => {
@@ -115,6 +117,10 @@ export const authService = {
   async updateUser(id: number, details: UserUpdateDetails): Promise<UpdatedUserDetails> {
     const { data } = await api.put<UpdatedUserDetails>(`/api/v1/users/${id}`, details);
     return data;
+  },
+
+  async deleteUserImage(id: number): Promise<void> {
+    await api.delete(`/api/v1/users/${id}/image`);
   },
 
   async uploadUserImage(id: number, image: File): Promise<void> {

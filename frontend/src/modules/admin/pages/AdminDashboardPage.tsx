@@ -15,6 +15,7 @@ import {
   DialogTitle,
   Divider,
   InputAdornment,
+  MenuItem,
   Snackbar,
   Stack,
   Tab,
@@ -31,7 +32,9 @@ import {
 import api from '../../../service/api';
 import { authService, type AuthUser } from '../../auth/services/authService';
 import { coachService } from '../../coaches/services/coachService';
+import CreateCoachDialog from '../components/CreateCoachDialog';
 import { courtService } from '../../courts/services/courtService';
+import toast from 'react-hot-toast';
 
 type MainTab = 'users' | 'bookings';
 type UserFilter = 'clients' | 'coaches';
@@ -44,6 +47,7 @@ interface AdminUser {
   email: string;
   role: UserRole;
   sessionPrice: number | null;
+  skillLevel: number | null;
 }
 
 interface BookingDTO {
@@ -116,6 +120,7 @@ async function fetchUsers(signal?: AbortSignal): Promise<AdminUser[]> {
     email: user.email,
     role: normalizeRole(user.role),
     sessionPrice: user.sessionPrice ?? null,
+    skillLevel: user.skillLevel ?? null,
   }));
 }
 
@@ -245,17 +250,22 @@ function AdminDashboardPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [bookings, setBookings] = useState<AdminBooking[]>([]);
   const [visibleBookings, setVisibleBookings] = useState(10);
+  const [visibleUsersCount, setVisibleUsersCount] = useState(10);
+  const [visibleCoachesCount, setVisibleCoachesCount] = useState(10);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
   const [originalEditingUser, setOriginalEditingUser] = useState<AdminUser | null>(null);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isCreateCoachOpen, setIsCreateCoachOpen] = useState(false);
+  const [imageVersions, setImageVersions] = useState<Record<number, number>>({});
   const hasChanges = Boolean(editingUser && originalEditingUser && (
     editingUser.name !== originalEditingUser.name
     || editingUser.nickname !== originalEditingUser.nickname
     || editingUser.email !== originalEditingUser.email
     || editingUser.sessionPrice !== originalEditingUser.sessionPrice
+    || editingUser.skillLevel !== originalEditingUser.skillLevel
   ));
 
   useEffect(() => {
@@ -276,15 +286,34 @@ function AdminDashboardPage() {
     return () => controller.abort();
   }, []);
 
-  const visibleUsers = useMemo(
-    () => users.filter((user) => user.role === (userFilter === 'clients' ? 'USER' : 'COACH')),
-    [userFilter, users],
-  );
+  const visibleUsers = useMemo(() => users.filter((user) => user.role === 'USER'), [users]);
+  const visibleCoaches = useMemo(() => users.filter((user) => user.role === 'COACH'), [users]);
   const pendingBookings = useMemo(() => bookings.filter(isPendingBooking), [bookings]);
   const completedBookings = useMemo(() => bookings.filter((booking) => !isPendingBooking(booking)), [bookings]);
   const visiblePendingBookings = pendingBookings.slice(0, visibleBookings);
   const visibleCompletedBookings = completedBookings.slice(0, visibleBookings);
   const handleLoadMore = () => setVisibleBookings((previous) => previous + 10);
+  const handleCoachCreated = (coach: AuthUser) => {
+    setUsers((current) => [...current, {
+      id: coach.id,
+      name: coach.name ?? coach.nickname ?? 'Entrenador sin nombre',
+      nickname: coach.nickname,
+      email: coach.email,
+      role: 'COACH',
+      sessionPrice: coach.sessionPrice ?? null,
+      skillLevel: coach.skillLevel ?? null,
+    }]);
+  };
+
+  const handleDeleteUserImage = async (user: AdminUser) => {
+    try {
+      await authService.deleteUserImage(user.id);
+      setImageVersions((current) => ({ ...current, [user.id]: (current[user.id] ?? 0) + 1 }));
+      toast.success('Foto eliminada correctamente.');
+    } catch (error: unknown) {
+      toast.error(authService.getErrorMessage(error));
+    }
+  };
 
   const confirmAction = async () => {
     if (!confirmation) return;
@@ -292,9 +321,14 @@ function AdminDashboardPage() {
       if (confirmation.kind === 'save-user') {
         await authService.updateUser(confirmation.user.id, {
           name: confirmation.user.name.trim(),
-          nickname: confirmation.user.nickname ?? '',
           email: confirmation.user.email.trim(),
           sessionPrice: confirmation.user.sessionPrice,
+          ...(confirmation.user.role === 'USER' && confirmation.user.nickname
+            ? { nickname: confirmation.user.nickname.trim() }
+            : {}),
+          ...(confirmation.user.role === 'COACH' && confirmation.user.skillLevel !== null
+            ? { skillLevel: confirmation.user.skillLevel }
+            : {}),
         });
         setUsers((current) => current.map((user) => user.id === confirmation.user.id ? confirmation.user : user));
         setEditingUser(null);
@@ -343,10 +377,10 @@ function AdminDashboardPage() {
                 <Tab value="coaches" label={`Entrenadores (${users.filter((user) => user.role === 'COACH').length})`} />
               </Tabs>
               <Stack spacing={2}>
-                {visibleUsers.map((user) => (
+                {(userFilter === 'clients' ? visibleUsers.slice(0, visibleUsersCount) : visibleCoaches.slice(0, visibleCoachesCount)).map((user) => (
                   <Card key={user.id} sx={{ ...cardSx, display: 'flex', flexDirection: { xs: 'column', sm: 'row' } }}>
                     <Box sx={{ p: 2.5, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-                      <Avatar src={`/api/v1/users/${user.id}/image`} alt={user.name} sx={{ width: 100, height: 100, objectFit: 'cover', bgcolor: '#e60012', fontWeight: 900, fontSize: 28 }}>
+                      <Avatar src={`/api/v1/users/${user.id}/image?v=${imageVersions[user.id] ?? 0}`} alt={user.name} sx={{ width: 100, height: 100, objectFit: 'cover', bgcolor: '#e60012', fontWeight: 900, fontSize: 28 }}>
                         {initials(user.name)}
                       </Avatar>
                     </Box>
@@ -363,6 +397,62 @@ function AdminDashboardPage() {
                   </Card>
                 ))}
               </Stack>
+              {userFilter === 'clients' && visibleUsers.length > visibleUsersCount && (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                    <Button
+                        variant="outlined"
+                        onClick={() => setVisibleUsersCount((count) => count + 10)}
+                        sx={{
+                          px: 3,
+                          minHeight: 44,
+                          bgcolor: 'white',
+                          color: '#111318',
+                          borderColor: 'white',
+                          borderRadius: 2,
+                          fontWeight: 700,
+                          textTransform: 'none',
+                          '&:hover': { bgcolor: 'grey.100', borderColor: 'grey.100' },
+                        }}
+                    >
+                    VER MÁS
+                  </Button>
+                </Box>
+              )}
+              {userFilter === 'coaches' && (
+                <>
+                  {visibleCoaches.length > visibleCoachesCount && (
+                      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                        <Button
+                            variant="outlined"
+                            onClick={() => setVisibleCoachesCount((count) => count + 10)}
+                            sx={{
+                              px: 3,
+                              minHeight: 44,
+                              bgcolor: 'white',
+                              color: '#111318',
+                              borderColor: 'white',
+                              borderRadius: 2,
+                              fontWeight: 700,
+                              textTransform: 'none',
+                              '&:hover': { bgcolor: 'grey.100', borderColor: 'grey.100' },
+                            }}
+                        >
+                        VER MÁS
+                      </Button>
+                    </Box>
+                  )}
+                  <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+                    <Button
+                      variant="contained"
+                      color="error"
+                      onClick={() => setIsCreateCoachOpen(true)}
+                      sx={{ fontWeight: 900, textTransform: 'uppercase', borderRadius: 2 }}
+                    >
+                      AÑADIR ENTRENADOR
+                    </Button>
+                  </Box>
+                </>
+              )}
             </>
           ) : (
             <Stack spacing={4}>
@@ -416,27 +506,50 @@ function AdminDashboardPage() {
               />
             )}
             {editingUser?.role === 'COACH' && (
-              <TextField
-                label="Precio por sesión"
-                type="number"
-                value={editingUser.sessionPrice ?? ''}
-                onChange={(event) => setEditingUser((current) => {
-                  if (!current) return current;
-                  const value = event.target.value;
-                  return { ...current, sessionPrice: value === '' ? null : Number(value) };
-                })}
-                slotProps={{
-                  input: { startAdornment: <InputAdornment position="start">€</InputAdornment> },
-                  htmlInput: { min: 0, step: 0.01 },
-                }}
-                fullWidth
-              />
+              <>
+                <TextField
+                  label="Precio por sesión"
+                  type="number"
+                  value={editingUser.sessionPrice ?? ''}
+                  onChange={(event) => setEditingUser((current) => {
+                    if (!current) return current;
+                    const value = event.target.value;
+                    return { ...current, sessionPrice: value === '' ? null : Number(value) };
+                  })}
+                  slotProps={{
+                    input: { startAdornment: <InputAdornment position="start">€</InputAdornment> },
+                    htmlInput: { min: 0, step: 0.01 },
+                  }}
+                  fullWidth
+                />
+                <TextField
+                  select
+                  required
+                  label="Nivel de certificación"
+                  value={editingUser.skillLevel ?? ''}
+                  onChange={(event) => setEditingUser((current) => current
+                    ? { ...current, skillLevel: Number(event.target.value) }
+                    : current)}
+                  fullWidth
+                >
+                  {[1, 2, 3].map((level) => (
+                    <MenuItem key={level} value={level}>Nivel {level}</MenuItem>
+                  ))}
+                </TextField>
+              </>
             )}
             <TextField label="Email" type="email" value={editingUser?.email ?? ''} onChange={(event) => setEditingUser((current) => current ? { ...current, email: event.target.value } : current)} fullWidth />
           </Stack>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setEditingUser(null)} sx={{ color: 'grey.700', textTransform: 'none' }}>Volver</Button>
+          <Button
+            variant="outlined"
+            color="error"
+            onClick={() => editingUser && void handleDeleteUserImage(editingUser)}
+          >
+            ELIMINAR FOTO
+          </Button>
           <Button variant="contained" color="error" disabled={!hasChanges || !editingUser?.name.trim() || !editingUser?.email.trim()} onClick={() => editingUser && setConfirmation({ kind: 'save-user', user: editingUser })} sx={{ fontWeight: 800, textTransform: 'none' }}>Guardar</Button>
         </DialogActions>
       </Dialog>
@@ -455,6 +568,12 @@ function AdminDashboardPage() {
           <Button variant="contained" color="error" onClick={() => void confirmAction()} sx={{ fontWeight: 800, textTransform: 'none' }}>Confirmar</Button>
         </DialogActions>
       </Dialog>
+
+      <CreateCoachDialog
+        open={isCreateCoachOpen}
+        onClose={() => setIsCreateCoachOpen(false)}
+        onCreated={handleCoachCreated}
+      />
 
       <Snackbar open={successMessage !== null} autoHideDuration={4000} onClose={() => setSuccessMessage(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
         <Alert severity="success" variant="filled" onClose={() => setSuccessMessage(null)} sx={{ width: '100%' }}>{successMessage}</Alert>

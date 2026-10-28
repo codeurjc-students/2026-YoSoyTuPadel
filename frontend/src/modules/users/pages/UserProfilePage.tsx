@@ -132,9 +132,12 @@ function UserProfilePage() {
 
   const isCoach = profile.role.toUpperCase().replace(/^ROLE_/, '') === 'COACH';
   const isAdmin = profile.role.toUpperCase().replace(/^ROLE_/, '') === 'ADMIN';
+  const isUser = !isCoach && !isAdmin;
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const nameIsValid = form.name.trim().length >= 4;
-  const nicknameIsValid = form.nickname.trim().length >= 4;
+  const nicknameIsValid = !isCoach && !isAdmin
+    ? (form.nickname ?? '').trim().length >= 4
+    : true;
   const emailIsValid = form.email.trim().length > 0 && emailPattern.test(form.email.trim());
   const passwordIsValid = !form.password || form.password.length >= 8;
   const formIsValid = nameIsValid
@@ -142,7 +145,7 @@ function UserProfilePage() {
     && emailIsValid
     && passwordIsValid;
   const hasChanges = form.name !== (profile.name ?? '')
-    || form.nickname !== (profile.nickname ?? '')
+    || ((!isCoach && !isAdmin) && form.nickname !== (profile.nickname ?? ''))
     || form.email !== profile.email
     || (form.password !== undefined && form.password.trim().length > 0)
     || form.sessionPrice !== (profile.sessionPrice ?? null);
@@ -187,10 +190,12 @@ function UserProfilePage() {
     try {
       const details: UserUpdateDetails = {
         name: form.name.trim(),
-        nickname: isCoach ? profile.nickname ?? '' : form.nickname.trim(),
         email: form.email.trim(),
         sessionPrice: isCoach ? form.sessionPrice ?? null : undefined,
       };
+      if (!isCoach && !isAdmin) {
+        details.nickname = (form.nickname ?? '').trim();
+      }
 
       if (form.password && form.password.trim().length > 0) {
         details.password = form.password.trim();
@@ -202,7 +207,7 @@ function UserProfilePage() {
         ? {
           ...currentProfile,
           name: details.name,
-          nickname: details.nickname,
+          nickname: details.nickname ?? currentProfile.nickname,
           email: details.email,
           sessionPrice: details.sessionPrice,
         }
@@ -302,8 +307,10 @@ function UserProfilePage() {
               {[
                 ['Nombre completo', profile.name || 'Sin nombre'],
                 ...(isCoach
-                  ? [['Precio por sesión', profile.sessionPrice == null ? 'Sin precio' : `${profile.sessionPrice} €`]]
-                  : [['Nickname', `@${profile.nickname || 'sin-nickname'}`]]),
+                    ? [['Precio por sesión', profile.sessionPrice == null ? 'Sin precio' : `${profile.sessionPrice} €`]]
+                    : isUser
+                        ? [['Nickname', `@${profile.nickname || 'sin-nickname'}`]]
+                        : []),
                 ['Email', profile.email],
               ].map(([label, value]) => (
                 <Grid key={label} size={{ xs: 12, sm: 6 }}>
@@ -480,7 +487,7 @@ function UserProfilePage() {
               helperText={nameIsValid ? '' : 'El nombre debe tener al menos 4 caracteres.'}
               fullWidth
             />
-            {!isCoach && (
+            {isUser && (
               <TextField
                 variant="outlined"
                 label="Nickname"

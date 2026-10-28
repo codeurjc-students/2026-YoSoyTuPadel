@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -91,6 +92,21 @@ public class UserController {
                 .toUri();
 
         return ResponseEntity.created(location).body(responseDTO);
+    }
+
+    @Operation(summary = "Create a new coach (Admin only)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Coach created successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid coach data supplied"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Admin rights required"),
+            @ApiResponse(responseCode = "409", description = "Email is already in use")
+    })
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping(value = "/coaches", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<UserDTO> createCoach(
+            @Valid @RequestPart("coach") CoachCreateDTO dto,
+            @RequestPart(value = "image", required = false) MultipartFile image) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.createCoach(dto, image));
     }
 
     @Operation(summary = "Update an existing user")
@@ -243,11 +259,11 @@ public class UserController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User image deleted successfully", content = { @Content(mediaType = "text/plain") }),
             @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Forbidden - Cannot delete for other users", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Admin rights required", content = @Content),
             @ApiResponse(responseCode = "404", description = "User or image not found", content = @Content)
     })
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasRole('ADMIN') or @userService.isMe(#id)")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}/image")
     public ResponseEntity<String> deleteUserImage(@PathVariable long id) {
             userService.deleteUserImage(id);

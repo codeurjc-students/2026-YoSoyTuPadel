@@ -2,6 +2,7 @@ package es.urjc.code.yosoytupadel.backend.unit.controller;
 
 import es.urjc.code.yosoytupadel.backend.controller.UserController;
 import es.urjc.code.yosoytupadel.backend.dto.CoachDTO;
+import es.urjc.code.yosoytupadel.backend.dto.CoachCreateDTO;
 import es.urjc.code.yosoytupadel.backend.dto.UserDTO;
 import es.urjc.code.yosoytupadel.backend.dto.UserUpdateDTO;
 import es.urjc.code.yosoytupadel.backend.dto.BookingDTO;
@@ -133,6 +134,40 @@ class UserControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header()
                         .string(HttpHeaders.LOCATION, org.hamcrest.Matchers.endsWith("/api/v1/users/5")));
+    }
+
+    @Test
+    void createCoach_ShouldReturnCreatedCoach() throws Exception {
+        CoachCreateDTO createDTO = new CoachCreateDTO(
+                "Coach Name", "coach@example.com", "password", 35.0, 2.0
+        );
+        when(userService.createCoach(any(CoachCreateDTO.class), any())).thenReturn(userDTO);
+        org.springframework.mock.web.MockMultipartFile coachPart =
+                new org.springframework.mock.web.MockMultipartFile(
+                        "coach", "", MediaType.APPLICATION_JSON_VALUE,
+                        objectMapper.writeValueAsBytes(createDTO));
+
+        mockMvc.perform(multipart("/api/v1/users/coaches").file(coachPart))
+                .andExpect(status().isCreated());
+
+        verify(userService).createCoach(any(CoachCreateDTO.class), isNull());
+    }
+
+    @Test
+    void createCoach_WhenEmailExists_ShouldReturnConflict() throws Exception {
+        CoachCreateDTO createDTO = new CoachCreateDTO(
+                "Coach Name", "coach@example.com", "password", 35.0, 2.0
+        );
+        when(userService.createCoach(any(CoachCreateDTO.class), any()))
+                .thenThrow(new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.CONFLICT, "Email is already in use"));
+        org.springframework.mock.web.MockMultipartFile coachPart =
+                new org.springframework.mock.web.MockMultipartFile(
+                        "coach", "", MediaType.APPLICATION_JSON_VALUE,
+                        objectMapper.writeValueAsBytes(createDTO));
+
+        mockMvc.perform(multipart("/api/v1/users/coaches").file(coachPart))
+                .andExpect(status().isConflict());
     }
 
     @Test
@@ -307,7 +342,7 @@ class UserControllerTest {
     void updateUser_WhenUserDoesNotExist_ShouldReturn404() throws Exception {
         // Given
         when(userService.getUserById(99L)).thenReturn(Optional.empty());
-        UserUpdateDTO update = new UserUpdateDTO("Name", "nick", "new@example.com", 20.0, null);
+        UserUpdateDTO update = new UserUpdateDTO("Name", "nick", "new@example.com", 20.0, null, null);
 
         // When / Then
         mockMvc.perform(put("/api/v1/users/99")
@@ -332,8 +367,8 @@ class UserControllerTest {
     @Test
     void updateUser_WhenEmailChangesForAuthenticatedUser_ShouldClearTokens() throws Exception {
         // Given
-        UserUpdateDTO update = new UserUpdateDTO("Name", "nick", "new@example.com", 20.0, null);
-        UserUpdateDTO saved = new UserUpdateDTO("Name", "nick", "new@example.com", 20.0, null);
+        UserUpdateDTO update = new UserUpdateDTO("Name", "nick", "new@example.com", 20.0, null, 2.0);
+        UserUpdateDTO saved = new UserUpdateDTO("Name", "nick", "new@example.com", 20.0, null, 2.0);
         when(userService.getUserById(1L)).thenReturn(Optional.of(userDTO));
         when(userDTO.email()).thenReturn("old@example.com");
         when(userService.updateUser(eq(1L), any(UserUpdateDTO.class))).thenReturn(saved);

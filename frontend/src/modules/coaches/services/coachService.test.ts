@@ -54,6 +54,29 @@ describe('coachService', () => {
     });
   });
 
+  test('creates a coach with multipart form data', async () => {
+    const createdCoach = {
+      id: 8,
+      name: 'Coach Created',
+      email: 'created@example.com',
+      role: 'COACH',
+      sessionPrice: 40,
+    };
+    const image = new File(['image'], 'coach.jpg', { type: 'image/jpeg' });
+    vi.mocked(api.post).mockResolvedValue({ data: createdCoach });
+
+    await expect(coachService.createCoach({
+      name: 'Coach Created',
+      email: 'created@example.com',
+      password: 'password',
+      sessionPrice: 40,
+    }, image)).resolves.toEqual(createdCoach);
+
+    const [, body] = vi.mocked(api.post).mock.calls[0];
+    expect(body).toBeInstanceOf(FormData);
+    expect((body as FormData).get('image')).toBe(image);
+  });
+
   test('books a two-hour training session', async () => {
     vi.mocked(api.post).mockResolvedValue({ data: { id: 7 } });
 

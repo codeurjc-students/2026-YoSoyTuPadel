@@ -63,7 +63,7 @@ public class DataBaseInitializer implements CommandLineRunner {
         if (emails.add("admin@yosoytupadel.com")) {
             User admin = new User(
                     "Administrador",
-                    "admin",
+                    null,
                     "admin@yosoytupadel.com",
                     passwordEncoder.encode("admin"),
                     UserRole.ADMIN
