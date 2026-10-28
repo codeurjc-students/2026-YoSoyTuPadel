@@ -1,6 +1,7 @@
 package es.urjc.code.yosoytupadel.backend.unit.service;
 
 import es.urjc.code.yosoytupadel.backend.dto.CoachDTO;
+import es.urjc.code.yosoytupadel.backend.dto.CoachCreateDTO;
 import es.urjc.code.yosoytupadel.backend.dto.UserDTO;
 import es.urjc.code.yosoytupadel.backend.dto.UserUpdateDTO;
 import es.urjc.code.yosoytupadel.backend.dto.UserMapper;
@@ -26,6 +27,8 @@ import java.util.Optional;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -90,6 +93,41 @@ class UserServiceTest {
         assertThat(result).hasSize(1);
         assertThat(result.iterator().next().name()).isEqualTo("Entrenador Pepe");
         verify(userRepository, times(1)).findByRole(UserRole.COACH);
+    }
+
+    @Test
+    void createCoach_ShouldCreateCoachWithDefaultImage() {
+        CoachCreateDTO createDTO = new CoachCreateDTO(
+                "Coach Name", "coach@example.com", "password", 35.0, 2.0
+        );
+        when(userRepository.existsByEmail("coach@example.com")).thenReturn(false);
+        when(passwordEncoder.encode("password")).thenReturn("encoded-password");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(userMapper.toDTO(any(User.class))).thenReturn(studentDTO);
+
+        UserDTO result = userService.createCoach(createDTO, null);
+
+        assertThat(result).isEqualTo(studentDTO);
+        verify(userRepository).save(argThat(saved -> saved.getRole() == UserRole.COACH
+                && saved.getSkillLevel().equals(2.0)
+                && saved.getSessionPrice().equals(35.0)
+                && saved.getProfilePicture() != null
+                && saved.getEncodedPassword().equals("encoded-password")));
+    }
+
+    @Test
+    void createCoach_WhenEmailExists_ShouldThrowConflict() {
+        CoachCreateDTO createDTO = new CoachCreateDTO(
+                "Coach Name", "coach@example.com", "password", 35.0, 2.0
+        );
+        when(userRepository.existsByEmail("coach@example.com")).thenReturn(true);
+
+        assertThatThrownBy(() -> userService.createCoach(createDTO, null))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Email is already in use");
+
+        verify(userRepository, never()).save(any(User.class));
+        verify(passwordEncoder, never()).encode(anyString());
     }
 
     @Test
@@ -339,6 +377,52 @@ class UserServiceTest {
     }
 
     @Test
+    void updateUser_WhenAdminUpdatesCoach_ShouldChangeSkillLevel() {
+        coach.setEmail("coach@example.com");
+        UserUpdateDTO updateDTO = new UserUpdateDTO(
+                "Coach Name", "coachnick", "coach@example.com", 35.0, null, 2.0
+        );
+        when(userRepository.findById(1L)).thenReturn(Optional.of(coach));
+        when(userRepository.save(coach)).thenReturn(coach);
+        when(userMapper.toUserUpdateDTO(coach)).thenReturn(updateDTO);
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(
+                        "admin@example.com",
+                        null,
+                        List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
+                )
+        );
+
+        UserUpdateDTO result = userService.updateUser(1L, updateDTO);
+
+        assertThat(result).isEqualTo(updateDTO);
+        assertThat(coach.getSkillLevel()).isEqualTo(2.0);
+    }
+
+    @Test
+    void updateUser_WhenNonAdminUpdatesCoach_ShouldIgnoreSkillLevel() {
+        coach.setEmail("coach@example.com");
+        coach.setSkillLevel(1.0);
+        UserUpdateDTO updateDTO = new UserUpdateDTO(
+                "Coach Name", "coachnick", "coach@example.com", 35.0, null, 3.0
+        );
+        when(userRepository.findById(1L)).thenReturn(Optional.of(coach));
+        when(userRepository.save(coach)).thenReturn(coach);
+        when(userMapper.toUserUpdateDTO(coach)).thenReturn(updateDTO);
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(
+                        "coach@example.com",
+                        null,
+                        List.of(new SimpleGrantedAuthority("ROLE_COACH"))
+                )
+        );
+
+        userService.updateUser(1L, updateDTO);
+
+        assertThat(coach.getSkillLevel()).isEqualTo(1.0);
+    }
+
+    @Test
     void getUserImage_WhenImageIsMissing_ShouldThrowNotFound() {
         // Given
         student.setProfilePicture(null);
@@ -348,19 +432,6 @@ class UserServiceTest {
         assertThatThrownBy(() -> userService.getUserImage(2L))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("User image not found");
-    }
-
-    @Test
-    void deleteUserImage_WhenImageIsMissing_ShouldThrowNotFound() {
-        // Given
-        student.setProfilePicture(null);
-        when(userRepository.findById(2L)).thenReturn(Optional.of(student));
-
-        // When / Then
-        assertThatThrownBy(() -> userService.deleteUserImage(2L))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("User image not found");
-        verify(userRepository, never()).save(any());
     }
 
     @Test
@@ -448,14 +519,20 @@ class UserServiceTest {
     }
 
     @Test
-    void deleteUserImage_WhenImageIsNull_ShouldThrowNotFound() {
+    void deleteUserImage_ShouldSetDefaultImageAndSave() {
         // Given
+        // Configure the user to simulate missing or existing image
         student.setProfilePicture(null);
         when(userRepository.findById(2L)).thenReturn(Optional.of(student));
 
-        // When / Then
-        assertThatThrownBy(() -> userService.deleteUserImage(2L))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("User image not found");
+        // When
+        userService.deleteUserImage(2L);
+
+        // Then
+        // Verify that the user is saved in the database
+        verify(userRepository, times(1)).save(student);
+
+        // Verify that a default image has been assigned
+        assertThat(student.getProfilePicture()).isNotNull();
     }
 }

@@ -8,6 +8,7 @@ import {
   type LoginCredentials,
   type RegistrationDetails,
 } from '../services/authService';
+import { isLoginAuthenticationError } from '../constants/authErrors';
 import { getWelcomeMessage } from '../utils/welcomeMessage';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -54,9 +55,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       toast.success(getWelcomeMessage(authenticatedUser.name));
       return true;
     } catch (authError) {
-      const message = authService.getErrorMessage(authError);
+      const message = isLoginAuthenticationError(authError)
+        ? 'Usuario o contraseña incorrectos'
+        : authService.getErrorMessage(authError);
       setError(message);
-      if (!axios.isAxiosError(authError)) {
+      if (isLoginAuthenticationError(authError) || !axios.isAxiosError(authError)) {
         toast.error(message);
       }
       return false;

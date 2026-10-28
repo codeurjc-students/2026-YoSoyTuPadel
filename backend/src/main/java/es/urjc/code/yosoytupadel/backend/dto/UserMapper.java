@@ -22,6 +22,7 @@ public interface UserMapper {
     @Mapping(target = "racketUsages", ignore = true)
     @Mapping(target = "racketHistory", ignore = true)
     @Mapping(target = "sessionPrice", ignore = true)
+    @Mapping(target = "skillLevel", ignore = true)
     User toDomain(UserDTO userDTO);
 
     default CoachDTO toCoachDTO(User user) {
@@ -44,10 +45,13 @@ public interface UserMapper {
                 user.getName(),
                 user.getNickname(),
                 user.getEmail(),
-                user.getSessionPrice()
+                user.getSessionPrice(),
+                null,
+                user.getSkillLevel()
         );
     }
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,  unmappedTargetPolicy = ReportingPolicy.IGNORE)
+    @Mapping(target = "skillLevel", ignore = true)
     void updateUserFromDTO(UserUpdateDTO updateDTO, @MappingTarget User entity);
 }

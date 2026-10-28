@@ -1,6 +1,7 @@
 package es.urjc.code.yosoytupadel.backend.service;
 
 import es.urjc.code.yosoytupadel.backend.dto.CoachDTO;
+import es.urjc.code.yosoytupadel.backend.dto.CoachCreateDTO;
 import es.urjc.code.yosoytupadel.backend.dto.UserDTO;
 import es.urjc.code.yosoytupadel.backend.dto.UserMapper;
 import es.urjc.code.yosoytupadel.backend.dto.UserUpdateDTO;
@@ -25,8 +26,10 @@ import org.springframework.transaction.annotation.Transactional;
 import es.urjc.code.yosoytupadel.backend.entities.User;
 import es.urjc.code.yosoytupadel.backend.repository.UserRepository;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.sql.rowset.serial.SerialBlob;
+import jakarta.validation.Valid;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -104,6 +107,43 @@ public class UserService {
         return userMapper.toDTO(savedUser);
     }
 
+    @Transactional
+    public UserDTO createCoach(@Valid CoachCreateDTO dto, MultipartFile image) {
+        String email = dto.email().trim();
+        if (existsByEmail(email)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email is already in use");
+        }
+
+        User coach = new User();
+        coach.setName(dto.name().trim());
+        coach.setNickname(null);
+        coach.setEmail(email);
+        coach.setEncodedPassword(passwordEncoder.encode(dto.password()));
+        coach.setRole(UserRole.COACH);
+        coach.setSkillLevel(dto.skillLevel());
+        coach.setSessionPrice(dto.sessionPrice());
+        coach.setRacket(null);
+
+        try {
+            if (image != null && !image.isEmpty()) {
+                coach.setProfilePicture(BlobProxy.generateProxy(image.getInputStream(), image.getSize()));
+            } else {
+                ClassPathResource defaultImage = new ClassPathResource("static/images/emptyImage.png");
+                try (InputStream inputStream = defaultImage.getInputStream()) {
+                    coach.setProfilePicture(new SerialBlob(inputStream.readAllBytes()));
+                }
+            }
+        } catch (IOException | SQLException exception) {
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Could not store coach profile image",
+                    exception
+            );
+        }
+
+        return userMapper.toDTO(userRepository.save(coach));
+    }
+
 
     @Transactional
     public UserUpdateDTO updateUser(Long id, UserUpdateDTO updateDTO) {
@@ -117,14 +157,36 @@ public class UserService {
         }
 
         userMapper.updateUserFromDTO(updateDTO, existingUser);
+        if (updateDTO.skillLevel() != null
+                && existingUser.getRole() == UserRole.COACH
+                && isAuthenticatedAdmin()) {
+            existingUser.setSkillLevel(updateDTO.skillLevel());
+        }
+        if (updateDTO.password() != null && !updateDTO.password().trim().isBlank()) {
+            existingUser.setEncodedPassword(passwordEncoder.encode(updateDTO.password().trim()));
+        }
         User savedUser = userRepository.save(existingUser);
 
         return userMapper.toUserUpdateDTO(savedUser);
     }
 
+    private boolean isAuthenticatedAdmin() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null
+                && authentication.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
+    }
+
     @Transactional
     public UserDTO updateSkillLevel(long studentId, Double change) {
         User student = getUserEntityById(studentId);
+
+        if (student.getRole() == UserRole.COACH) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Coach certification level can only be changed by an administrator."
+            );
+        }
 
         double newLevel = student.getSkillLevel() + change;
         if (newLevel > 5.0) newLevel = 5.0;
@@ -136,6 +198,20 @@ public class UserService {
 
     @Transactional
     public UserDTO deleteUser(long id) {
+        UserDTO currentUser = getAuthenticatedUserDto()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no autenticado"));
+
+        boolean isCurrentUserAdmin = UserRole.ADMIN.equals(currentUser.role());
+
+
+        if (isCurrentUserAdmin && currentUser.id() == id) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Un administrador no puede eliminar su propia cuenta.");
+        }
+
+        if (!isCurrentUserAdmin && currentUser.id() != id) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permisos para eliminar la cuenta de otro usuario.");
+        }
+
         User user = getUserEntityById(id);
         userRepository.deleteById(id);
         return userMapper.toDTO(user);
@@ -217,19 +293,21 @@ public class UserService {
         userRepository.save(user);
     }
 
+    @Transactional
     public void deleteUserImage(long id) {
         try {
             User user = getUserEntityById(id);
-            if (user.getProfilePicture() == null) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User image not found");
+            ClassPathResource defaultImage = new ClassPathResource("static/images/emptyImage.png");
+            try (InputStream inputStream = defaultImage.getInputStream()) {
+                user.setProfilePicture(new SerialBlob(inputStream.readAllBytes()));
             }
-            ClassPathResource imgFileDefault = new ClassPathResource("static/images/profile-picture-default.jpg");
-            byte[] imageBytesDefault = Files.readAllBytes(imgFileDefault.getFile().toPath());
-            Blob imageBlobDefault = new SerialBlob(imageBytesDefault);
-            user.setProfilePicture(imageBlobDefault);
             userRepository.save(user);
         } catch (IOException | SQLException e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error deleting user image");
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Error deleting user image",
+                    e
+            );
         }
     }
 

@@ -133,7 +133,7 @@ public class BookingService {
 
         Court court = null;
         if (hasCourt) {
-            court = courtRepository.findById(bookingDTO.courtId())
+            court = courtRepository.findByIdWithLock(bookingDTO.courtId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Court not found"));
 
             if (!court.getIsAvailable()) {
@@ -148,13 +148,16 @@ public class BookingService {
             );
 
             if (isOccupied) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "The selected time slot is already reserved.");
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "Este horario ya está reservado actualmente. Por favor, inténtelo de nuevo más tarde o mire otro horario o pista."
+                );
             }
         }
 
         User coach = null;
         if (hasCoach) {
-            coach = userRepository.findById(bookingDTO.coachId())
+            coach = userRepository.findByIdWithLock(bookingDTO.coachId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Coach not found"));
 
             boolean isCoachOccupied = bookingRepository.existsOverlappingCoachBooking(
@@ -165,7 +168,10 @@ public class BookingService {
             );
 
             if (isCoachOccupied) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "This coach already has a class scheduled at this time.");
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "Este horario ya está reservado actualmente. Por favor, inténtelo de nuevo más tarde o mire otro horario o pista."
+                );
             }
         }
 

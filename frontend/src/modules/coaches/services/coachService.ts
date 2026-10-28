@@ -1,4 +1,13 @@
 import api from '../../../service/api';
+import type { AuthUser } from '../../auth/services/authService';
+
+export interface CoachCreateDetails {
+  name: string;
+  email: string;
+  password: string;
+  sessionPrice: number;
+  skillLevel?: number;
+}
 
 export interface PreCoachDTO {
   id: number;
@@ -29,6 +38,21 @@ export interface CoachBookingDTO {
 }
 
 export const coachService = {
+  async createCoach(data: CoachCreateDetails, image: File | null): Promise<AuthUser> {
+    const formData = new FormData();
+    formData.append('coach', new Blob([JSON.stringify(data)], { type: 'application/json' }));
+    if (image) {
+      formData.append('image', image);
+    }
+
+    const { data: createdCoach } = await api.post<AuthUser>('/api/v1/users/coaches', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return createdCoach;
+  },
+
   getCoachImageUrl(coachId: number): string {
     return api.getUri({ url: `/api/v1/users/coaches/${coachId}/image` });
   },

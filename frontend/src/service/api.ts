@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-import { isLoginForbidden } from '../modules/auth/constants/authErrors';
+import { isLoginAuthenticationError, isLoginForbidden } from '../modules/auth/constants/authErrors';
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL || '/',
@@ -26,6 +26,10 @@ api.interceptors.response.use(
         }
 
         if (axios.isAxiosError<{ message?: string; error?: string }>(error)) {
+            if (isLoginAuthenticationError(error)) {
+                return Promise.reject(error);
+            }
+
             if (error.response?.status === 403) {
                 if (window.location.pathname !== '/403') {
                     window.location.href = '/403';

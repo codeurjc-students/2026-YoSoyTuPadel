@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import api from '../../service/api';
 import { AuthContext, type AuthContextValue } from '../auth/context/authContext';
 import { authService } from '../auth/services/authService';
+import { coachService } from '../coaches/services/coachService';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import UserProfilePage from '../users/pages/UserProfilePage';
 import toast from 'react-hot-toast';
@@ -23,9 +24,16 @@ vi.mock('../auth/services/authService', () => ({
 vi.mock('../courts/services/courtService', () => ({
   courtService: { getCourtById: vi.fn() },
 }));
+vi.mock('../coaches/services/coachService', () => ({
+  coachService: {
+    createCoach: vi.fn(),
+    getCoachById: vi.fn(),
+    getCoachImageUrl: vi.fn(),
+  },
+}));
 vi.mock('react-hot-toast', () => ({ default: { success: vi.fn(), error: vi.fn() } }));
 
-const user = { id: 7, name: 'Ana López', nickname: 'ana', email: 'ana@example.com', role: 'USER' };
+const user = { id: 7, name: 'Ana López', nickname: 'anita', email: 'ana@example.com', role: 'USER' };
 const admin = { ...user, role: 'ADMIN' };
 const auth = (currentUser = user): AuthContextValue => ({
   user: currentUser,
@@ -38,6 +46,13 @@ const auth = (currentUser = user): AuthContextValue => ({
   clearError: vi.fn(),
   updateUser: vi.fn(),
 });
+
+function mockDashboardRequests() {
+  vi.mocked(api.get)
+    .mockResolvedValueOnce({ data: [user, { ...user, id: 8, name: 'Coach One', role: 'COACH', sessionPrice: 35, skillLevel: 2 }] })
+    .mockResolvedValueOnce({ data: [] })
+    .mockResolvedValueOnce({ data: [user, { ...user, id: 8, name: 'Coach One', role: 'COACH', sessionPrice: 35, skillLevel: 2 }] });
+}
 
 describe('Profile integration and administration', () => {
   beforeEach(() => {
@@ -80,7 +95,8 @@ describe('Profile integration and administration', () => {
     const editBtn = await screen.findByRole('button', { name: 'Editar' });
     fireEvent.click(editBtn);
     const nameInput = await screen.findByRole('textbox', { name: 'Name' });
-    fireEvent.change(nameInput, { target: { value: '' } });
+
+    fireEvent.change(nameInput, { target: { value: 'Ana Act' } });
     fireEvent.click(screen.getByRole('button', { name: 'GUARDAR' }));
     const confirmBtn = await screen.findByRole('button', { name: 'CONFIRMAR' });
     fireEvent.click(confirmBtn);
@@ -104,5 +120,63 @@ describe('Profile integration and administration', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Reservas' }));
     expect(await screen.findByRole('tab', { name: 'Reservas' })).toHaveAttribute('aria-selected', 'true');
     expect(api.get).toHaveBeenCalled();
+  });
+
+  test('disables the save button when client-side validation fails', async () => {
+    render(
+        <MemoryRouter>
+          <AuthContext.Provider value={auth()}><UserProfilePage /></AuthContext.Provider>
+        </MemoryRouter>,
+    );
+
+    const editBtn = await screen.findByRole('button', { name: 'Editar' });
+    fireEvent.click(editBtn);
+
+    const nameInput = await screen.findByRole('textbox', { name: 'Name' });
+
+    // Provide invalid data (less than 4 characters)
+    fireEvent.change(nameInput, { target: { value: 'A' } });
+
+    // Check if the save button is successfully disabled
+    const guardarBtn = screen.getByRole('button', { name: 'GUARDAR' });
+    expect(guardarBtn).toBeDisabled();
+  });
+
+  test('creates a coach from the administration panel', async () => {
+    mockDashboardRequests();
+    vi.mocked(coachService.createCoach).mockResolvedValue({
+      id: 9,
+      name: 'Coach Nuevo',
+      nickname: null,
+      email: 'coachnew@example.com',
+      role: 'COACH',
+      sessionPrice: 45,
+      skillLevel: 2,
+    });
+
+    render(
+      <MemoryRouter>
+        <AuthContext.Provider value={auth(admin)}><AdminDashboardPage /></AuthContext.Provider>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(await screen.findByRole('tab', { name: 'Entrenadores (1)' }));
+    fireEvent.click(screen.getByRole('button', { name: 'AÑADIR ENTRENADOR' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Nombre' }), { target: { value: 'Coach Nuevo' } });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Email' }), { target: { value: 'coachnew@example.com' } });
+    fireEvent.change(screen.getByLabelText('Contraseña'), { target: { value: 'password' } });
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Precio por sesión' }), { target: { value: '45' } });
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Nivel de certificación' }));
+    fireEvent.click(await screen.findByRole('option', { name: 'Nivel 2' }));
+    const saveButton = screen.getByRole('button', { name: 'GUARDAR' });
+    expect(saveButton).toBeEnabled();
+    fireEvent.click(saveButton);
+
+    await waitFor(() => expect(coachService.createCoach).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Coach Nuevo', email: 'coachnew@example.com', sessionPrice: 45, skillLevel: 2 }),
+      null,
+    ));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(screen.getByText('Coach Nuevo')).toBeInTheDocument();
   });
 });
