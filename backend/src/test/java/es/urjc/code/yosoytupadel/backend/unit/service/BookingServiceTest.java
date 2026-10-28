@@ -132,7 +132,7 @@ class BookingServiceTest {
 
         when(mapper.toDomain(bookingDTO1)).thenReturn(booking1);
 
-        when(courtRepository.findById(1L)).thenReturn(Optional.of(court));
+        when(courtRepository.findByIdWithLock(1L)).thenReturn(Optional.of(court));
         when(userRepository.findById(2L)).thenReturn(Optional.of(student));
 
         when(bookingRepository.existsOverlappingBooking(
@@ -169,7 +169,7 @@ class BookingServiceTest {
         when(bookingDTO1.startTime()).thenReturn(LocalTime.of(10, 0));
         when(bookingDTO1.endTime()).thenReturn(LocalTime.of(11, 0));
 
-        when(courtRepository.findById(1L)).thenReturn(Optional.of(court));
+        when(courtRepository.findByIdWithLock(1L)).thenReturn(Optional.of(court));
 
         when(bookingRepository.existsOverlappingBooking(
                 eq(1L), any(LocalDate.class), any(LocalTime.class), any(LocalTime.class)
@@ -177,7 +177,7 @@ class BookingServiceTest {
 
         assertThatThrownBy(() -> bookingService.createBooking(bookingDTO1))
                 .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("The selected time slot is already reserved.");
+                .hasMessageContaining("Este horario ya está reservado actualmente");
 
         verify(bookingRepository, never()).save(any());
     }
@@ -209,7 +209,7 @@ class BookingServiceTest {
         when(trainingDTO.startTime()).thenReturn(LocalTime.of(10, 0));
         when(trainingDTO.endTime()).thenReturn(LocalTime.of(11, 0));
 
-        when(userRepository.findById(3L)).thenReturn(Optional.of(coach));
+        when(userRepository.findByIdWithLock(3L)).thenReturn(Optional.of(coach));
 
         when(bookingRepository.existsOverlappingCoachBooking(
                 eq(3L), any(LocalDate.class), any(LocalTime.class), any(LocalTime.class))
@@ -218,7 +218,7 @@ class BookingServiceTest {
         // Excepción 409 Conflict
         assertThatThrownBy(() -> bookingService.createBooking(trainingDTO))
                 .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("already has a class");
+                .hasMessageContaining("Este horario ya está reservado actualmente");
 
         verify(bookingRepository, never()).save(any());
     }
@@ -284,8 +284,7 @@ class BookingServiceTest {
         when(bookingDTO1.bookingDate()).thenReturn(LocalDate.now().plusDays(1));
         when(bookingDTO1.courtId()).thenReturn(1L);
         when(bookingDTO1.coachId()).thenReturn(null);
-        when(courtRepository.findById(1L)).thenReturn(Optional.of(court));
-
+        when(courtRepository.findByIdWithLock(1L)).thenReturn(Optional.of(court));
         // When / Then
         assertThatThrownBy(() -> bookingService.createBooking(bookingDTO1))
                 .isInstanceOf(ResponseStatusException.class)
@@ -300,7 +299,7 @@ class BookingServiceTest {
         when(bookingDTO1.bookingDate()).thenReturn(LocalDate.now().plusDays(1));
         when(bookingDTO1.courtId()).thenReturn(1L);
         when(bookingDTO1.coachId()).thenReturn(null);
-        when(courtRepository.findById(1L)).thenReturn(Optional.empty());
+        when(courtRepository.findByIdWithLock(1L)).thenReturn(Optional.empty());
 
         // When / Then
         assertThatThrownBy(() -> bookingService.createBooking(bookingDTO1))
@@ -316,7 +315,7 @@ class BookingServiceTest {
         when(bookingDTO1.courtId()).thenReturn(1L);
         when(bookingDTO1.coachId()).thenReturn(null);
         when(bookingDTO1.userId()).thenReturn(null);
-        when(courtRepository.findById(1L)).thenReturn(Optional.of(court));
+        when(courtRepository.findByIdWithLock(1L)).thenReturn(Optional.of(court));
         when(bookingRepository.existsOverlappingBooking(anyLong(), any(), any(), any())).thenReturn(false);
         when(userService.getAuthenticatedUserDto()).thenReturn(Optional.empty());
 
@@ -495,7 +494,7 @@ class BookingServiceTest {
 
         when(mapper.toDomain(bookingDTO1)).thenReturn(booking1);
 
-        when(userRepository.findById(3L)).thenReturn(Optional.of(coach));
+        when(userRepository.findByIdWithLock(3L)).thenReturn(Optional.of(coach));
         User student = new User();
         student.setId(2L);
         when(userRepository.findById(2L)).thenReturn(Optional.of(student));
