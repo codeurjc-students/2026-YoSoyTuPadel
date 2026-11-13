@@ -28,6 +28,7 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { authService, type AuthUser, type UserUpdateDetails } from '../../auth/services/authService';
 import { racketService, type RacketDTO } from '../../rackets/services/racketService';
+import LevelProgressionChart from '../components/LevelProgressionChart';
 
 const cardSx = {
   borderRadius: 4,
@@ -56,7 +57,6 @@ function UserProfilePage() {
     name: authenticatedUser?.name ?? '',
     nickname: authenticatedUser?.nickname ?? '',
     email: authenticatedUser?.email ?? '',
-    password: '',
     sessionPrice: authenticatedUser?.sessionPrice ?? null,
   });
 
@@ -72,7 +72,6 @@ function UserProfilePage() {
             name: currentUser.name ?? '',
             nickname: currentUser.nickname ?? '',
             email: currentUser.email ?? '',
-            password: '',
             sessionPrice: currentUser.sessionPrice ?? null,
           });
           setImageVersion((version) => version + 1);
@@ -131,23 +130,10 @@ function UserProfilePage() {
   }
 
   const isCoach = profile.role.toUpperCase().replace(/^ROLE_/, '') === 'COACH';
-  const isAdmin = profile.role.toUpperCase().replace(/^ROLE_/, '') === 'ADMIN';
-  const isUser = !isCoach && !isAdmin;
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const nameIsValid = form.name.trim().length >= 4;
-  const nicknameIsValid = !isCoach && !isAdmin
-    ? (form.nickname ?? '').trim().length >= 4
-    : true;
-  const emailIsValid = form.email.trim().length > 0 && emailPattern.test(form.email.trim());
-  const passwordIsValid = !form.password || form.password.length >= 8;
-  const formIsValid = nameIsValid
-    && nicknameIsValid
-    && emailIsValid
-    && passwordIsValid;
+  const isUser = profile.role.toUpperCase().replace(/^ROLE_/, '') === 'USER';
   const hasChanges = form.name !== (profile.name ?? '')
-    || ((!isCoach && !isAdmin) && form.nickname !== (profile.nickname ?? ''))
+    || form.nickname !== (profile.nickname ?? '')
     || form.email !== profile.email
-    || (form.password !== undefined && form.password.trim().length > 0)
     || form.sessionPrice !== (profile.sessionPrice ?? null);
   const activeRacket = profile.racketId ? loadedRacket : undefined;
 
@@ -181,25 +167,15 @@ function UserProfilePage() {
     }
   };
 
-  const handleSaveProfile = async (requiresRelogin: boolean) => {
-    if (!formIsValid) {
-      return;
-    }
-
+  const handleSaveProfile = async (emailChanged: boolean) => {
     setIsSaving(true);
     try {
-      const details: UserUpdateDetails = {
+      const details = {
         name: form.name.trim(),
+        nickname: isCoach ? profile.nickname ?? '' : form.nickname.trim(),
         email: form.email.trim(),
         sessionPrice: isCoach ? form.sessionPrice ?? null : undefined,
       };
-      if (!isCoach && !isAdmin) {
-        details.nickname = (form.nickname ?? '').trim();
-      }
-
-      if (form.password && form.password.trim().length > 0) {
-        details.password = form.password.trim();
-      }
 
       const updatedDetails = await authService.updateUser(profile.id, details);
       const updatedUser: AuthUser = { ...profile, ...updatedDetails };
@@ -207,7 +183,7 @@ function UserProfilePage() {
         ? {
           ...currentProfile,
           name: details.name,
-          nickname: details.nickname ?? currentProfile.nickname,
+          nickname: details.nickname,
           email: details.email,
           sessionPrice: details.sessionPrice,
         }
@@ -215,7 +191,7 @@ function UserProfilePage() {
       authService.storeUser(updatedUser);
       updateUser?.(updatedUser);
       setIsEditOpen(false);
-      if (requiresRelogin) {
+      if (emailChanged) {
         await logout();
         void navigate('/login', { replace: true });
       } else {
@@ -230,10 +206,9 @@ function UserProfilePage() {
 
   const handleConfirmEdit = async () => {
     const emailChanged = form.email.trim() !== profile.email.trim();
-    const passwordChanged = form.password !== undefined && form.password.trim().length > 0;
     setIsConfirmEditOpen(false);
     setIsEditOpen(false);
-    await handleSaveProfile(emailChanged || passwordChanged);
+    await handleSaveProfile(emailChanged);
   };
 
   const handleDeleteAccount = async () => {
@@ -307,10 +282,8 @@ function UserProfilePage() {
               {[
                 ['Nombre completo', profile.name || 'Sin nombre'],
                 ...(isCoach
-                    ? [['Precio por sesión', profile.sessionPrice == null ? 'Sin precio' : `${profile.sessionPrice} €`]]
-                    : isUser
-                        ? [['Nickname', `@${profile.nickname || 'sin-nickname'}`]]
-                        : []),
+                  ? [['Precio por sesión', profile.sessionPrice == null ? 'Sin precio' : `${profile.sessionPrice} €`]]
+                  : [['Nickname', `@${profile.nickname || 'sin-nickname'}`]]),
                 ['Email', profile.email],
               ].map(([label, value]) => (
                 <Grid key={label} size={{ xs: 12, sm: 6 }}>
@@ -321,6 +294,8 @@ function UserProfilePage() {
             </Grid>
           </CardContent>
         </Card>
+
+        {isUser && <LevelProgressionChart userId={profile.id} />}
 
         {activeRacket && (
             <Card elevation={3} sx={cardSx}>
@@ -416,19 +391,17 @@ function UserProfilePage() {
         )}
       </Stack>
 
-      {!isAdmin && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 6 }}>
-          <Button
-            startIcon={<DeleteOutlineRoundedIcon />}
-            variant="contained"
-            color="error"
-            onClick={() => setIsDeleteOpen(true)}
-            sx={{ fontWeight: 'bold', borderRadius: 2, textTransform: 'none' }}
-          >
-            Eliminar Cuenta
-          </Button>
-        </Box>
-      )}
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 6 }}>
+        <Button
+          startIcon={<DeleteOutlineRoundedIcon />}
+          variant="contained"
+          color="error"
+          onClick={() => setIsDeleteOpen(true)}
+          sx={{ fontWeight: 'bold', borderRadius: 2, textTransform: 'none' }}
+        >
+          Eliminar Cuenta
+        </Button>
+      </Box>
 
       <Dialog
         open={isPhotoConfirmOpen}
@@ -478,25 +451,9 @@ function UserProfilePage() {
         <DialogTitle sx={{ color: 'grey.900', fontWeight: 800 }}>Editar Perfil</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
-            <TextField
-              variant="outlined"
-              label="Name"
-              value={form.name}
-              onChange={(event) => setForm({ ...form, name: event.target.value })}
-              error={!nameIsValid}
-              helperText={nameIsValid ? '' : 'El nombre debe tener al menos 4 caracteres.'}
-              fullWidth
-            />
-            {isUser && (
-              <TextField
-                variant="outlined"
-                label="Nickname"
-                value={form.nickname}
-                onChange={(event) => setForm({ ...form, nickname: event.target.value })}
-                error={!nicknameIsValid}
-                helperText={nicknameIsValid ? '' : 'El nickname debe tener al menos 4 caracteres.'}
-                fullWidth
-              />
+            <TextField variant="outlined" label="Name" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} fullWidth />
+            {!isCoach && (
+              <TextField variant="outlined" label="Nickname" value={form.nickname} onChange={(event) => setForm({ ...form, nickname: event.target.value })} fullWidth />
             )}
             {isCoach && (
               <TextField
@@ -512,35 +469,14 @@ function UserProfilePage() {
                 fullWidth
               />
             )}
-            <TextField
-              variant="outlined"
-              label="Email"
-              type="email"
-              value={form.email}
-              onChange={(event) => setForm({ ...form, email: event.target.value })}
-              error={!emailIsValid}
-              helperText={emailIsValid ? '' : 'Introduce un correo electrónico válido.'}
-              fullWidth
-            />
-            <TextField
-              variant="outlined"
-              label="Nueva contraseña"
-              type="password"
-              value={form.password ?? ''}
-              onChange={(event) => setForm({ ...form, password: event.target.value })}
-              error={!passwordIsValid}
-              helperText={passwordIsValid
-                ? 'Déjalo en blanco si no quieres cambiarla'
-                : 'La contraseña debe tener al menos 8 caracteres.'}
-              fullWidth
-            />
+            <TextField variant="outlined" label="Email" type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} fullWidth />
           </Stack>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setIsEditOpen(false)} disabled={isSaving} variant="text" sx={{ color: 'grey.700', textTransform: 'uppercase' }}>
             VOLVER
           </Button>
-          <Button onClick={() => setIsConfirmEditOpen(true)} disabled={isSaving || !hasChanges || !formIsValid} variant="contained" color="error" disableElevation sx={{ fontWeight: 800, textTransform: 'uppercase' }}>
+          <Button onClick={() => setIsConfirmEditOpen(true)} disabled={isSaving || !hasChanges} variant="contained" color="error" disableElevation sx={{ fontWeight: 800, textTransform: 'uppercase' }}>
             GUARDAR
           </Button>
         </DialogActions>
@@ -563,7 +499,7 @@ function UserProfilePage() {
           <Button onClick={() => setIsConfirmEditOpen(false)} disabled={isSaving} variant="text" sx={{ color: 'grey.700', textTransform: 'uppercase' }}>
             VOLVER
           </Button>
-          <Button onClick={() => void handleConfirmEdit()} disabled={isSaving || !hasChanges || !formIsValid} variant="contained" color="error" disableElevation sx={{ fontWeight: 800, textTransform: 'uppercase' }}>
+          <Button onClick={() => void handleConfirmEdit()} disabled={isSaving || !hasChanges} variant="contained" color="error" disableElevation sx={{ fontWeight: 800, textTransform: 'uppercase' }}>
             CONFIRMAR
           </Button>
         </DialogActions>

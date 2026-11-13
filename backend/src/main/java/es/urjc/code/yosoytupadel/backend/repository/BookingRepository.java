@@ -19,6 +19,14 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByUserIdAndType(Long userId, es.urjc.code.yosoytupadel.backend.entities.BookingType type);
 
+    @Query("SELECT b FROM Booking b " +
+            "WHERE b.user.id = :userId " +
+            "AND b.status = es.urjc.code.yosoytupadel.backend.entities.BookingStatus.COMPLETED " +
+            "AND b.type = es.urjc.code.yosoytupadel.backend.entities.BookingType.TRAINING " +
+            "AND b.score IS NOT NULL " +
+            "ORDER BY b.bookingDate ASC")
+    List<Booking> findCompletedTrainingBookingsWithScore(@Param("userId") Long userId);
+
     @Query("SELECT b FROM Booking b WHERE b.court.id = :courtId " +
             "AND b.bookingDate = :date " +
             "AND b.status <> es.urjc.code.yosoytupadel.backend.entities.BookingStatus.CANCELLED")

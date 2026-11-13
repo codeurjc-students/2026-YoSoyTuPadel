@@ -29,7 +29,7 @@ public record UserDTO(
         Integer racketUsages,
         List<RacketDTO> racketHistory,
         Double sessionPrice
-) {
+) { // testing
     public UserDTO(
             Long id,
             String name,

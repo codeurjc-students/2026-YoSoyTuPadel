@@ -91,6 +91,7 @@ public class UserService {
         if (user.getSkillLevel() == null || user.getSkillLevel() == 0.0) {
             user.setSkillLevel(1.0);
         }
+        user.setBaseLevel(user.getSkillLevel());
 
         try {
             ClassPathResource imgFileDefault = new ClassPathResource("static/images/emptyImage.png");

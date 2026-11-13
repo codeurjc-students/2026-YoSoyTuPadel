@@ -113,7 +113,7 @@ public class WebSecurityConfig {
                 .requestMatchers(HttpMethod.PATCH, "/api/v1/users/*/racket/*").hasRole("USER")
                 .requestMatchers(HttpMethod.DELETE, "/api/v1/users/*/racket").hasRole("USER")
                 .requestMatchers(HttpMethod.PATCH, "/api/v1/users/*/skill-level").hasAnyRole("COACH", "ADMIN")
-                .requestMatchers(HttpMethod.GET, "/api/v1/users/me").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/v1/users/me", "/api/v1/users/*/progression").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/v1/users").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/*/bookings").hasAnyRole("USER", "ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/v1/users/coaches").hasRole("ADMIN")
