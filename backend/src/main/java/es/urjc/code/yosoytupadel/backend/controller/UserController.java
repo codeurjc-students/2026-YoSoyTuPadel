@@ -330,4 +330,18 @@ public class UserController {
         }
         return bookingService.getAllBookingsByUserId(id);
     }
+
+    @Operation(summary = "Get a user's level progression")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Progression retrieved", content = { @Content(mediaType = "application/json") }),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Access denied", content = @Content),
+            @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
+    })
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasRole('ADMIN') or @userService.isMe(#id)")
+    @GetMapping("/{id}/progression")
+    public Collection<UserProgressionDTO> getUserProgression(@PathVariable Long id) {
+        return bookingService.getUserProgression(id);
+    }
 }

@@ -28,6 +28,7 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { authService, type AuthUser, type UserUpdateDetails } from '../../auth/services/authService';
 import { racketService, type RacketDTO } from '../../rackets/services/racketService';
+import LevelProgressionChart from '../components/LevelProgressionChart';
 
 const cardSx = {
   borderRadius: 4,
@@ -129,6 +130,7 @@ function UserProfilePage() {
   }
 
   const isCoach = profile.role.toUpperCase().replace(/^ROLE_/, '') === 'COACH';
+  const isUser = profile.role.toUpperCase().replace(/^ROLE_/, '') === 'USER';
   const hasChanges = form.name !== (profile.name ?? '')
     || form.nickname !== (profile.nickname ?? '')
     || form.email !== profile.email
@@ -292,6 +294,8 @@ function UserProfilePage() {
             </Grid>
           </CardContent>
         </Card>
+
+        {isUser && <LevelProgressionChart userId={profile.id} />}
 
         {activeRacket && (
             <Card elevation={3} sx={cardSx}>

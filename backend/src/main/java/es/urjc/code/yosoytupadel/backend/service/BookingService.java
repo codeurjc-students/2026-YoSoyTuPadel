@@ -5,10 +5,12 @@ import java.time.LocalTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.ArrayList;
 
 import es.urjc.code.yosoytupadel.backend.dto.BookingDTO;
 import es.urjc.code.yosoytupadel.backend.dto.BookingMapper;
 import es.urjc.code.yosoytupadel.backend.dto.CoachBookingDTO;
+import es.urjc.code.yosoytupadel.backend.dto.UserProgressionDTO;
 import es.urjc.code.yosoytupadel.backend.entities.*;
 import es.urjc.code.yosoytupadel.backend.repository.BookingRepository;
 import es.urjc.code.yosoytupadel.backend.repository.CourtRepository;
@@ -239,6 +241,56 @@ public class BookingService {
 
     public Collection<BookingDTO> getTrainingBookingsByUserId(Long userId) {
         return mapper.toDTOs(bookingRepository.findByUserIdAndType(userId, BookingType.TRAINING));
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserProgressionDTO> getUserProgression(Long userId) {
+        User user = userService.getUserEntityById(userId);
+        double initialLevel = user.getBaseLevel() != null
+                ? user.getBaseLevel()
+                : user.getSkillLevel() != null ? user.getSkillLevel() : 1.0;
+        double currentLevel = initialLevel;
+        List<UserProgressionDTO> progression = new ArrayList<>();
+
+        // Fetch exclusively completed training sessions with recorded score
+        List<Booking> bookings = bookingRepository.findCompletedTrainingBookingsWithScore(userId);
+
+        // Inject starting data point: 1 month ago if no bookings, or 7 days before the first booking
+        LocalDate startDate = bookings.isEmpty()
+                ? LocalDate.now().minusMonths(1)
+                : bookings.get(0).getBookingDate().minusDays(7);
+        progression.add(new UserProgressionDTO(startDate, initialLevel));
+
+        for (Booking booking : bookings) {
+            currentLevel = Math.clamp(currentLevel + calculateLevelAdjustment(booking.getScore()), 0.0, 5.0);
+            progression.add(new UserProgressionDTO(booking.getBookingDate(), currentLevel));
+        }
+
+        LocalDate today = LocalDate.now();
+        if (bookings.isEmpty() || !bookings.get(bookings.size() - 1).getBookingDate().isEqual(today)) {
+            progression.add(new UserProgressionDTO(today, currentLevel));
+        }
+
+        return progression;
+    }
+
+    private double calculateLevelAdjustment(String score) {
+        if (score == null) {
+            return 0.0;
+        }
+
+        String normalizedScore = score.trim();
+        try {
+            // If the score is a pure numeric value between 0 and 10 (e.g., "7.5", "8")
+            if (normalizedScore.matches("\\d+(\\.\\d+)?")) {
+                double numericScore = Double.parseDouble(normalizedScore);
+                // initial leveling prototype
+                return (numericScore - 5.0) * 0.05;
+            }
+        } catch (NumberFormatException ignored) {
+            // Malformed historical scores or non-numeric inputs are safely ignored as neutral.
+        }
+        return 0.0;
     }
 
     /**

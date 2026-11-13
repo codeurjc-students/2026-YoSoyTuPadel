@@ -81,6 +81,8 @@ public class DataBaseInitializer implements CommandLineRunner {
                     UserRole.USER
             );
             student.setProfilePicture(imageBlob("static/images/profile-picture-default.jpg"));
+            student.setBaseLevel(1.5);
+            student.setSkillLevel(1.5);
             newUsers.add(student);
         }
 
