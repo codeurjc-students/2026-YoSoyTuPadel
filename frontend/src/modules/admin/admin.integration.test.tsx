@@ -58,6 +58,7 @@ describe('Profile integration and administration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(authService.getCurrentUser).mockResolvedValue(user);
+    vi.mocked(api.get).mockResolvedValue({ data: [] });
   });
 
   test('updates the authenticated profile and reflects the result', async () => {
