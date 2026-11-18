@@ -13,6 +13,29 @@ vi.mock('../services/courtService', () => ({
   },
 }));
 
+vi.mock('../components/CourtMiniMap', () => ({
+  default: ({
+              latitude,
+              longitude,
+              name,
+              interactive = true,
+            }: {
+    latitude: number;
+    longitude: number;
+    name: string;
+    interactive?: boolean;
+  }) => (
+      <div
+          data-testid="court-map"
+          data-lat={latitude}
+          data-lng={longitude}
+          data-interactive={String(interactive)}
+      >
+        {name}
+      </div>
+  ),
+}));
+
 const getCourtsMock = vi.mocked(courtService.getCourts);
 
 const successfulResponse: CourtPage = {
@@ -172,5 +195,28 @@ describe('CourtListPage', () => {
     fireEvent.click(loadMoreButton);
 
     expect(getCourtsMock).toHaveBeenCalledWith(1, 10);
+  });
+
+  it('renders static mini map only for courts with valid coordinates', async () => {
+    getCourtsMock.mockResolvedValue({
+      content: [
+        { id: 1, name: 'Chamberí', isAvailable: true, latitude: 40.435, longitude: -3.703 },
+        { id: 2, name: 'Pista sin ubicación', isAvailable: true, latitude: null, longitude: null },
+      ],
+      number: 0,
+      size: 10,
+      totalElements: 2,
+      totalPages: 1,
+      last: true,
+    });
+
+    renderCourtList();
+
+    const maps = await screen.findAllByTestId('court-map');
+    expect(maps).toHaveLength(1);
+    expect(maps[0]).toHaveTextContent('Chamberí');
+    expect(maps[0]).toHaveAttribute('data-lat', '40.435');
+    expect(maps[0]).toHaveAttribute('data-lng', '-3.703');
+    expect(maps[0]).toHaveAttribute('data-interactive', 'false');
   });
 });

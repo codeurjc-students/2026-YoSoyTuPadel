@@ -34,6 +34,9 @@ public class User {
     @Column(nullable = false)
     private Double skillLevel = Math.clamp(1.0, 0.0, 5.0);
 
+    @Column(nullable = false)
+    private Double baseLevel = Math.clamp(1.0, 0.0, 5.0);
+
     @Lob
     @JsonIgnore
     private Blob profilePicture;
@@ -98,6 +101,8 @@ public class User {
     public void setRole(UserRole role) { this.role = role; }
     public Double getSkillLevel() { return skillLevel; }
     public void setSkillLevel(Double skillLevel) { this.skillLevel = skillLevel; }
+    public Double getBaseLevel() { return baseLevel; }
+    public void setBaseLevel(Double baseLevel) { this.baseLevel = baseLevel; }
     public Blob getProfilePicture() { return profilePicture; }
     public void setProfilePicture(Blob profilePicture) { this.profilePicture = profilePicture; }
     public Racket getRacket() { return racket; }

@@ -14,6 +14,29 @@ vi.mock('../../../service/api', () => ({
   },
 }));
 
+vi.mock('../components/CourtMiniMap', () => ({
+  default: ({
+              latitude,
+              longitude,
+              name,
+              interactive = true,
+            }: {
+    latitude: number;
+    longitude: number;
+    name: string;
+    interactive?: boolean;
+  }) => (
+      <div
+          data-testid="court-map"
+          data-lat={latitude}
+          data-lng={longitude}
+          data-interactive={String(interactive)}
+      >
+        {name}
+      </div>
+  ),
+}));
+
 const signedInAuth: AuthContextValue = {
   user: { id: 9, name: 'Test', nickname: null, email: 'test@example.com', role: 'USER' },
   isAuthenticated: true,
@@ -195,5 +218,66 @@ describe('CourtDetailPage', () => {
     fireEvent.click(nextDaysButton);
 
     expect(dayScroller.scrollLeft).toBe(220);
+  });
+
+  test('renders interactive map and Google Maps directions link when court has coordinates', async () => {
+    vi.mocked(api.get).mockImplementation((url) => {
+      if (url.includes('/availability')) {
+        return Promise.resolve({ data: [] });
+      }
+      return Promise.resolve({
+        data: {
+          id: 1,
+          name: 'Retiro',
+          courtPrice: 8,
+          type: 'OUTDOOR',
+          surface: 'GLASS',
+          isAvailable: true,
+          latitude: 40.4153,
+          longitude: -3.6844,
+        },
+      });
+    });
+
+    renderCourtDetail();
+
+    const map = await screen.findByTestId('court-map');
+    expect(map).toHaveAttribute('data-lat', '40.4153');
+    expect(map).toHaveAttribute('data-lng', '-3.6844');
+    expect(map).toHaveAttribute('data-interactive', 'true');
+
+    const directionsLink = screen.getByRole('link', { name: /cómo llegar/i });
+    expect(directionsLink).toHaveAttribute(
+        'href',
+        'https://www.google.com/maps/dir/?api=1&destination=40.4153,-3.6844',
+    );
+    expect(directionsLink).toHaveAttribute('target', '_blank');
+    expect(directionsLink).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
+  test('shows fallback alert instead of map when court has no coordinates', async () => {
+    vi.mocked(api.get).mockImplementation((url: string) => {
+      if (url.includes('/availability')) {
+        return Promise.resolve({ data: [] });
+      }
+      return Promise.resolve({
+        data: {
+          id: 2,
+          name: 'Pista sin mapa',
+          courtPrice: 10,
+          type: 'INDOOR',
+          surface: 'WALL',
+          isAvailable: true,
+          latitude: null,
+          longitude: null,
+        },
+      });
+    });
+
+    renderCourtDetail();
+
+    expect(await screen.findByText('Esta pista no tiene una ubicación disponible.')).toBeInTheDocument();
+    expect(screen.queryByTestId('court-map')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /cómo llegar/i })).not.toBeInTheDocument();
   });
 });

@@ -4,6 +4,8 @@ export interface PreCourtDTO {
   id: number;
   name: string;
   isAvailable: boolean | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export interface CourtDTO {
@@ -13,6 +15,8 @@ export interface CourtDTO {
   type: string;
   surface: string;
   isAvailable: boolean | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export interface CourtPage {

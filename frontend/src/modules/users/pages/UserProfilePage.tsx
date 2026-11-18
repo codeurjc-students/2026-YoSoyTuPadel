@@ -28,6 +28,7 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { authService, type AuthUser, type UserUpdateDetails } from '../../auth/services/authService';
 import { racketService, type RacketDTO } from '../../rackets/services/racketService';
+import LevelProgressionChart from '../components/LevelProgressionChart';
 
 const cardSx = {
   borderRadius: 4,
@@ -64,25 +65,25 @@ function UserProfilePage() {
     let active = true;
 
     void authService.getCurrentUser()
-      .then((currentUser) => {
-        if (active) {
-          setUserProfile(currentUser);
-          authService.storeUser(currentUser);
-          setForm({
-            name: currentUser.name ?? '',
-            nickname: currentUser.nickname ?? '',
-            email: currentUser.email ?? '',
-            password: '',
-            sessionPrice: currentUser.sessionPrice ?? null,
-          });
-          setImageVersion((version) => version + 1);
-        }
-      })
-      .catch((error: unknown) => {
-        if (active) {
-          toast.error(authService.getErrorMessage(error));
-        }
-      });
+        .then((currentUser) => {
+          if (active) {
+            setUserProfile(currentUser);
+            authService.storeUser(currentUser);
+            setForm({
+              name: currentUser.name ?? '',
+              nickname: currentUser.nickname ?? '',
+              email: currentUser.email ?? '',
+              password: '',
+              sessionPrice: currentUser.sessionPrice ?? null,
+            });
+            setImageVersion((version) => version + 1);
+          }
+        })
+        .catch((error: unknown) => {
+          if (active) {
+            toast.error(authService.getErrorMessage(error));
+          }
+        });
 
     return () => {
       active = false;
@@ -98,12 +99,12 @@ function UserProfilePage() {
 
     const controller = new AbortController();
     void racketService.getRacketById(profile.racketId, controller.signal)
-      .then(setLoadedRacket)
-      .catch((error: unknown) => {
-        if (!controller.signal.aborted) {
-          toast.error(authService.getErrorMessage(error));
-        }
-      });
+        .then(setLoadedRacket)
+        .catch((error: unknown) => {
+          if (!controller.signal.aborted) {
+            toast.error(authService.getErrorMessage(error));
+          }
+        });
 
     return () => controller.abort();
   }, [profile?.racketId]);
@@ -115,18 +116,18 @@ function UserProfilePage() {
 
   if (!profile) {
     return (
-      <section className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
-        <Card sx={cardSx}>
-          <CardContent sx={{ p: { xs: 3, sm: 6 }, textAlign: 'center' }}>
-            <Typography variant="h5" sx={{ fontWeight: 800 }}>
-              Inicia sesión para ver tu perfil
-            </Typography>
-            <Button sx={{ mt: 3 }} variant="contained" color="error" onClick={() => navigate('/login')}>
-              Ir a iniciar sesión
-            </Button>
-          </CardContent>
-        </Card>
-      </section>
+        <section className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
+          <Card sx={cardSx}>
+            <CardContent sx={{ p: { xs: 3, sm: 6 }, textAlign: 'center' }}>
+              <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                Inicia sesión para ver tu perfil
+              </Typography>
+              <Button sx={{ mt: 3 }} variant="contained" color="error" onClick={() => navigate('/login')}>
+                Ir a iniciar sesión
+              </Button>
+            </CardContent>
+          </Card>
+        </section>
     );
   }
 
@@ -136,19 +137,19 @@ function UserProfilePage() {
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const nameIsValid = form.name.trim().length >= 4;
   const nicknameIsValid = !isCoach && !isAdmin
-    ? (form.nickname ?? '').trim().length >= 4
-    : true;
+      ? (form.nickname ?? '').trim().length >= 4
+      : true;
   const emailIsValid = form.email.trim().length > 0 && emailPattern.test(form.email.trim());
   const passwordIsValid = !form.password || form.password.length >= 8;
   const formIsValid = nameIsValid
-    && nicknameIsValid
-    && emailIsValid
-    && passwordIsValid;
+      && nicknameIsValid
+      && emailIsValid
+      && passwordIsValid;
   const hasChanges = form.name !== (profile.name ?? '')
-    || ((!isCoach && !isAdmin) && form.nickname !== (profile.nickname ?? ''))
-    || form.email !== profile.email
-    || (form.password !== undefined && form.password.trim().length > 0)
-    || form.sessionPrice !== (profile.sessionPrice ?? null);
+      || ((!isCoach && !isAdmin) && form.nickname !== (profile.nickname ?? ''))
+      || form.email !== profile.email
+      || (form.password !== undefined && form.password.trim().length > 0)
+      || form.sessionPrice !== (profile.sessionPrice ?? null);
   const activeRacket = profile.racketId ? loadedRacket : undefined;
 
   const handleImageSelection = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -204,14 +205,14 @@ function UserProfilePage() {
       const updatedDetails = await authService.updateUser(profile.id, details);
       const updatedUser: AuthUser = { ...profile, ...updatedDetails };
       setUserProfile((currentProfile) => currentProfile
-        ? {
-          ...currentProfile,
-          name: details.name,
-          nickname: details.nickname ?? currentProfile.nickname,
-          email: details.email,
-          sessionPrice: details.sessionPrice,
-        }
-        : updatedUser);
+          ? {
+            ...currentProfile,
+            name: details.name,
+            nickname: details.nickname ?? currentProfile.nickname,
+            email: details.email,
+            sessionPrice: details.sessionPrice,
+          }
+          : updatedUser);
       authService.storeUser(updatedUser);
       updateUser?.(updatedUser);
       setIsEditOpen(false);
@@ -252,352 +253,352 @@ function UserProfilePage() {
   };
 
   return (
-    <section className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
-      <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative', gap: 2 }}>
-        <Button
-          startIcon={<ArrowBackRoundedIcon />}
-          onClick={() => navigate(-1)}
-          sx={{ color: 'grey.300', textTransform: 'none', fontWeight: 700, '&:hover': { color: 'white', bgcolor: 'rgba(255,255,255,0.06)' } }}
-        >
-          Volver
-        </Button>
-        <Typography variant="h5" sx={{ color: 'white', fontWeight: 900, letterSpacing: '0.12em', position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
-          MI PERFIL
-        </Typography>
-        <Stack direction="row" spacing={0.5}>
+      <section className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+        <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative', gap: 2 }}>
           <Button
-            startIcon={<EditOutlinedIcon />}
-            variant="contained"
-            onClick={() => setIsEditOpen(true)}
-            sx={{ bgcolor: 'white', color: 'grey.900', fontWeight: 'bold', borderRadius: 2, textTransform: 'none', '&:hover': { bgcolor: 'grey.200' } }}
+              startIcon={<ArrowBackRoundedIcon />}
+              onClick={() => navigate(-1)}
+              sx={{ color: 'grey.300', textTransform: 'none', fontWeight: 700, '&:hover': { color: 'white', bgcolor: 'rgba(255,255,255,0.06)' } }}
           >
-            Editar
+            Volver
           </Button>
-        </Stack>
-      </Box>
-
-      <Stack spacing={2.5}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <Avatar
-            variant="rounded"
-            src={`/api/v1/users/${profile.id}/image?v=${imageVersion}`}
-            alt={profile.name ?? profile.nickname ?? 'Usuario'}
-            sx={{ width: 220, height: 220, borderRadius: 4, objectFit: 'cover', mb: 2, boxShadow: 2, bgcolor: '#ef3340', fontSize: 72, fontWeight: 800 }}
-          >
-            {initials}
-          </Avatar>
-          <Button
-            component="label"
-            size="small"
-            variant="contained"
-            disabled={isUploading}
-            sx={{ bgcolor: 'white', color: 'grey.900', fontWeight: 'bold', textTransform: 'none', borderRadius: 2, mt: 2, '&:hover': { bgcolor: 'grey.200' } }}
-          >
-            Actualizar foto
-            <input type="file" hidden accept="image/*" onChange={handleImageSelection} />
-          </Button>
+          <Typography variant="h5" sx={{ color: 'white', fontWeight: 900, letterSpacing: '0.12em', position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
+            MI PERFIL
+          </Typography>
+          <Stack direction="row" spacing={0.5}>
+            <Button
+                startIcon={<EditOutlinedIcon />}
+                variant="contained"
+                onClick={() => setIsEditOpen(true)}
+                sx={{ bgcolor: 'white', color: 'grey.900', fontWeight: 'bold', borderRadius: 2, textTransform: 'none', '&:hover': { bgcolor: 'grey.200' } }}
+            >
+              Editar
+            </Button>
+          </Stack>
         </Box>
 
-        <Card elevation={3} sx={cardSx}>
-          <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
-            <Typography sx={{ mb: 3, color: 'grey.900', fontSize: 12, fontWeight: 800, letterSpacing: '0.16em' }}>
-              DATOS DEL JUGADOR
-            </Typography>
-            <Grid container spacing={3}>
-              {[
-                ['Nombre completo', profile.name || 'Sin nombre'],
-                ...(isCoach
-                    ? [['Precio por sesión', profile.sessionPrice == null ? 'Sin precio' : `${profile.sessionPrice} €`]]
-                    : isUser
-                        ? [['Nickname', `@${profile.nickname || 'sin-nickname'}`]]
-                        : []),
-                ['Email', profile.email],
-              ].map(([label, value]) => (
-                <Grid key={label} size={{ xs: 12, sm: 6 }}>
-                  <Typography sx={{ color: 'grey.600', fontSize: 12, fontWeight: 700 }}>{label}</Typography>
-                  <Typography sx={{ mt: 0.5, color: 'grey.900', fontWeight: 800, overflowWrap: 'anywhere' }}>{value}</Typography>
-                </Grid>
-              ))}
-            </Grid>
-          </CardContent>
-        </Card>
+        <Stack spacing={2.5}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <Avatar
+                variant="rounded"
+                src={`/api/v1/users/${profile.id}/image?v=${imageVersion}`}
+                alt={profile.name ?? profile.nickname ?? 'Usuario'}
+                sx={{ width: 220, height: 220, borderRadius: 4, objectFit: 'cover', mb: 2, boxShadow: 2, bgcolor: '#ef3340', fontSize: 72, fontWeight: 800 }}
+            >
+              {initials}
+            </Avatar>
+            <Button
+                component="label"
+                size="small"
+                variant="contained"
+                disabled={isUploading}
+                sx={{ bgcolor: 'white', color: 'grey.900', fontWeight: 'bold', textTransform: 'none', borderRadius: 2, mt: 2, '&:hover': { bgcolor: 'grey.200' } }}
+            >
+              Actualizar foto
+              <input type="file" hidden accept="image/*" onChange={handleImageSelection} />
+            </Button>
+          </Box>
 
-        {activeRacket && (
-            <Card elevation={3} sx={cardSx}>
-              <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
-                <Typography
-                    sx={{
-                      mb: 2.5,
-                      color: 'grey.900',
-                      fontSize: 12,
-                      fontWeight: 800,
-                      letterSpacing: '0.16em',
-                    }}
-                >
-                  MATERIAL ACTIVO
-                </Typography>
+          <Card elevation={3} sx={cardSx}>
+            <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
+              <Typography sx={{ mb: 3, color: 'grey.900', fontSize: 12, fontWeight: 800, letterSpacing: '0.16em' }}>
+                {isCoach ? 'DATOS DEL ENTRENADOR' : isAdmin ? 'DATOS DEL ADMINISTRADOR' : 'DATOS DEL JUGADOR'}
+              </Typography>
+              <Grid container spacing={3}>
+                {[
+                  ['Nombre completo', profile.name || 'Sin nombre'],
+                  ...(isCoach
+                      ? [['Precio por sesión', profile.sessionPrice == null ? 'Sin precio' : `${profile.sessionPrice} €`]]
+                      : isUser
+                          ? [['Nickname', `@${profile.nickname || 'sin-nickname'}`]]
+                          : []),
+                  ['Email', profile.email],
+                ].map(([label, value]) => (
+                    <Grid key={label} size={{ xs: 12, sm: 6 }}>
+                      <Typography sx={{ color: 'grey.600', fontSize: 12, fontWeight: 700 }}>{label}</Typography>
+                      <Typography sx={{ mt: 0.5, color: 'grey.900', fontWeight: 800, overflowWrap: 'anywhere' }}>{value}</Typography>
+                    </Grid>
+                ))}
+              </Grid>
+            </CardContent>
+          </Card>
 
-                <Stack
-                    direction={{ xs: 'column', sm: 'row' }}
-                    spacing={2}
-                    sx={{ alignItems: { xs: 'stretch', sm: 'center' } }}
-                >
-                  {/* Contenedor dedicado para la imagen sin recortes */}
-                  <Box
+          {isUser && <LevelProgressionChart userId={profile.id} />}
+
+          {activeRacket && (
+              <Card elevation={3} sx={cardSx}>
+                <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
+                  <Typography
                       sx={{
-                        width: 80,
-                        height: 100,
-                        mr: { sm: 2 },
-                        bgcolor: 'grey.100',
-                        borderRadius: 2,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        overflow: 'hidden',
-                        alignSelf: { xs: 'center', sm: 'auto' },
-                        flexShrink: 0,
+                        mb: 2.5,
+                        color: 'grey.900',
+                        fontSize: 12,
+                        fontWeight: 800,
+                        letterSpacing: '0.16em',
                       }}
                   >
-                    <Box
-                        component="img"
-                        src={`/api/v1/rackets/${activeRacket.id}/image`}
-                        alt={activeRacket.name}
-                        sx={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'contain', // Esto garantiza que la pala salga entera
-                        }}
-                    />
-                  </Box>
-
-                  <Box sx={{ minWidth: 0, flex: 1 }}>
-                    <Typography
-                        sx={{
-                          color: 'grey.900',
-                          fontWeight: 800,
-                          overflowWrap: 'anywhere',
-                        }}
-                    >
-                      {activeRacket.brand} {activeRacket.name}
-                    </Typography>
-
-                    <Typography sx={{ mt: 0.5, color: 'grey.600', fontSize: 13 }}>
-                      Pala alquilada actualmente
-                    </Typography>
-                  </Box>
+                    MATERIAL ACTIVO
+                  </Typography>
 
                   <Stack
-                      direction="row"
+                      direction={{ xs: 'column', sm: 'row' }}
                       spacing={2}
-                      sx={{
-                        alignItems: 'center',
-                        justifyContent: { xs: 'space-between', sm: 'flex-end' },
-                        flexWrap: 'wrap',
-                      }}
+                      sx={{ alignItems: { xs: 'stretch', sm: 'center' } }}
                   >
-
-                    <Button
-                        variant="contained"
-                        color="error"
-                        onClick={() => navigate('/bookings?tab=material')}
+                    <Box
                         sx={{
-                          fontWeight: 'bold',
-                          textTransform: 'none',
+                          width: 80,
+                          height: 100,
+                          mr: { sm: 2 },
+                          bgcolor: 'grey.100',
                           borderRadius: 2,
-                          px: 3,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          overflow: 'hidden',
+                          alignSelf: { xs: 'center', sm: 'auto' },
+                          flexShrink: 0,
                         }}
                     >
-                      Ir a material
-                    </Button>
+                      <Box
+                          component="img"
+                          src={`/api/v1/rackets/${activeRacket.id}/image`}
+                          alt={activeRacket.name}
+                          sx={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'contain',
+                          }}
+                      />
+                    </Box>
+
+                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                      <Typography
+                          sx={{
+                            color: 'grey.900',
+                            fontWeight: 800,
+                            overflowWrap: 'anywhere',
+                          }}
+                      >
+                        {activeRacket.brand} {activeRacket.name}
+                      </Typography>
+
+                      <Typography sx={{ mt: 0.5, color: 'grey.600', fontSize: 13 }}>
+                        Pala alquilada actualmente
+                      </Typography>
+                    </Box>
+
+                    <Stack
+                        direction="row"
+                        spacing={2}
+                        sx={{
+                          alignItems: 'center',
+                          justifyContent: { xs: 'space-between', sm: 'flex-end' },
+                          flexWrap: 'wrap',
+                        }}
+                    >
+                      <Button
+                          variant="contained"
+                          color="error"
+                          onClick={() => navigate('/bookings?tab=material')}
+                          sx={{
+                            fontWeight: 'bold',
+                            textTransform: 'none',
+                            borderRadius: 2,
+                            px: 3,
+                          }}
+                      >
+                        Ir a material
+                      </Button>
+                    </Stack>
                   </Stack>
-                </Stack>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+          )}
+        </Stack>
+
+        {!isAdmin && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 6 }}>
+              <Button
+                  startIcon={<DeleteOutlineRoundedIcon />}
+                  variant="contained"
+                  color="error"
+                  onClick={() => setIsDeleteOpen(true)}
+                  sx={{ fontWeight: 'bold', borderRadius: 2, textTransform: 'none' }}
+              >
+                Eliminar Cuenta
+              </Button>
+            </Box>
         )}
-      </Stack>
 
-      {!isAdmin && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 6 }}>
-          <Button
-            startIcon={<DeleteOutlineRoundedIcon />}
-            variant="contained"
-            color="error"
-            onClick={() => setIsDeleteOpen(true)}
-            sx={{ fontWeight: 'bold', borderRadius: 2, textTransform: 'none' }}
-          >
-            Eliminar Cuenta
-          </Button>
-        </Box>
-      )}
-
-      <Dialog
-        open={isPhotoConfirmOpen}
-        onClose={() => !isUploading && setIsPhotoConfirmOpen(false)}
-        fullWidth
-        maxWidth="sm"
-        slotProps={{ paper: { sx: { bgcolor: 'white', borderRadius: 3 } } }}
-      >
-        <DialogTitle sx={{ color: 'grey.900', fontWeight: 800 }}>Actualizar foto de perfil</DialogTitle>
-        <DialogContent>
-          <DialogContentText sx={{ color: 'grey.700', lineHeight: 1.7 }}>
-            ¿Deseas actualizar tu foto de perfil con la imagen seleccionada?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button
-            onClick={() => {
-              setSelectedImage(null);
-              setIsPhotoConfirmOpen(false);
-            }}
-            disabled={isUploading}
-            variant="text"
-            sx={{ color: 'grey.700', textTransform: 'uppercase' }}
-          >
-            VOLVER
-          </Button>
-          <Button
-            onClick={() => void handleImageUpload()}
-            disabled={isUploading || !selectedImage}
-            variant="contained"
-            color="error"
-            disableElevation
-            sx={{ fontWeight: 800, textTransform: 'uppercase' }}
-          >
-            CONFIRMAR
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog
-        open={isEditOpen}
-        onClose={() => !isSaving && setIsEditOpen(false)}
-        fullWidth
-        maxWidth="sm"
-        slotProps={{ paper: { sx: { bgcolor: 'white', color: 'grey.900', borderRadius: 3 } } }}
-      >
-        <DialogTitle sx={{ color: 'grey.900', fontWeight: 800 }}>Editar Perfil</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            <TextField
-              variant="outlined"
-              label="Name"
-              value={form.name}
-              onChange={(event) => setForm({ ...form, name: event.target.value })}
-              error={!nameIsValid}
-              helperText={nameIsValid ? '' : 'El nombre debe tener al menos 4 caracteres.'}
-              fullWidth
-            />
-            {isUser && (
-              <TextField
-                variant="outlined"
-                label="Nickname"
-                value={form.nickname}
-                onChange={(event) => setForm({ ...form, nickname: event.target.value })}
-                error={!nicknameIsValid}
-                helperText={nicknameIsValid ? '' : 'El nickname debe tener al menos 4 caracteres.'}
-                fullWidth
-              />
-            )}
-            {isCoach && (
-              <TextField
-                variant="outlined"
-                label="Precio por sesión"
-                type="number"
-                value={form.sessionPrice ?? ''}
-                onChange={(event) => setForm({ ...form, sessionPrice: event.target.value === '' ? null : Number(event.target.value) })}
-                slotProps={{
-                  input: { startAdornment: <InputAdornment position="start">€</InputAdornment> },
-                  htmlInput: { min: 0, step: 0.01 },
+        <Dialog
+            open={isPhotoConfirmOpen}
+            onClose={() => !isUploading && setIsPhotoConfirmOpen(false)}
+            fullWidth
+            maxWidth="sm"
+            slotProps={{ paper: { sx: { bgcolor: 'white', borderRadius: 3 } } }}
+        >
+          <DialogTitle sx={{ color: 'grey.900', fontWeight: 800 }}>Actualizar foto de perfil</DialogTitle>
+          <DialogContent>
+            <DialogContentText sx={{ color: 'grey.700', lineHeight: 1.7 }}>
+              ¿Deseas actualizar tu foto de perfil con la imagen seleccionada?
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button
+                onClick={() => {
+                  setSelectedImage(null);
+                  setIsPhotoConfirmOpen(false);
                 }}
-                fullWidth
+                disabled={isUploading}
+                variant="text"
+                sx={{ color: 'grey.700', textTransform: 'uppercase' }}
+            >
+              VOLVER
+            </Button>
+            <Button
+                onClick={() => void handleImageUpload()}
+                disabled={isUploading || !selectedImage}
+                variant="contained"
+                color="error"
+                disableElevation
+                sx={{ fontWeight: 800, textTransform: 'uppercase' }}
+            >
+              CONFIRMAR
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+            open={isEditOpen}
+            onClose={() => !isSaving && setIsEditOpen(false)}
+            fullWidth
+            maxWidth="sm"
+            slotProps={{ paper: { sx: { bgcolor: 'white', color: 'grey.900', borderRadius: 3 } } }}
+        >
+          <DialogTitle sx={{ color: 'grey.900', fontWeight: 800 }}>Editar Perfil</DialogTitle>
+          <DialogContent>
+            <Stack spacing={2} sx={{ pt: 1 }}>
+              <TextField
+                  variant="outlined"
+                  label="Name"
+                  value={form.name}
+                  onChange={(event) => setForm({ ...form, name: event.target.value })}
+                  error={!nameIsValid}
+                  helperText={nameIsValid ? '' : 'El nombre debe tener al menos 4 caracteres.'}
+                  fullWidth
               />
-            )}
-            <TextField
-              variant="outlined"
-              label="Email"
-              type="email"
-              value={form.email}
-              onChange={(event) => setForm({ ...form, email: event.target.value })}
-              error={!emailIsValid}
-              helperText={emailIsValid ? '' : 'Introduce un correo electrónico válido.'}
-              fullWidth
-            />
-            <TextField
-              variant="outlined"
-              label="Nueva contraseña"
-              type="password"
-              value={form.password ?? ''}
-              onChange={(event) => setForm({ ...form, password: event.target.value })}
-              error={!passwordIsValid}
-              helperText={passwordIsValid
-                ? 'Déjalo en blanco si no quieres cambiarla'
-                : 'La contraseña debe tener al menos 8 caracteres.'}
-              fullWidth
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setIsEditOpen(false)} disabled={isSaving} variant="text" sx={{ color: 'grey.700', textTransform: 'uppercase' }}>
-            VOLVER
-          </Button>
-          <Button onClick={() => setIsConfirmEditOpen(true)} disabled={isSaving || !hasChanges || !formIsValid} variant="contained" color="error" disableElevation sx={{ fontWeight: 800, textTransform: 'uppercase' }}>
-            GUARDAR
-          </Button>
-        </DialogActions>
-      </Dialog>
+              {isUser && (
+                  <TextField
+                      variant="outlined"
+                      label="Nickname"
+                      value={form.nickname}
+                      onChange={(event) => setForm({ ...form, nickname: event.target.value })}
+                      error={!nicknameIsValid}
+                      helperText={nicknameIsValid ? '' : 'El nickname debe tener al menos 4 caracteres.'}
+                      fullWidth
+                  />
+              )}
+              {isCoach && (
+                  <TextField
+                      variant="outlined"
+                      label="Precio por sesión"
+                      type="number"
+                      value={form.sessionPrice ?? ''}
+                      onChange={(event) => setForm({ ...form, sessionPrice: event.target.value === '' ? null : Number(event.target.value) })}
+                      slotProps={{
+                        input: { startAdornment: <InputAdornment position="start">€</InputAdornment> },
+                        htmlInput: { min: 0, step: 0.01 },
+                      }}
+                      fullWidth
+                  />
+              )}
+              <TextField
+                  variant="outlined"
+                  label="Email"
+                  type="email"
+                  value={form.email}
+                  onChange={(event) => setForm({ ...form, email: event.target.value })}
+                  error={!emailIsValid}
+                  helperText={emailIsValid ? '' : 'Introduce un correo electrónico válido.'}
+                  fullWidth
+              />
+              <TextField
+                  variant="outlined"
+                  label="Nueva contraseña"
+                  type="password"
+                  value={form.password ?? ''}
+                  onChange={(event) => setForm({ ...form, password: event.target.value })}
+                  error={!passwordIsValid}
+                  helperText={passwordIsValid
+                      ? 'Déjalo en blanco si no quieres cambiarla'
+                      : 'La contraseña debe tener al menos 8 caracteres.'}
+                  fullWidth
+              />
+            </Stack>
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setIsEditOpen(false)} disabled={isSaving} variant="text" sx={{ color: 'grey.700', textTransform: 'uppercase' }}>
+              VOLVER
+            </Button>
+            <Button onClick={() => setIsConfirmEditOpen(true)} disabled={isSaving || !hasChanges || !formIsValid} variant="contained" color="error" disableElevation sx={{ fontWeight: 800, textTransform: 'uppercase' }}>
+              GUARDAR
+            </Button>
+          </DialogActions>
+        </Dialog>
 
-      <Dialog
-        open={isConfirmEditOpen}
-        onClose={() => !isSaving && setIsConfirmEditOpen(false)}
-        fullWidth
-        maxWidth="xs"
-        slotProps={{ paper: { sx: { bgcolor: 'white', color: 'grey.900', borderRadius: 3 } } }}
-      >
-        <DialogTitle sx={{ color: 'grey.900', fontWeight: 800 }}>Confirmar cambios</DialogTitle>
-        <DialogContent>
-          <DialogContentText sx={{ color: 'grey.700', lineHeight: 1.7 }}>
-            ¿Estás seguro de que deseas aplicar estos cambios en tu perfil?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setIsConfirmEditOpen(false)} disabled={isSaving} variant="text" sx={{ color: 'grey.700', textTransform: 'uppercase' }}>
-            VOLVER
-          </Button>
-          <Button onClick={() => void handleConfirmEdit()} disabled={isSaving || !hasChanges || !formIsValid} variant="contained" color="error" disableElevation sx={{ fontWeight: 800, textTransform: 'uppercase' }}>
-            CONFIRMAR
-          </Button>
-        </DialogActions>
-      </Dialog>
+        <Dialog
+            open={isConfirmEditOpen}
+            onClose={() => !isSaving && setIsConfirmEditOpen(false)}
+            fullWidth
+            maxWidth="xs"
+            slotProps={{ paper: { sx: { bgcolor: 'white', color: 'grey.900', borderRadius: 3 } } }}
+        >
+          <DialogTitle sx={{ color: 'grey.900', fontWeight: 800 }}>Confirmar cambios</DialogTitle>
+          <DialogContent>
+            <DialogContentText sx={{ color: 'grey.700', lineHeight: 1.7 }}>
+              ¿Estás seguro de que deseas aplicar estos cambios en tu perfil?
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setIsConfirmEditOpen(false)} disabled={isSaving} variant="text" sx={{ color: 'grey.700', textTransform: 'uppercase' }}>
+              VOLVER
+            </Button>
+            <Button onClick={() => void handleConfirmEdit()} disabled={isSaving || !hasChanges || !formIsValid} variant="contained" color="error" disableElevation sx={{ fontWeight: 800, textTransform: 'uppercase' }}>
+              CONFIRMAR
+            </Button>
+          </DialogActions>
+        </Dialog>
 
-      <Dialog
-        open={isDeleteOpen}
-        onClose={() => !isDeleting && setIsDeleteOpen(false)}
-        fullWidth
-        maxWidth="xs"
-        slotProps={{ paper: { sx: { bgcolor: 'white', borderRadius: 3 } } }}
-      >
-        <DialogTitle sx={{ color: 'grey.900', fontWeight: 800 }}>¿Eliminar cuenta?</DialogTitle>
-        <DialogContent>
-          <DialogContentText sx={{ color: 'grey.700', lineHeight: 1.7 }}>
-            Esta acción es permanente. Se eliminarán tu cuenta, tus datos personales y el acceso a tus reservas. No podrás recuperar esta información.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setIsDeleteOpen(false)} disabled={isDeleting} variant="text" sx={{ color: 'grey.700', textTransform: 'uppercase' }}>
-            VOLVER
-          </Button>
-          <Button color="error" variant="contained" disableElevation onClick={() => void handleDeleteAccount()} disabled={isDeleting} sx={{ fontWeight: 800, textTransform: 'uppercase' }}>
-            ELIMINAR
-          </Button>
-        </DialogActions>
-      </Dialog>
+        <Dialog
+            open={isDeleteOpen}
+            onClose={() => !isDeleting && setIsDeleteOpen(false)}
+            fullWidth
+            maxWidth="xs"
+            slotProps={{ paper: { sx: { bgcolor: 'white', borderRadius: 3 } } }}
+        >
+          <DialogTitle sx={{ color: 'grey.900', fontWeight: 800 }}>¿Eliminar cuenta?</DialogTitle>
+          <DialogContent>
+            <DialogContentText sx={{ color: 'grey.700', lineHeight: 1.7 }}>
+              Esta acción es permanente. Se eliminarán tu cuenta, tus datos personales y el acceso a tus reservas. No podrás recuperar esta información.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setIsDeleteOpen(false)} disabled={isDeleting} variant="text" sx={{ color: 'grey.700', textTransform: 'uppercase' }}>
+              VOLVER
+            </Button>
+            <Button color="error" variant="contained" disableElevation onClick={() => void handleDeleteAccount()} disabled={isDeleting} sx={{ fontWeight: 800, textTransform: 'uppercase' }}>
+              ELIMINAR
+            </Button>
+          </DialogActions>
+        </Dialog>
 
-      <Snackbar open={successMessage !== null} autoHideDuration={4000} onClose={() => setSuccessMessage(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
-        <Alert onClose={() => setSuccessMessage(null)} severity="success" variant="filled" sx={{ width: '100%' }}>
-          {successMessage}
-        </Alert>
-      </Snackbar>
-    </section>
+        <Snackbar open={successMessage !== null} autoHideDuration={4000} onClose={() => setSuccessMessage(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+          <Alert onClose={() => setSuccessMessage(null)} severity="success" variant="filled" sx={{ width: '100%' }}>
+            {successMessage}
+          </Alert>
+        </Snackbar>
+      </section>
   );
 }
 

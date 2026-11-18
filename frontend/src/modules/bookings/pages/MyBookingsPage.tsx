@@ -30,6 +30,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { racketService } from '../../rackets/services/racketService';
 import { bookingService, type BookingItem, type BookingItemType } from '../services/bookingService';
+import CourtMap from '../../courts/components/CourtMiniMap'
 
 type BookingTab = 'all' | BookingItemType;
 const ITEMS_PER_PAGE = 10;
@@ -428,6 +429,16 @@ function MyBookingsPage() {
   );
 }
 
+function hasCourtCoordinates(
+    booking: BookingItem,
+): booking is BookingItem & { latitude: number; longitude: number } {
+    return booking.type === 'court'
+        && typeof booking.latitude === 'number'
+        && typeof booking.longitude === 'number'
+        && Number.isFinite(booking.latitude)
+        && Number.isFinite(booking.longitude);
+}
+
 function BookingCard({
   booking,
   onAction,
@@ -447,36 +458,47 @@ function BookingCard({
         ? 'Completada'
         : null;
 
-  return (
-    <Card
-      elevation={2}
-      sx={{
-        display: 'flex',
-        flexDirection: 'row',
-        height: 160,
-        position: 'relative',
-        overflow: 'hidden',
-        border: '1px solid rgba(255,255,255,0.14)',
-        borderRadius: 3,
-        bgcolor: 'white',
-        transition: 'transform 220ms ease, box-shadow 220ms ease',
-        '&:hover': { transform: 'scale(1.01)', boxShadow: '0 14px 32px rgba(0,0,0,0.24)' },
-      }}
-    >
-      <CardMedia
-        component="img"
-        image={booking.image}
-        alt=""
-        sx={{ width: 140, height: '100%', flexShrink: 0, objectFit: 'cover' }}
-        onError={(event) => {
-          event.currentTarget.onerror = null;
-          event.currentTarget.src = booking.type === 'court'
-            ? '/images/padel-court-overhead.jpg'
-            : booking.type === 'coach'
-              ? '/images/coach-training.jpg'
-              : '/images/racket-collection.jpg';
-        }}
-      />
+    return (
+        <Card
+            elevation={2}
+            sx={{
+                display: 'flex',
+                flexDirection: 'row',
+                height: 160,
+                position: 'relative',
+                overflow: 'hidden',
+                border: '1px solid rgba(255,255,255,0.14)',
+                borderRadius: 3,
+                bgcolor: 'white',
+                transition: 'transform 220ms ease, box-shadow 220ms ease',
+                '&:hover': { transform: 'scale(1.01)', boxShadow: '0 14px 32px rgba(0,0,0,0.24)' },
+            }}
+        >
+            {hasCourtCoordinates(booking) ? (
+                <Box sx={{ width: 140, height: '100%', flexShrink: 0, overflow: 'hidden' }}>
+                    <CourtMap
+                        latitude={booking.latitude}
+                        longitude={booking.longitude}
+                        name={booking.title}
+                        interactive={false}
+                    />
+                </Box>
+            ) : (
+                <CardMedia
+                    component="img"
+                    image={booking.image}
+                    alt=""
+                    sx={{ width: 140, height: '100%', flexShrink: 0, objectFit: 'cover' }}
+                    onError={(event) => {
+                        event.currentTarget.onerror = null;
+                        event.currentTarget.src = booking.type === 'court'
+                            ? '/images/padel-court-overhead.jpg'
+                            : booking.type === 'coach'
+                                ? '/images/coach-training.jpg'
+                                : '/images/racket-collection.jpg';
+                    }}
+                />
+            )}
       <CardContent
         sx={{
           flex: 1,

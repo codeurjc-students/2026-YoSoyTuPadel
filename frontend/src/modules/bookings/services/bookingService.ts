@@ -14,6 +14,8 @@ interface BookingDTO {
   status: string;
   courtId: number | null;
   coachId: number | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 interface UserBookingsDTO {
@@ -34,6 +36,8 @@ export interface BookingItem {
   image: string;
   status: string;
   remainingUses?: number;
+  latitude?: number;
+  longitude?:number;
 }
 
 function formatTime(value: string): string {
@@ -87,6 +91,8 @@ export const bookingService = {
           price: booking.bookingPrice ?? court.courtPrice,
           image: '/images/padel-court-overhead.jpg',
           status: booking.status,
+          latitude: booking.latitude ?? court.latitude ?? undefined,
+          longitude: booking.longitude ?? court.longitude ?? undefined,
         };
       }
 
