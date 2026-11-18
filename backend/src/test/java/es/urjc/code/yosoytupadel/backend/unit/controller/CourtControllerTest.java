@@ -64,11 +64,11 @@ class CourtControllerTest {
     @BeforeEach
     void setUp() {
 
-        dto1 = new CourtDTO( 1L,"Alameda de Osuna", 8.0, CourtType.INDOOR, SurfaceType.GLASS, true);
-        dto2 = new CourtDTO( 2L, "Coslada", 7.0, CourtType.INDOOR, SurfaceType.WALL, true);
+        dto1 = new CourtDTO( 1L,"Alameda de Osuna", 8.0, CourtType.INDOOR, SurfaceType.GLASS, true, null, null);
+        dto2 = new CourtDTO( 2L, "Coslada", 7.0, CourtType.INDOOR, SurfaceType.WALL, true, null, null);
 
-        preDto1 = new PreCourtDTO(1L, "Alameda de Osuna", true);
-        preDto2 = new PreCourtDTO(2L, "Coslada", true);
+        preDto1 = new PreCourtDTO(1L, "Alameda de Osuna", true, null, null);
+        preDto2 = new PreCourtDTO(2L, "Coslada", true, null, null);
     }
 
     @Test
@@ -123,7 +123,7 @@ class CourtControllerTest {
 
     @Test
     void createCourt_ShouldReturnLocationHeader() throws Exception {
-        CourtDTO newCourt = new CourtDTO(null, "Alameda de Osuna", 8.0, CourtType.INDOOR, SurfaceType.GLASS, true);
+        CourtDTO newCourt = new CourtDTO(null, "Alameda de Osuna", 8.0, CourtType.INDOOR, SurfaceType.GLASS, true, null, null);
         when(courtService.createCourt(any(CourtDTO.class))).thenReturn(dto1);
 
         mockMvc.perform(post("/api/v1/courts")

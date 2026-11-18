@@ -6,6 +6,8 @@ import UserProfilePage from './UserProfilePage';
 import { AuthContext, type AuthContextValue } from '../../auth/context/authContext';
 import { authService } from '../../auth/services/authService';
 import { racketService } from '../../rackets/services/racketService';
+import type { ReactNode } from 'react';
+import api from '../../../service/api';
 
 vi.mock('../../auth/services/authService', () => ({
   authService: {
@@ -26,6 +28,28 @@ vi.mock('../../rackets/services/racketService', () => ({
 
 vi.mock('react-hot-toast', () => ({
   default: { success: vi.fn(), error: vi.fn() },
+}));
+
+vi.mock('../../../service/api', () => ({
+  default: {
+    get: vi.fn(),
+  },
+}));
+
+vi.mock('recharts', () => ({
+  ResponsiveContainer: ({ children }: { children: ReactNode }) => (
+      <div data-testid="progression-chart-container">{children}</div>
+  ),
+  AreaChart: ({ data, children }: { data?: unknown[]; children: ReactNode }) => (
+      <svg data-testid="progression-chart" data-points={JSON.stringify(data ?? [])}>
+        {children}
+      </svg>
+  ),
+  Area: () => null,
+  XAxis: () => null,
+  YAxis: () => null,
+  Tooltip: () => null,
+  CartesianGrid: () => null,
 }));
 
 const user = {
@@ -63,6 +87,7 @@ describe('UserProfilePage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(authService.getCurrentUser).mockResolvedValue(user);
+    vi.mocked(api.get).mockResolvedValue({ data: [] });
   });
 
   it('renders the authenticated user profile data', async () => {
@@ -131,6 +156,7 @@ describe('UserProfilePage', () => {
   });
 
   it('prompts to log in if the user is unauthenticated', () => {
+    vi.mocked(authService.getCurrentUser).mockReturnValueOnce(new Promise(() => undefined));
     renderProfile({ ...authValue, isAuthenticated: false, user: null });
 
     expect(screen.getByText('Inicia sesión para ver tu perfil')).toBeInTheDocument();
@@ -170,15 +196,93 @@ describe('UserProfilePage', () => {
   it('allows permanently deleting the account', async () => {
     renderProfile();
 
-    const deleteButton = await screen.findByRole('button', { name: /Eliminar Cuenta/i });
-    deleteButton.click();
+    fireEvent.click(await screen.findByRole('button', { name: /Eliminar Cuenta/i }));
+    fireEvent.click(await screen.findByRole('button', { name: 'ELIMINAR' }));
 
-    const confirmDelete = await screen.findByRole('button', { name: 'ELIMINAR' });
-    confirmDelete.click();
+    expect(await screen.findByText('Operación realizada con éxito')).toBeInTheDocument();
+    expect(authService.deleteUser).toHaveBeenCalledWith(4);
+    expect(authValue.logout).toHaveBeenCalled();
+  });
 
-    await waitFor(() => {
-      expect(authService.deleteUser).toHaveBeenCalledWith(4);
-      expect(authValue.logout).toHaveBeenCalled();
+  it('renders level progression chart sorted chronologically with the latest value per day', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce({
+      data: [
+        { date: '2026-10-15', currentLevel: 2.85 },
+        { date: '2026-10-10', currentLevel: 2.4 },
+        { date: '2026-10-10', currentLevel: 2.55 },
+      ],
     });
+
+    renderProfile();
+
+    expect(await screen.findByText('PROGRESIÓN DE NIVEL')).toBeInTheDocument();
+    const chart = await screen.findByTestId('progression-chart');
+    const points = JSON.parse(chart.getAttribute('data-points') ?? '[]') as Array<{
+      date: string;
+      currentLevel: number;
+    }>;
+
+    expect(points).toEqual([
+      { date: '2026-10-10', currentLevel: 2.55 },
+      { date: '2026-10-15', currentLevel: 2.85 },
+    ]);
+    expect(api.get).toHaveBeenCalledWith('/api/v1/users/4/progression', {
+      signal: expect.any(AbortSignal),
+    });
+  });
+
+  it('renders a flat baseline progression when the user has no rated trainings yet', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce({
+      data: [
+        { date: '2026-10-18', currentLevel: 1.5 },
+        { date: '2026-11-18', currentLevel: 1.5 },
+      ],
+    });
+
+    renderProfile();
+
+    const chart = await screen.findByTestId('progression-chart');
+    const points = JSON.parse(chart.getAttribute('data-points') ?? '[]') as Array<{
+      date: string;
+      currentLevel: number;
+    }>;
+
+    expect(points).toEqual([
+      { date: '2026-10-18', currentLevel: 1.5 },
+      { date: '2026-11-18', currentLevel: 1.5 },
+    ]);
+  });
+
+  it('shows a defensive info alert if the progression API returns an empty array', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce({ data: [] });
+
+    renderProfile();
+
+    expect(
+        await screen.findByText(
+            'Aún no tienes entrenamientos valorados. Tu progresión aparecerá aquí después de tu primer entrenamiento.',
+        ),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId('progression-chart')).not.toBeInTheDocument();
+  });
+
+  it('shows an error alert when loading level progression fails', async () => {
+    vi.mocked(api.get).mockRejectedValueOnce(new Error('Network error'));
+
+    renderProfile();
+
+    expect(await screen.findByText('Profile request failed')).toBeInTheDocument();
+    expect(screen.queryByTestId('progression-chart')).not.toBeInTheDocument();
+  });
+
+  it('does not render level progression chart for coaches or admins', async () => {
+    const adminUser = { ...user, role: 'ADMIN' };
+    vi.mocked(authService.getCurrentUser).mockResolvedValue(adminUser);
+
+    renderProfile({ ...authValue, user: adminUser });
+
+    expect(await screen.findByText('DATOS DEL ADMINISTRADOR')).toBeInTheDocument();
+    expect(screen.queryByText('PROGRESIÓN DE NIVEL')).not.toBeInTheDocument();
+    expect(api.get).not.toHaveBeenCalled();
   });
 });

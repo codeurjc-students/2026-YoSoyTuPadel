@@ -48,42 +48,47 @@ public class DataBaseInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws IOException, SQLException {
-        seedUsers();
-        seedRackets();
-        seedCourts();
-        seedBookings();
+        if (userRepository.count() > 0) {
+            return; //sentinel pattern
+        }
+        try {
+            seedUsers();
+            seedRackets();
+            seedCourts();
+            seedBookings();
+        } catch (Exception e) {
+            throw new RuntimeException("Error initializing test data", e);
+        }
     }
 
     private void seedUsers() throws IOException, SQLException {
-        Set<String> emails = new HashSet<>(
-                userRepository.findAll().stream().map(User::getEmail).toList()
-        );
         List<User> newUsers = new ArrayList<>();
 
-        if (emails.add("admin@yosoytupadel.com")) {
-            User admin = new User(
-                    "Administrador",
-                    null,
-                    "admin@yosoytupadel.com",
-                    passwordEncoder.encode("admin"),
-                    UserRole.ADMIN
-            );
-            admin.setProfilePicture(imageBlob("static/images/adminProfilePicture.png"));
-            newUsers.add(admin);
-        }
+        //admin
+        User admin = new User(
+                "Administrador",
+                null,
+                "admin@yosoytupadel.com",
+                passwordEncoder.encode("admin"),
+                UserRole.ADMIN
+        );
+        admin.setProfilePicture(imageBlob("static/images/adminProfilePicture.png"));
+        newUsers.add(admin);
 
-        if (emails.add("victor@alumno.com")) {
-            User student = new User(
-                    "Victor",
-                    "victorcc02",
-                    "victor@alumno.com",
-                    passwordEncoder.encode("pass"),
-                    UserRole.USER
-            );
-            student.setProfilePicture(imageBlob("static/images/profile-picture-default.jpg"));
-            newUsers.add(student);
-        }
+        //student
+        User student = new User(
+                "Victor",
+                "victorcc02",
+                "victor@alumno.com",
+                passwordEncoder.encode("pass"),
+                UserRole.USER
+        );
+        student.setProfilePicture(imageBlob("static/images/profile-picture-default.jpg"));
+        student.setBaseLevel(1.5);
+        student.setSkillLevel(1.5);
+        newUsers.add(student);
 
+        //coaches
         List<CoachSample> coaches = List.of(
                 new CoachSample("Juan Perez", "coach@yosoytupadel.com", 1, 35.0, "entrenador1.jpg"),
                 new CoachSample("Lucía Martín", "lucia.coach@yosoytupadel.com", 2, 38.0, "entrenador2.jpg"),
@@ -96,50 +101,22 @@ public class DataBaseInitializer implements CommandLineRunner {
                 new CoachSample("Sergio Ramos", "sergio.coach@yosoytupadel.com", 3, 44.0, "entrenador9.jpg")
         );
         for (CoachSample sample : coaches) {
-            if (emails.add(sample.email())) {
-                User coach = new User(
-                        sample.email(),
-                        passwordEncoder.encode("coach"),
-                        UserRole.COACH,
-                        sample.name()
-                );
-                coach.setSkillLevel((double) sample.skillLevel());
-                coach.setSessionPrice(sample.sessionPrice());
-                coach.setProfilePicture(imageBlob("static/images/" + sample.imageName()));
-                newUsers.add(coach);
-            } else {
-                userRepository.findByEmail(sample.email())
-                        .filter(coach -> coach.getRole() == UserRole.COACH)
-                        .filter(coach -> coach.getSkillLevel() == null
-                                || Double.compare(coach.getSkillLevel(), sample.skillLevel()) != 0)
-                        .ifPresent(coach -> {
-                            coach.setSkillLevel((double) sample.skillLevel());
-                            newUsers.add(coach);
-                        });
-            }
+            User coach = new User(
+                    sample.email(),
+                    passwordEncoder.encode("coach"),
+                    UserRole.COACH,
+                    sample.name()
+            );
+            coach.setSkillLevel((double) sample.skillLevel());
+            coach.setSessionPrice(sample.sessionPrice());
+            coach.setProfilePicture(imageBlob("static/images/" + sample.imageName()));
+            newUsers.add(coach);
         }
 
         userRepository.saveAll(newUsers);
-
-        List<User> existingCoaches = userRepository.findByRole(UserRole.COACH);
-        List<User> coachesWithRemovedNicknames = new ArrayList<>();
-        for (User coach : existingCoaches) {
-            if (coach.getNickname() != null) {
-                coach.setNickname(null);
-                coachesWithRemovedNicknames.add(coach);
-            }
-        }
-        if (!coachesWithRemovedNicknames.isEmpty()) {
-            userRepository.saveAll(coachesWithRemovedNicknames);
-        }
     }
 
     private void seedRackets() throws IOException, SQLException {
-        Set<String> existing = new HashSet<>(
-                racketRepository.findAll().stream()
-                        .map(racket -> racket.getBrand() + "|" + racket.getName())
-                        .toList()
-        );
         List<RacketSample> samples = List.of(
                 new RacketSample("Nox", "ML10 Pro Cup", "Pala redonda de control y amplio punto dulce, asociada a Miguel Lamperti.", 5.0, 5, "NoxML10.png"),
                 new RacketSample("Nox", "AT10 Genius 18K Alum", "Pala polivalente de la gama AT10 con carbono 18K y tacto equilibrado.", 8.0, 1, "Nox-Genius-18k.jpg"),
@@ -175,47 +152,39 @@ public class DataBaseInitializer implements CommandLineRunner {
 
         List<Racket> newRackets = new ArrayList<>();
         for (RacketSample sample : samples) {
-            if (existing.add(sample.brand() + "|" + sample.name())) {
-                Racket racket = new Racket(sample.brand(), sample.name(), sample.description(), sample.pricePerDay());
-                racket.setStock(sample.stock());
-                racket.setImage(imageBlob("static/images/" + sample.imageName()));
-                newRackets.add(racket);
-            }
+            Racket racket = new Racket(sample.brand(), sample.name(), sample.description(), sample.pricePerDay());
+            racket.setStock(sample.stock());
+            racket.setImage(imageBlob("static/images/" + sample.imageName()));
+            newRackets.add(racket);
         }
+
         racketRepository.saveAll(newRackets);
     }
 
     private void seedCourts() {
-        Set<String> existing = new HashSet<>(
-                courtRepository.findAll().stream().map(Court::getName).toList()
-        );
-        List<CourtSample> samples = List.of(
-                new CourtSample("Chamberí", 9.0, CourtType.INDOOR, SurfaceType.GLASS),
-                new CourtSample("Retiro", 8.0, CourtType.OUTDOOR, SurfaceType.GLASS),
-                new CourtSample("Chamartín", 10.0, CourtType.INDOOR, SurfaceType.GLASS),
-                new CourtSample("Arganzuela", 7.0, CourtType.OUTDOOR, SurfaceType.WALL),
-                new CourtSample("Salamanca", 11.0, CourtType.INDOOR, SurfaceType.GLASS),
-                new CourtSample("Tetuán", 8.0, CourtType.INDOOR, SurfaceType.WALL),
-                new CourtSample("Moncloa-Aravaca", 7.0, CourtType.OUTDOOR, SurfaceType.GLASS),
-                new CourtSample("Fuencarral-El Pardo", 8.0, CourtType.INDOOR, SurfaceType.GLASS),
-                new CourtSample("Latina", 6.0, CourtType.OUTDOOR, SurfaceType.WALL),
-                new CourtSample("Carabanchel", 7.0, CourtType.INDOOR, SurfaceType.GLASS),
-                new CourtSample("Usera", 6.0, CourtType.OUTDOOR, SurfaceType.WALL),
-                new CourtSample("Puente de Vallecas", 6.0, CourtType.INDOOR, SurfaceType.GLASS),
-                new CourtSample("Moratalaz", 7.0, CourtType.OUTDOOR, SurfaceType.GLASS),
-                new CourtSample("Ciudad Lineal", 8.0, CourtType.INDOOR, SurfaceType.WALL),
-                new CourtSample("Hortaleza", 9.0, CourtType.INDOOR, SurfaceType.GLASS),
-                new CourtSample("Villaverde", 6.0, CourtType.OUTDOOR, SurfaceType.WALL),
-                new CourtSample("Centro", 9.0, CourtType.INDOOR, SurfaceType.GLASS),
-                new CourtSample("Barajas", 8.0, CourtType.OUTDOOR, SurfaceType.GLASS),
-                new CourtSample("San Blas-Canillejas", 7.0, CourtType.INDOOR, SurfaceType.WALL),
-                new CourtSample("Vicálvaro", 6.0, CourtType.OUTDOOR, SurfaceType.GLASS)
+        List<Court> newCourts = List.of(
+                new Court("Chamberí", 9.0, CourtType.INDOOR, SurfaceType.GLASS, 40.443494901608354, -3.706805964375021),
+                new Court("Retiro", 8.0, CourtType.OUTDOOR, SurfaceType.GLASS, 40.41260421247807, -3.6861022277485462),
+                new Court("Chamartín", 10.0, CourtType.INDOOR, SurfaceType.GLASS, 40.46364552414092, -3.667400708385035),
+                new Court("Arganzuela", 7.0, CourtType.OUTDOOR, SurfaceType.WALL, 40.39794624153827, -3.6946583629527683),
+                new Court("Salamanca", 11.0, CourtType.INDOOR, SurfaceType.GLASS, 40.429895586282605, -3.668150982265448),
+                new Court("Tetuán", 8.0, CourtType.INDOOR, SurfaceType.WALL, 40.46599673026202, -3.693027394990555),
+                new Court("Moncloa-Aravaca", 7.0, CourtType.OUTDOOR, SurfaceType.GLASS, 40.44635996782728, -3.7431779655921518),
+                new Court("Fuencarral-El Pardo", 8.0, CourtType.INDOOR, SurfaceType.GLASS, 40.49277533346595, -3.7563375600657776),
+                new Court("Latina", 6.0, CourtType.OUTDOOR, SurfaceType.WALL, 40.38674026150156, -3.7702116769738505),
+                new Court("Carabanchel", 7.0, CourtType.INDOOR, SurfaceType.GLASS, 40.39369350166775, -3.7187832377299164),
+                new Court("Usera", 6.0, CourtType.OUTDOOR, SurfaceType.WALL, 40.36746583830209, -3.689794772549691),
+                new Court("Puente de Vallecas", 6.0, CourtType.INDOOR, SurfaceType.GLASS, 40.3843373948564, -3.6574457120507278),
+                new Court("Moratalaz", 7.0, CourtType.OUTDOOR, SurfaceType.GLASS, 40.40109386185984, -3.6163757362306246),
+                new Court("Ciudad Lineal", 8.0, CourtType.INDOOR, SurfaceType.WALL, 40.4356476154174, -3.629936664586638),
+                new Court("Hortaleza", 9.0, CourtType.INDOOR, SurfaceType.GLASS, 40.45937007835342, -3.6209106249524843),
+                new Court("Villaverde", 6.0, CourtType.OUTDOOR, SurfaceType.WALL, 40.33962897693069, -3.696998294054047),
+                new Court("Alameda de Osuna", 9.0, CourtType.INDOOR, SurfaceType.GLASS, 40.45498882266159, -3.5972294468134045),
+                new Court("Barajas", 8.0, CourtType.OUTDOOR, SurfaceType.GLASS, 40.462956605663905, -3.587446569857184),
+                new Court("San Blas-Canillejas", 7.0, CourtType.INDOOR, SurfaceType.WALL, 40.42978108396497, -3.614957679380132),
+                new Court("Vicálvaro", 6.0, CourtType.OUTDOOR, SurfaceType.GLASS, 40.3968248672552, -3.5909221000497857)
         );
 
-        List<Court> newCourts = samples.stream()
-                .filter(sample -> existing.add(sample.name()))
-                .map(sample -> new Court(sample.name(), sample.price(), sample.type(), sample.surface()))
-                .toList();
         courtRepository.saveAll(newCourts);
     }
 
@@ -272,12 +241,5 @@ public class DataBaseInitializer implements CommandLineRunner {
             double pricePerDay,
             int stock,
             String imageName
-    ) {}
-
-    private record CourtSample(
-            String name,
-            double price,
-            CourtType type,
-            SurfaceType surface
     ) {}
 }

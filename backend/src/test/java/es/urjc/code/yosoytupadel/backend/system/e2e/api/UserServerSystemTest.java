@@ -82,4 +82,61 @@ class UserServerSystemTest extends BaseIntegrationTest {
                 .body("content", hasSize(1))
                 .body("content[0].name", equalTo("Coach Fernando"));
     }
+
+    @Test
+    void shouldReturnOwnProgressionAndForbidOtherUsers() {
+        User student = new User();
+        student.setName("Alumno Uno");
+        student.setEmail("alumno1@yosoytupadel.com");
+        student.setEncodedPassword(passwordEncoder.encode("1234"));
+        student.setRole(UserRole.USER);
+        student.setSkillLevel(1.5);
+        student = userRepository.save(student);
+
+        User otherStudent = new User();
+        otherStudent.setName("Alumno Dos");
+        otherStudent.setEmail("alumno2@yosoytupadel.com");
+        otherStudent.setEncodedPassword(passwordEncoder.encode("1234"));
+        otherStudent.setRole(UserRole.USER);
+        otherStudent.setSkillLevel(2.0);
+        userRepository.save(otherStudent);
+
+        String studentToken = given()
+                .contentType(ContentType.JSON)
+                .body("{ \"email\": \"alumno1@yosoytupadel.com\", \"password\": \"1234\" }")
+                .when()
+                .post("/api/v1/auth/login")
+                .then()
+                .statusCode(200)
+                .extract()
+                .cookie("AuthToken");
+
+        // The student can access their own progression
+        given()
+                .contentType(ContentType.JSON)
+                .cookie("AuthToken", studentToken)
+                .when()
+                .get("/api/v1/users/" + student.getId() + "/progression")
+                .then()
+                .statusCode(200);
+
+        // Cant access another user's progression
+        String otherToken = given()
+                .contentType(ContentType.JSON)
+                .body("{ \"email\": \"alumno2@yosoytupadel.com\", \"password\": \"1234\" }")
+                .when()
+                .post("/api/v1/auth/login")
+                .then()
+                .statusCode(200)
+                .extract()
+                .cookie("AuthToken");
+
+        given()
+                .contentType(ContentType.JSON)
+                .cookie("AuthToken", otherToken)
+                .when()
+                .get("/api/v1/users/" + student.getId() + "/progression")
+                .then()
+                .statusCode(403);
+    }
 }

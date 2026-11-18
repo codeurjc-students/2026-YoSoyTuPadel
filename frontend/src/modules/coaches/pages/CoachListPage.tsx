@@ -14,12 +14,14 @@ import {
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { coachService, type PreCoachDTO } from '../services/coachService';
+import { courtService } from '../../courts/services/courtService';
 
 const PAGE_SIZE = 10;
 const coachImage = '/images/coach-training.jpg';
+const GoalCoachId = 1;
 
 function CoachListPage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated} = useAuth();
   const [coaches, setCoaches] = useState<PreCoachDTO[]>([]);
   const [totalCoaches, setTotalCoaches] = useState(0);
   const [page, setPage] = useState(0);
@@ -27,6 +29,7 @@ function CoachListPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [goalCourtName, setGoalCourtName] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -43,6 +46,15 @@ function CoachListPage() {
       .finally(() => {
         if (!controller.signal.aborted) setIsLoading(false);
       });
+
+    void courtService.getCourts(0, 50, controller.signal)
+        .then((result) => {
+          const targetCourt = result.content.find((court) => court.id === GoalCoachId);
+          if (targetCourt) setGoalCourtName(targetCourt.name);
+        })
+        .catch(() => {
+
+        });
     return () => controller.abort();
   }, []);
 
@@ -110,6 +122,28 @@ function CoachListPage() {
             </Typography>
             <Typography sx={{ mt: 0.75, color: '#333844', fontSize: 14, lineHeight: 1.6 }}>
               Todos nuestros entrenadores cuentan con certificación oficial de la Federación Española de Pádel
+            </Typography>
+            <Typography sx={{ mt: 0.5, color: '#333844', fontSize: 14, lineHeight: 1.6 }}>
+              Todos ellos dan sus clases en nuestra pista de{' '}
+              {isAuthenticated ? (
+                  <Box
+                      component={Link}
+                      to={`/courts/${GoalCoachId}`}
+                      sx={{
+                        color: '#e60012',
+                        fontWeight: 800,
+                        textDecoration: 'underline',
+                        textUnderlineOffset: '3px',
+                        '&:hover': { color: '#b8000e' },
+                      }}
+                  >
+                    {goalCourtName ?? 'Chamberí'}
+                  </Box>
+              ) : (
+                  <Box component="span" sx={{ mt: 0.75, color: '#333844', fontSize: 14, lineHeight: 1.6 }}>
+                    {goalCourtName ?? 'Chamberí'}
+                  </Box>
+              )}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: { xs: 'flex-start', sm: 'flex-end' }, flexWrap: 'wrap', gap: 0.75, flexShrink: 0 }}>

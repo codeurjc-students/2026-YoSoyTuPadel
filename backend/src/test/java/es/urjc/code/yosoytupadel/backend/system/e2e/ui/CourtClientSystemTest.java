@@ -45,7 +45,7 @@ class CourtClientSystemTest extends ClientSystemTestSupport {
                 UserRole.USER,
                 "Test Player"
         ));
-        Court court = new Court("Central court", 15.0, CourtType.INDOOR, SurfaceType.GLASS);
+        Court court = new Court("Central court", 15.0, CourtType.INDOOR, SurfaceType.GLASS, null, null);
         court.setIsAvailable(true);
         courtRepository.save(court);
         openBrowser();
