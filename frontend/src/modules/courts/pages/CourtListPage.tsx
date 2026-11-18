@@ -5,7 +5,6 @@ import {
   Button,
   Card,
   CardContent,
-  CardMedia,
   CircularProgress,
   Dialog,
   DialogActions,
@@ -22,9 +21,9 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { courtService, type PreCourtDTO } from '../services/courtService';
+import CourtMap from '../components/CourtMiniMap';
 
 const PAGE_SIZE = 10;
-const courtImage = '/images/padel-court-overhead.jpg';
 
 function CourtListPage() {
   const { isAuthenticated, user } = useAuth();
@@ -202,14 +201,17 @@ function CourtListPage() {
                     },
                   }}
                 >
-                  <Box sx={{ position: 'relative', height: 176, overflow: 'hidden', bgcolor: 'white' }}>
-                    <CardMedia
-                      component="img"
-                      image={courtImage}
-                      alt={`Vista de una pista de pádel - ${court.name}`}
-                      sx={{ height: '100%', objectFit: 'cover' }}
-                    />
-                  </Box>
+                  {typeof court.latitude === 'number' && typeof court.longitude === 'number'
+                      && Number.isFinite(court.latitude) && Number.isFinite(court.longitude) && (
+                    <Box sx={{ height: 176, overflow: 'hidden', borderBottom: '1px solid #e8e8eb' }}>
+                      <CourtMap
+                        latitude={court.latitude}
+                        longitude={court.longitude}
+                        name={court.name}
+                        interactive={false}
+                      />
+                    </Box>
+                  )}
                   <CardContent sx={{ p: 2.5 }}>
                     <Typography component="h2" variant="h6" sx={{ color: '#17191e', fontSize: 20, lineHeight: 1.35, fontWeight: 900 }}>
                       {court.name}

@@ -9,5 +9,7 @@ public record CourtDTO(
         Double courtPrice,
         CourtType type,
         SurfaceType surface,
-        Boolean isAvailable
+        Boolean isAvailable,
+        Double latitude,
+        Double longitude
 ) {}

@@ -33,6 +33,29 @@ vi.mock('../services/bookingService', () => ({
   },
 }));
 
+vi.mock('../../courts/components/CourtMiniMap', () => ({
+  default: ({
+              latitude,
+              longitude,
+              name,
+              interactive = true,
+            }: {
+    latitude: number;
+    longitude: number;
+    name: string;
+    interactive?: boolean;
+  }) => (
+      <div
+          data-testid="court-map"
+          data-lat={latitude}
+          data-lng={longitude}
+          data-interactive={String(interactive)}
+      >
+        {name}
+      </div>
+  ),
+}));
+
 function formatLocalDate(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -305,5 +328,39 @@ describe('MyBookingsPage', () => {
     expect(await screen.findByRole('heading', { name: 'Pista central' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Cancelar reserva' })).not.toBeInTheDocument();
     expect(screen.getByText('Completada')).toBeInTheDocument();
+  });
+
+  test('renders static mini map for court bookings with coordinates and fallback image otherwise', async () => {
+    vi.mocked(bookingService.getUserBookings).mockResolvedValue([
+      {
+        ...bookings[0],
+        id: 'court-with-map',
+        title: 'Pista Retiro',
+        latitude: 40.4153,
+        longitude: -3.6844,
+      },
+      {
+        ...bookings[0],
+        id: 'court-without-map',
+        title: 'Pista sin coordenadas',
+      },
+      bookings[1],
+      bookings[2],
+    ]);
+
+    const { container } = renderPage();
+
+    const maps = await screen.findAllByTestId('court-map');
+    expect(maps).toHaveLength(1);
+    expect(maps[0]).toHaveTextContent('Pista Retiro');
+    expect(maps[0]).toHaveAttribute('data-lat', '40.4153');
+    expect(maps[0]).toHaveAttribute('data-lng', '-3.6844');
+    expect(maps[0]).toHaveAttribute('data-interactive', 'false');
+
+    const fallbackImages = container.querySelectorAll('img');
+    expect(fallbackImages).toHaveLength(3);
+    expect(Array.from(fallbackImages).map((img) => img.getAttribute('src'))).toContain(
+        '/images/padel-court-overhead.jpg',
+    );
   });
 });

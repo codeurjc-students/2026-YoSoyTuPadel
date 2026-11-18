@@ -51,7 +51,7 @@ class BookingClientSystemTest extends ClientSystemTestSupport {
                 "Test Player"
         ));
         Court court = courtRepository.save(
-                new Court("Central court", 15.0, CourtType.INDOOR, SurfaceType.GLASS)
+                new Court("Central court", 15.0, CourtType.INDOOR, SurfaceType.GLASS, null, null)
         );
         bookingRepository.save(new Booking(
                 LocalDate.now().plusDays(1),

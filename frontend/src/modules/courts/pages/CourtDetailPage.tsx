@@ -4,8 +4,6 @@ import {
   Alert,
   Box,
   Button,
-  CardMedia,
-  Chip,
   CircularProgress,
   Dialog,
   DialogActions,
@@ -22,11 +20,12 @@ import {
   Typography,
 } from '@mui/material';
 import { AccessTimeRounded as AccessTimeRoundedIcon } from '@mui/icons-material';
+import DirectionsRoundedIcon from '@mui/icons-material/DirectionsRounded';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { courtService, type CourtDTO } from '../services/courtService';
+import CourtMap from '../components/CourtMiniMap';
 
-const courtImage = '/images/padel-court-overhead.jpg';
 const timeSlots = Array.from({ length: 13 }, (_, index) => `${String(index + 9).padStart(2, '0')}:00`);
 const spanishDate = new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: 'short' });
 const spanishWeekdayDate = new Intl.DateTimeFormat('es-ES', {
@@ -76,6 +75,13 @@ function courtTypeLabel(type: string): string {
 function surfaceLabel(surface: string): string {
   const labels: Record<string, string> = { GLASS: 'Cristal', WALL: 'Muro' };
   return labels[surface] ?? surface;
+}
+
+function hasCoordinates(court: CourtDTO): court is CourtDTO & { latitude: number; longitude: number } {
+  return court.latitude !== null
+    && court.longitude !== null
+    && Number.isFinite(court.latitude)
+    && Number.isFinite(court.longitude);
 }
 
 function CourtDetailPage() {
@@ -239,7 +245,7 @@ function CourtDetailPage() {
   }
 
   return (
-    <Box component="section" sx={{ maxWidth: isAdmin ? 800 : 1100, mx: 'auto', width: '100%', px: { xs: 2, sm: 3, lg: 4 }, py: { xs: 3, sm: 5 } }}>
+    <Box component="section" sx={{ maxWidth: 1400, mx: 'auto', width: '100%', px: { xs: 2, sm: 3, lg: 4 }, py: { xs: 3, sm: 5 } }}>
       <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2, mb: 3 }}>
         <Button component={Link} to="/courts" color="inherit" sx={{ color: 'rgba(255,255,255,0.75)', textTransform: 'none' }}>
           ← Pistas
@@ -255,35 +261,9 @@ function CourtDetailPage() {
 
       {court && (
         <>
-        <Grid container spacing={{ xs: 2.5, md: 3 }} sx={{ maxWidth: isAdmin ? 900 : 1100, mx: 'auto' }}>
-          <Grid size={{ xs: 12, md: isAdmin ? 12 : 6 }}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Paper
-                elevation={3}
-                sx={{
-                  position: 'relative',
-                  overflow: 'hidden',
-                  borderRadius: 3,
-                  height: { xs: 190, sm: 260, md: 288 },
-                }}
-              >
-                <CardMedia
-                  component="img"
-                  image={courtImage}
-                  alt={`Vista de una pista de pádel - ${court.name}`}
-                  sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-                <Box sx={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: 'linear-gradient(0deg, rgba(0,0,0,0.6), transparent 55%)',
-                }} />
-                <Chip
-                  label={court.isAvailable ? 'Disponible para reservar' : 'No disponible'}
-                  color={court.isAvailable ? 'success' : 'error'}
-                  sx={{ position: 'absolute', left: 2.5, bottom: 2.5, fontWeight: 800 }}
-                />
-              </Paper>
+        <Grid container spacing={{ xs: 2.5, md: 3 }}  sx={{ maxWidth: 1400, mx: 'auto', alignItems:'stretch' }}>
+          <Grid size={{ xs: 12, md: 4 }} sx={{ order: { xs: 1, md: 1 } }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, height: '100%' }}>
               <Paper elevation={2} sx={{ p: { xs: 2.25, sm: 3 }, borderRadius: 3 }}>
                 <Box sx={{
                   display: 'flex',
@@ -325,12 +305,45 @@ function CourtDetailPage() {
             </Box>
           </Grid>
 
-          <Grid size={{ xs: 12, md: 6 }} sx={{ display: isAdmin ? 'none' : undefined }}>
+          <Grid size={{ xs: 12, md: 4 }} sx={{ order: { xs: 3, md: 3 } }}>
+            <Paper elevation={3} sx={{ height: '100%', overflow: 'hidden', borderRadius: 3 }}>
+              {hasCoordinates(court) ? (
+                <>
+                  <Box sx={{ height: { xs: 300, sm: 360, md: 420 } }}>
+                    <CourtMap
+                      latitude={court.latitude}
+                      longitude={court.longitude}
+                      name={court.name}
+                    />
+                  </Box>
+                  <Box sx={{ p: 2 }}>
+                    <Button
+                      component="a"
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${court.latitude},${court.longitude}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      variant="contained"
+                      color="error"
+                      startIcon={<DirectionsRoundedIcon />}
+                      sx={{ borderRadius: 2, fontWeight: 800, textTransform: 'none' }}
+                    >
+                      Cómo llegar
+                    </Button>
+                  </Box>
+                </>
+              ) : (
+                <Alert severity="info" sx={{ m: 2, borderRadius: 2 }}>
+                  Esta pista no tiene una ubicación disponible.
+                </Alert>
+              )}
+            </Paper>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 4 }} sx={{ display: isAdmin ? 'none' : undefined, order: { xs: 2, md: 2 } }}>
             <Paper
               elevation={3}
               sx={{
-                position: { md: 'sticky' },
-                top: { md: 96 },
+                height: '100%',
                 p: { xs: 2.25, sm: 3 },
                 borderRadius: 3,
               }}

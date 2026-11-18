@@ -29,15 +29,22 @@ public class Court {
     private Boolean isAvailable = true;
 
 
+    @Column(unique = true)
+    private Double latitude;
+
+    @Column(unique = true)
+    private Double longitude;
 
     public Court() {}
 
-    public Court(String name, Double courtPrice, CourtType type, SurfaceType surface) {
+    public Court(String name, Double courtPrice, CourtType type, SurfaceType surface, Double latitude, Double longitude) {
         this.name = name;
         this.courtPrice = courtPrice;
         this.type = type;
         this.surface = surface;
         this.isAvailable = true;
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 
     // Getters & Setters
@@ -53,5 +60,10 @@ public class Court {
     public void setSurface(SurfaceType surface) { this.surface = surface; }
     public Boolean getIsAvailable() { return isAvailable; }
     public void setIsAvailable(Boolean isAvailable) { this.isAvailable = isAvailable; }
-
+    public Double getLatitude() {return latitude;}
+    public void setLatitude(Double latitude) {this.latitude = latitude;}
+    public Double getLongitude() {return longitude;}
+    public void setLongitude(Double longitude) {this.longitude = longitude;}
+    public Boolean getAvailable() {return isAvailable;}
+    public void setAvailable(Boolean available) {isAvailable = available;}
 }

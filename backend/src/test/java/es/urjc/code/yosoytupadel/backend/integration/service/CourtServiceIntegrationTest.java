@@ -34,8 +34,8 @@ class CourtServiceIntegrationTest extends BaseIntegrationTest {
     void setUp() {
         courtRepository.deleteAll();
 
-        Court court1 = new Court( "Alameda de Osuna", 8.0, CourtType.INDOOR, SurfaceType.GLASS);
-        Court court2 = new Court( "Coslada", 7.0, CourtType.INDOOR, SurfaceType.WALL);
+        Court court1 = new Court( "Alameda de Osuna", 8.0, CourtType.INDOOR, SurfaceType.GLASS, null, null);
+        Court court2 = new Court( "Coslada", 7.0, CourtType.INDOOR, SurfaceType.WALL, null, null);
 
         courtRepository.saveAll(List.of(court1, court2));
     }

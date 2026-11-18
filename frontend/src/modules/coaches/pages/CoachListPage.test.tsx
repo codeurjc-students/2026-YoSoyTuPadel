@@ -73,23 +73,33 @@ describe('CoachListPage', () => {
   });
 
   test('appends the next coach page', async () => {
-    vi.mocked(api.get)
-      .mockResolvedValueOnce({
-        data: {
-          content: Array.from({ length: 10 }, (_, index) => ({
-            id: index + 1,
-            name: `Coach ${index + 1}`,
-            skillLevel: (index % 3) + 1,
-            sessionPrice: 30,
-          })),
-          number: 0,
-          size: 10,
-          totalElements: 11,
-          totalPages: 2,
-          last: false,
-        },
-      })
-      .mockResolvedValueOnce({
+    vi.mocked(api.get).mockImplementation((url, config) => {
+      if (url.includes('/courts')) {
+        return Promise.resolve({
+          data: { content: [], number: 0, size: 50, totalElements: 0, totalPages: 0, last: true },
+        });
+      }
+
+      const page = (config?.params as { page?: number } | undefined)?.page ?? 0;
+      if (page === 0) {
+        return Promise.resolve({
+          data: {
+            content: Array.from({ length: 10 }, (_, index) => ({
+              id: index + 1,
+              name: `Coach ${index + 1}`,
+              skillLevel: (index % 3) + 1,
+              sessionPrice: 30,
+            })),
+            number: 0,
+            size: 10,
+            totalElements: 11,
+            totalPages: 2,
+            last: false,
+          },
+        });
+      }
+
+      return Promise.resolve({
         data: {
           content: [{ id: 11, name: 'Coach 11', skillLevel: 2, sessionPrice: 35 }],
           number: 1,
@@ -99,6 +109,7 @@ describe('CoachListPage', () => {
           last: true,
         },
       });
+    });
 
     renderList();
     expect(await screen.findByRole('heading', { name: 'Coach 10' })).toBeInTheDocument();

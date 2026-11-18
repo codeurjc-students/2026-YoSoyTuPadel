@@ -56,7 +56,7 @@ class BookingServiceTest {
 
     @BeforeEach
     void setUp() {
-        court = new Court("Alameda de Osuna", 8.0, CourtType.INDOOR, SurfaceType.GLASS);
+        court = new Court("Alameda de Osuna", 8.0, CourtType.INDOOR, SurfaceType.GLASS, null, null);
         court.setId(1L);
         court.setIsAvailable(true);
 
