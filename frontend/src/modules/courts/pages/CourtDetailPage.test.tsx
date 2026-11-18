@@ -222,7 +222,7 @@ describe('CourtDetailPage', () => {
 
   test('renders interactive map and Google Maps directions link when court has coordinates', async () => {
     vi.mocked(api.get).mockImplementation((url) => {
-      if (url.includes('/reserved-slots')) {
+      if (url.includes('/availability')) {
         return Promise.resolve({ data: [] });
       }
       return Promise.resolve({
