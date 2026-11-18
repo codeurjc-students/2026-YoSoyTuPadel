@@ -256,8 +256,8 @@ describe('CourtDetailPage', () => {
   });
 
   test('shows fallback alert instead of map when court has no coordinates', async () => {
-    vi.mocked(api.get).mockImplementation((url) => {
-      if (url.includes('/reserved-slots')) {
+    vi.mocked(api.get).mockImplementation((url: string) => {
+      if (url.includes('/availability')) {
         return Promise.resolve({ data: [] });
       }
       return Promise.resolve({
