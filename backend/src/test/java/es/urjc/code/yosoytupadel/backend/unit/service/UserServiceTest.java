@@ -18,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Arrays;
@@ -50,7 +51,7 @@ class UserServiceTest {
     private BookingRepository bookingRepository;
 
     @Mock
-    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private UserService userService;
@@ -67,7 +68,7 @@ class UserServiceTest {
         coach.setId(1L);
         coach.setName("Entrenador Pepe");
         coach.setRole(UserRole.COACH);
-        coach.setSkillLevel(9.5);
+        coach.setSkillLevel(3.0);
 
         student = new User();
         student.setId(2L);
@@ -283,20 +284,37 @@ class UserServiceTest {
     }
 
     @Test
-    void updateSkillLevel_ShouldClampLevelToUpperAndLowerBounds() {
+    void updateSkillLevel_ShouldClampLevelToUpperAndLowerBoundsAndRound() {
         // Given
+        student.setSkillLevel(1.20);
         when(userRepository.findById(2L)).thenReturn(Optional.of(student));
         when(userRepository.save(student)).thenReturn(student);
         when(userMapper.toDTO(student)).thenReturn(studentDTO);
 
-        // When
+        // When & Then: Rounding avoids floating-point artifacts (1.20 + 0.19 = 1.39)
+        userService.updateSkillLevel(2L, 0.19);
+        assertThat(student.getSkillLevel()).isEqualTo(1.39);
+
+        // Upper bound clamp
         userService.updateSkillLevel(2L, 10.0);
         assertThat(student.getSkillLevel()).isEqualTo(5.0);
-        userService.updateSkillLevel(2L, -10.0);
 
-        // Then
-        assertThat(student.getSkillLevel()).isEqualTo(1.0);
-        verify(userRepository, times(2)).save(student);
+        // Lower bound clamp (0.0)
+        userService.updateSkillLevel(2L, -10.0);
+        assertThat(student.getSkillLevel()).isEqualTo(0.0);
+
+        verify(userRepository, times(3)).save(student);
+    }
+
+    @Test
+    void updateSkillLevel_WhenTargetIsCoach_ShouldThrowForbidden() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(coach));
+
+        assertThatThrownBy(() -> userService.updateSkillLevel(1L, 0.20))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Coach certification level");
+
+        verify(userRepository, never()).save(any());
     }
 
     @Test

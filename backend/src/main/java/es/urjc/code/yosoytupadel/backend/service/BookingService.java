@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import es.urjc.code.yosoytupadel.backend.dto.BookingDTO;
 import es.urjc.code.yosoytupadel.backend.dto.BookingMapper;
 import es.urjc.code.yosoytupadel.backend.dto.CoachBookingDTO;
+import es.urjc.code.yosoytupadel.backend.dto.UserDTO;
 import es.urjc.code.yosoytupadel.backend.dto.UserProgressionDTO;
 import es.urjc.code.yosoytupadel.backend.entities.*;
 import es.urjc.code.yosoytupadel.backend.repository.BookingRepository;
@@ -70,13 +71,13 @@ public class BookingService {
     public Long getAuthenticatedCoachId() {
         return userService.getAuthenticatedUserDto()
                 .filter(user -> user.role().name().equals("COACH"))
-                .map(user -> user.id())
+                .map(UserDTO::id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Coach authentication required"));
     }
 
     public List<LocalTime> getReservedCourtSlots(Long courtId, LocalDate date) {
         List<Booking> bookings = bookingRepository.findActiveCourtBookings(courtId, date);
-        List<LocalTime> reservedSlots = new java.util.ArrayList<>();
+        List<LocalTime> reservedSlots = new ArrayList<>();
 
         for (int hour = 9; hour <= 21; hour++) {
             LocalTime slotStart = LocalTime.of(hour, 0);
@@ -92,7 +93,7 @@ public class BookingService {
 
     public List<LocalTime> getReservedCoachSlots(Long coachId, LocalDate date) {
         List<Booking> bookings = bookingRepository.findActiveCoachBookings(coachId, date);
-        List<LocalTime> reservedSlots = new java.util.ArrayList<>();
+        List<LocalTime> reservedSlots = new ArrayList<>();
 
         for (int hour = 9; hour <= 19; hour += 2) {
             LocalTime slotStart = LocalTime.of(hour, 0);
@@ -254,7 +255,8 @@ public class BookingService {
         User user = userService.getUserEntityById(userId);
         double initialLevel = user.getBaseLevel() != null
                 ? user.getBaseLevel()
-                : user.getSkillLevel() != null ? user.getSkillLevel() : 1.0;
+                : user.getSkillLevel() != null
+                ? user.getSkillLevel() : 1.0;
         double currentLevel = initialLevel;
         List<UserProgressionDTO> progression = new ArrayList<>();
 
@@ -268,7 +270,8 @@ public class BookingService {
         progression.add(new UserProgressionDTO(startDate, initialLevel));
 
         for (Booking booking : bookings) {
-            currentLevel = Math.clamp(currentLevel + calculateLevelAdjustment(booking.getScore()), 0.0, 5.0);
+            currentLevel = Math.clamp(currentLevel + calculateLevelAdjustment(booking.getScore(), currentLevel), 0.0, 5.0);
+            currentLevel = Math.round(currentLevel * 100.0) / 100.0;
             progression.add(new UserProgressionDTO(booking.getBookingDate(), currentLevel));
         }
 
@@ -280,7 +283,7 @@ public class BookingService {
         return progression;
     }
 
-    private double calculateLevelAdjustment(String score) {
+    private double calculateLevelAdjustment(String score, Double currentLevel) {
         if (score == null) {
             return 0.0;
         }
@@ -290,13 +293,52 @@ public class BookingService {
             // If the score is a pure numeric value between 0 and 10 (e.g., "7.5", "8")
             if (normalizedScore.matches("\\d+(\\.\\d+)?")) {
                 double numericScore = Double.parseDouble(normalizedScore);
-                // initial leveling prototype
-                return (numericScore - 5.0) * 0.05;
+                numericScore = Math.clamp(numericScore, 0.0, 10.0);
+                if (numericScore < 5.0) {
+                    return - (Math.round(((currentLevel / 10) * ((5 - numericScore)/5))* 100.0) / 100.0);
+                }else {
+                    return Math.round((((5 - currentLevel) / 10) * ((numericScore - 5)/5))* 100.0) / 100.0;
+                }
             }
         } catch (NumberFormatException ignored) {
             // Malformed historical scores or non-numeric inputs are safely ignored as neutral.
         }
         return 0.0;
+    }
+
+    @Transactional
+    public CoachBookingDTO evaluateTraining (long bookingId, int score){
+        if(score<0 || score>10){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Score must be between 0 and 10.");
+        }
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found"));
+
+        if (booking.getType() != BookingType.TRAINING) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only training sessions can be evaluated.");
+        }
+
+        if (booking.getStatus() == BookingStatus.CANCELLED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cancelled trainings cannot be evaluated.");
+        }
+
+        if (booking.getStatus() == BookingStatus.PENDING) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only completed training sessions can be evaluated.");
+        }
+
+        if (booking.getScore() != null && !booking.getScore().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This training session has already been evaluated.");
+        }
+
+        User student = booking.getUser();
+        double currentLevel =  student.getSkillLevel() != null ? student.getSkillLevel() : 1.0;
+        Double addition = calculateLevelAdjustment(String.valueOf(score), currentLevel);
+
+        UserDTO studentDTO = userService.updateSkillLevel(student.getId(), addition);
+        booking.setScore(String.valueOf(score));
+        Booking savedBooking = bookingRepository.save(booking);
+
+        return new CoachBookingDTO(mapper.toDTO(savedBooking), studentDTO);
     }
 
     /**

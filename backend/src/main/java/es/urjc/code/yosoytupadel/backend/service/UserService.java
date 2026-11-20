@@ -189,9 +189,8 @@ public class UserService {
             );
         }
 
-        double newLevel = student.getSkillLevel() + change;
-        if (newLevel > 5.0) newLevel = 5.0;
-        if (newLevel < 1.0) newLevel = 1.0;
+        double rawNewLevel = Math.round((student.getSkillLevel() + change) * 100.0) / 100.0;
+        double newLevel = Math.clamp(rawNewLevel, 0.0, 5.0);
 
         student.setSkillLevel(newLevel);
         return userMapper.toDTO(userRepository.save(student));

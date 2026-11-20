@@ -153,4 +153,23 @@ public class BookingController {
     public BookingDTO deleteBooking(@PathVariable long id) {
         return bookingService.deleteBooking(id);
     }
+
+    @Operation(summary = "Evaluate a training booking and update the student's skill level")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Training evaluated successfully", content = { @Content(mediaType = "application/json", schema = @Schema(implementation = CoachBookingDTO.class)) }),
+            @ApiResponse(responseCode = "400", description = "Invalid score or booking cannot be evaluated", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Assigned coach required", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Booking not found", content = @Content),
+            @ApiResponse(responseCode = "409", description = "Training already evaluated", content = @Content)
+    })
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasRole('ADMIN') or @bookingService.isCoachForBooking(#id)")
+    @PatchMapping("/{id}/evaluation")
+    public CoachBookingDTO evaluateBooking(
+            @PathVariable long id,
+            @RequestParam int score
+    ) {
+        return bookingService.evaluateTraining(id, score);
+    }
 }
