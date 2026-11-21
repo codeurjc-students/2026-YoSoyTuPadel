@@ -37,6 +37,28 @@ export interface CoachBookingDTO {
   coachId: number;
 }
 
+export interface CoachEvaluatedBookingDTO {
+  booking: {
+    id: number;
+    bookingDate: string;
+    startTime: string;
+    endTime: string;
+    bookingPrice: number | null;
+    type: 'TRAINING';
+    status: 'PENDING' | 'COMPLETED' | 'CANCELLED';
+    score: string | null;
+    userId: number;
+    courtId: number | null;
+    coachId: number | null;
+  };
+  client: {
+    id: number;
+    name: string | null;
+    nickname: string | null;
+    skillLevel?: number | null;
+  };
+}
+
 export const coachService = {
   async createCoach(data: CoachCreateDetails, image: File | null): Promise<AuthUser> {
     const formData = new FormData();
@@ -96,6 +118,15 @@ export const coachService = {
       type: 'TRAINING',
       status: 'PENDING',
     });
+    return data;
+  },
+
+  async evaluateTraining(bookingId: number, score: number): Promise<CoachEvaluatedBookingDTO> {
+    const { data } = await api.patch<CoachEvaluatedBookingDTO>(
+        `/api/v1/bookings/${bookingId}/evaluation`,
+        null,
+        { params: { score } },
+    );
     return data;
   },
 };

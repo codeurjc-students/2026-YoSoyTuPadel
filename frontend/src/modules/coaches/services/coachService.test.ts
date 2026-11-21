@@ -7,6 +7,7 @@ vi.mock('../../../service/api', () => ({
     get: vi.fn(),
     getUri: vi.fn(({ url }: { url: string }) => url),
     post: vi.fn(),
+    patch: vi.fn(),
   },
 }));
 
@@ -90,6 +91,36 @@ describe('coachService', () => {
       bookingPrice: null,
       type: 'TRAINING',
       status: 'PENDING',
+    });
+  });
+
+  test('evaluates a completed training session and returns updated booking and client', async () => {
+    const evaluatedResponse = {
+      booking: {
+        id: 12,
+        bookingDate: '2026-10-03',
+        startTime: '10:00:00',
+        endTime: '11:00:00',
+        bookingPrice: 35,
+        type: 'TRAINING',
+        status: 'COMPLETED',
+        score: '8',
+        userId: 9,
+        courtId: null,
+        coachId: 3,
+      },
+      client: {
+        id: 9,
+        name: 'Student One',
+        nickname: 'student1',
+        skillLevel: 2.15,
+      },
+    };
+    vi.mocked(api.patch).mockResolvedValue({ data: evaluatedResponse });
+
+    await expect(coachService.evaluateTraining(12, 8)).resolves.toEqual(evaluatedResponse);
+    expect(api.patch).toHaveBeenCalledWith('/api/v1/bookings/12/evaluation', null, {
+      params: { score: 8 },
     });
   });
 });
