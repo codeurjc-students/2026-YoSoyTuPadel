@@ -29,19 +29,4 @@ public record UserDTO(
         Integer racketUsages,
         List<RacketDTO> racketHistory,
         Double sessionPrice
-) { // testing
-    public UserDTO(
-            Long id,
-            String name,
-            String nickname,
-            String email,
-            String password,
-            UserRole role,
-            Double skillLevel,
-            Long racketId,
-            Integer racketUsages,
-            List<RacketDTO> racketHistory
-    ) {
-        this(id, name, nickname, email, password, role, skillLevel, racketId, racketUsages, racketHistory, null);
-    }
-}
+) {}

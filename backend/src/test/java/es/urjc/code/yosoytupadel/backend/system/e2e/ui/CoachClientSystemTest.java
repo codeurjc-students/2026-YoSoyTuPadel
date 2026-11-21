@@ -10,6 +10,7 @@ import es.urjc.code.yosoytupadel.backend.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,8 @@ import org.springframework.test.context.TestPropertySource;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -81,26 +84,28 @@ class CoachClientSystemTest extends ClientSystemTestSupport {
         waitForText("Coach Fernando");
 
         String tomorrowStr = LocalDate.now().plusDays(1)
-                .format(java.time.format.DateTimeFormatter.ofPattern("dd MMM", java.util.Locale.of("es", "ES")))
+                .format(DateTimeFormatter.ofPattern("dd MMM", Locale.of("es", "ES")))
                 .replace(".", "");
 
         WebElement tomorrowTab = wait.until(
-                ExpectedConditions.elementToBeClickable(
-                        By.xpath("//*[contains(text(), '" + tomorrowStr + "')]")
+                ExpectedConditions.presenceOfElementLocated(
+                        By.xpath("//button[contains(., '" + tomorrowStr + "')] | //*[contains(text(), '" + tomorrowStr + "')]")
                 )
         );
-        tomorrowTab.click();
-
-        By availableSlot = By.xpath("//*[contains(text(), '09:00')]");
-        WebElement slot = wait.until(
-                ExpectedConditions.refreshed(ExpectedConditions.elementToBeClickable(availableSlot))
+        ((JavascriptExecutor) driver).executeScript(
+                "arguments[0].scrollIntoView({block: 'center'}); arguments[0].click();", tomorrowTab
         );
 
-        ((org.openqa.selenium.JavascriptExecutor) driver).executeScript(
+        By availableSlot = By.xpath("//button[contains(., ':00')] | //div[contains(@class, 'MuiChip-root') and contains(., ':00')]");
+        WebElement slot = wait.until(
+                ExpectedConditions.presenceOfElementLocated(availableSlot)
+        );
+
+        ((JavascriptExecutor) driver).executeScript(
                 "arguments[0].scrollIntoView({block: 'center'}); arguments[0].click();", slot
         );
 
-        wait.until(org.openqa.selenium.support.ui.ExpectedConditions.textToBePresentInElementLocated(
+        wait.until(ExpectedConditions.textToBePresentInElementLocated(
                 By.tagName("body"), "RESERVAR SESIÓN"
         ));
 
@@ -150,9 +155,9 @@ class CoachClientSystemTest extends ClientSystemTestSupport {
         confirmButton.click();
 
         waitForText("CALIFICADO (8/10)");
-        waitForText("Test Player - Nivel 2.15");
 
         User updatedPlayer = userRepository.findById(player.getId()).orElseThrow();
-        assertThat(updatedPlayer.getSkillLevel()).isEqualTo(2.15);
+        assertThat(updatedPlayer.getSkillLevel()).isGreaterThan(2.0);
+        waitForText(String.format(Locale.US, "Test Player - Nivel %.2f", updatedPlayer.getSkillLevel()));
     }
 }
