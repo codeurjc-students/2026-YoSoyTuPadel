@@ -2,6 +2,9 @@ package es.urjc.code.yosoytupadel.backend.unit.service;
 
 import es.urjc.code.yosoytupadel.backend.dto.BookingDTO;
 import es.urjc.code.yosoytupadel.backend.dto.BookingMapper;
+import es.urjc.code.yosoytupadel.backend.dto.CoachBookingDTO;
+import es.urjc.code.yosoytupadel.backend.dto.UserDTO;
+import es.urjc.code.yosoytupadel.backend.dto.UserProgressionDTO;
 import es.urjc.code.yosoytupadel.backend.entities.*;
 import es.urjc.code.yosoytupadel.backend.repository.BookingRepository;
 import es.urjc.code.yosoytupadel.backend.repository.CourtRepository;
@@ -506,5 +509,182 @@ class BookingServiceTest {
         bookingService.createBooking(bookingDTO1);
 
         assertThat(booking1.getBookingPrice()).isEqualTo(0.0);
+    }
+
+    @Test
+    void evaluateTraining_WhenScoreAboveFiveAndLowSkill_ShouldApplyLargerIncrease() {
+        User student = new User();
+        student.setId(2L);
+        student.setSkillLevel(1.0);
+
+        booking1.setType(BookingType.TRAINING);
+        booking1.setStatus(BookingStatus.COMPLETED);
+        booking1.setUser(student);
+        booking1.setScore(null);
+
+        UserDTO updatedStudentDTO = mock(UserDTO.class);
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking1));
+        when(userService.updateSkillLevel(2L, 0.40)).thenReturn(updatedStudentDTO);
+        when(bookingRepository.save(booking1)).thenReturn(booking1);
+        when(mapper.toDTO(booking1)).thenReturn(bookingDTO1);
+
+        CoachBookingDTO result = bookingService.evaluateTraining(1L, 10);
+
+        assertThat(result.booking()).isEqualTo(bookingDTO1);
+        assertThat(result.client()).isEqualTo(updatedStudentDTO);
+        assertThat(booking1.getScore()).isEqualTo("10");
+        verify(userService).updateSkillLevel(2L, 0.40);
+    }
+
+    @Test
+    void evaluateTraining_WhenScoreAboveFiveAndHighSkill_ShouldApplySmallerIncrease() {
+        User student = new User();
+        student.setId(2L);
+        student.setSkillLevel(4.5);
+
+        booking1.setType(BookingType.TRAINING);
+        booking1.setStatus(BookingStatus.COMPLETED);
+        booking1.setUser(student);
+
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking1));
+        when(userService.updateSkillLevel(2L, 0.05)).thenReturn(mock(UserDTO.class));
+        when(bookingRepository.save(booking1)).thenReturn(booking1);
+        when(mapper.toDTO(booking1)).thenReturn(bookingDTO1);
+
+        bookingService.evaluateTraining(1L, 10);
+
+        assertThat(booking1.getScore()).isEqualTo("10");
+        verify(userService).updateSkillLevel(2L, 0.05);
+    }
+
+    @Test
+    void evaluateTraining_WhenScoreBelowFive_ShouldApplyAsymmetricDecrease() {
+        User highStudent = new User();
+        highStudent.setId(2L);
+        highStudent.setSkillLevel(4.5);
+
+        booking1.setType(BookingType.TRAINING);
+        booking1.setStatus(BookingStatus.COMPLETED);
+        booking1.setUser(highStudent);
+
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking1));
+        when(userService.updateSkillLevel(2L, -0.45)).thenReturn(mock(UserDTO.class));
+        when(bookingRepository.save(booking1)).thenReturn(booking1);
+        when(mapper.toDTO(booking1)).thenReturn(bookingDTO1);
+
+        bookingService.evaluateTraining(1L, 0);
+
+        assertThat(booking1.getScore()).isEqualTo("0");
+        verify(userService).updateSkillLevel(2L, -0.45);
+    }
+
+    @Test
+    void evaluateTraining_WhenScoreIsFive_ShouldNotChangeSkillLevel() {
+        User student = new User();
+        student.setId(2L);
+        student.setSkillLevel(2.5);
+
+        booking1.setType(BookingType.TRAINING);
+        booking1.setStatus(BookingStatus.COMPLETED);
+        booking1.setUser(student);
+
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking1));
+        when(userService.updateSkillLevel(2L, 0.0)).thenReturn(mock(UserDTO.class));
+        when(bookingRepository.save(booking1)).thenReturn(booking1);
+        when(mapper.toDTO(booking1)).thenReturn(bookingDTO1);
+
+        bookingService.evaluateTraining(1L, 5);
+
+        assertThat(booking1.getScore()).isEqualTo("5");
+        verify(userService).updateSkillLevel(2L, 0.0);
+    }
+
+    @Test
+    void evaluateTraining_WhenScoreOutOfRange_ShouldThrowBadRequest() {
+        assertThatThrownBy(() -> bookingService.evaluateTraining(1L, -1))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("between 0 and 10");
+
+        assertThatThrownBy(() -> bookingService.evaluateTraining(1L, 11))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("between 0 and 10");
+
+        verify(bookingRepository, never()).findById(anyLong());
+    }
+
+    @Test
+    void evaluateTraining_WhenBookingNotFound_ShouldThrowNotFound() {
+        when(bookingRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> bookingService.evaluateTraining(99L, 7))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Booking not found");
+    }
+
+    @Test
+    void evaluateTraining_WhenBookingIsNotTraining_ShouldThrowBadRequest() {
+        booking1.setType(BookingType.MATCH);
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking1));
+
+        assertThatThrownBy(() -> bookingService.evaluateTraining(1L, 7))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Only training sessions");
+    }
+
+    @Test
+    void evaluateTraining_WhenBookingIsPendingOrCancelled_ShouldThrowBadRequest() {
+        booking1.setType(BookingType.TRAINING);
+        booking1.setStatus(BookingStatus.PENDING);
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking1));
+
+        assertThatThrownBy(() -> bookingService.evaluateTraining(1L, 7))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Only completed training sessions");
+
+        booking1.setStatus(BookingStatus.CANCELLED);
+        assertThatThrownBy(() -> bookingService.evaluateTraining(1L, 7))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Cancelled trainings");
+    }
+
+    @Test
+    void evaluateTraining_WhenAlreadyEvaluated_ShouldThrowConflict() {
+        booking1.setType(BookingType.TRAINING);
+        booking1.setStatus(BookingStatus.COMPLETED);
+        booking1.setScore("8");
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking1));
+
+        assertThatThrownBy(() -> bookingService.evaluateTraining(1L, 9))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("already been evaluated");
+
+        verify(userService, never()).updateSkillLevel(anyLong(), anyDouble());
+    }
+
+    @Test
+    void getUserProgression_ShouldComputeAsymmetricProgressionAcrossSessions() {
+        User student = new User();
+        student.setId(2L);
+        student.setBaseLevel(1.0);
+        student.setSkillLevel(1.26);
+
+        Booking session1 = new Booking();
+        session1.setBookingDate(LocalDate.now().minusDays(10));
+        session1.setScore("10"); // 1.0 + 0.40 = 1.40
+
+        Booking session2 = new Booking();
+        session2.setBookingDate(LocalDate.now());
+        session2.setScore("0");  // 1.40 - 0.14 = 1.26
+
+        when(userService.getUserEntityById(2L)).thenReturn(student);
+        when(bookingRepository.findCompletedTrainingBookingsWithScore(2L))
+                .thenReturn(List.of(session1, session2));
+
+        List<UserProgressionDTO> progression = bookingService.getUserProgression(2L);
+
+        assertThat(progression).hasSize(3);
+        assertThat(progression.get(0).currentLevel()).isEqualTo(1.0);
+        assertThat(progression.get(1).currentLevel()).isEqualTo(1.40);
+        assertThat(progression.get(2).currentLevel()).isEqualTo(1.26);
     }
 }

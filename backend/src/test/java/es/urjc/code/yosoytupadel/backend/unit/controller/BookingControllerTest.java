@@ -12,6 +12,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -25,6 +26,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.hamcrest.Matchers.hasSize;
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpHeaders;
+import org.springframework.web.server.ResponseStatusException;
+import es.urjc.code.yosoytupadel.backend.dto.CoachBookingDTO;
+import es.urjc.code.yosoytupadel.backend.dto.UserDTO;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -221,5 +225,44 @@ class BookingControllerTest {
         mockMvc.perform(get("/api/v1/bookings/courts/1/availability").param("date", "invalid"))
                 .andExpect(status().isBadRequest());
         verify(bookingService, never()).getReservedCourtSlots(anyLong(), any());
+    }
+
+    @Test
+    void evaluateBooking_WhenValidScore_ShouldReturnOkWithCoachBookingDTO() throws Exception {
+        BookingDTO evaluatedBooking = new BookingDTO(
+                1L, LocalDate.now().minusDays(1), LocalTime.of(10, 0), LocalTime.of(12, 0),
+                35.0, BookingType.TRAINING, BookingStatus.COMPLETED, "8", 2L, null, 3L
+        );
+        CoachBookingDTO responseDTO = new CoachBookingDTO(evaluatedBooking, mock(UserDTO.class));
+        when(bookingService.evaluateTraining(1L, 8)).thenReturn(responseDTO);
+
+        mockMvc.perform(patch("/api/v1/bookings/1/evaluation")
+                        .param("score", "8")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.booking.id").value(1))
+                .andExpect(jsonPath("$.booking.score").value("8"));
+
+        verify(bookingService).evaluateTraining(1L, 8);
+    }
+
+    @Test
+    void evaluateBooking_WhenScoreParamMissing_ShouldReturn400() throws Exception {
+        mockMvc.perform(patch("/api/v1/bookings/1/evaluation")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+
+        verify(bookingService, never()).evaluateTraining(anyLong(), anyInt());
+    }
+
+    @Test
+    void evaluateBooking_WhenAlreadyEvaluated_ShouldReturn409() throws Exception {
+        when(bookingService.evaluateTraining(1L, 7))
+                .thenThrow(new ResponseStatusException(HttpStatus.CONFLICT, "This training session has already been evaluated."));
+
+        mockMvc.perform(patch("/api/v1/bookings/1/evaluation")
+                        .param("score", "7")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isConflict());
     }
 }

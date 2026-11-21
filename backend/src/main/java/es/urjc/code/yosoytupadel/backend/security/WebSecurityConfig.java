@@ -106,6 +106,7 @@ public class WebSecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/bookings/coach").hasRole("COACH")
                 .requestMatchers(HttpMethod.GET, "/api/v1/bookings/*").hasAnyRole("USER", "ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/v1/bookings").hasRole("USER")
+                .requestMatchers(HttpMethod.PATCH, "/api/v1/bookings/*/evaluation").hasAnyRole("COACH", "ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/api/v1/bookings/**").hasAnyRole("USER", "ADMIN", "COACH")
                 .requestMatchers(HttpMethod.DELETE, "/api/v1/bookings/**").hasRole("ADMIN")
 

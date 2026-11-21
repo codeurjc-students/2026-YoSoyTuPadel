@@ -12,6 +12,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import es.urjc.code.yosoytupadel.backend.dto.CoachBookingDTO;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -159,5 +161,58 @@ class BookingServiceIntegrationTest extends BaseIntegrationTest {
         assertThat(exceptions.get(0).getCause())
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Este horario ya está reservado actualmente");
+    }
+
+    @Test
+    void evaluateTraining_ShouldPersistScoreUpdateStudentLevelAndPreventReevaluation() {
+        User student = new User();
+        student.setName("Progression Student");
+        student.setEmail("prog@test.com");
+        student.setEncodedPassword("pass");
+        student.setRole(UserRole.USER);
+        student.setBaseLevel(1.0);
+        student.setSkillLevel(1.0);
+        student = userRepository.save(student);
+
+        User coach = new User();
+        coach.setName("Coach Test");
+        coach.setEmail("coach@test.com");
+        coach.setEncodedPassword("pass");
+        coach.setRole(UserRole.COACH);
+        coach.setSkillLevel(4.0);
+        coach = userRepository.save(coach);
+
+        Booking training = new Booking(
+                LocalDate.now().minusDays(1),
+                LocalTime.of(10, 0),
+                LocalTime.of(12, 0),
+                35.0,
+                student,
+                coach
+        );
+        training.setStatus(BookingStatus.COMPLETED);
+        training = bookingRepository.save(training);
+
+        // When: Coach evaluates student with score 10 (1.0 + 0.40 = 1.40)
+        CoachBookingDTO result = bookingService.evaluateTraining(training.getId(), 10);
+
+        // Then: DTO and persisted entities reflect the new score and skill level
+        assertThat(result.booking().score()).isEqualTo("10");
+        assertThat(result.client().skillLevel()).isEqualTo(1.40);
+
+        Booking persistedBooking = bookingRepository.findById(training.getId()).orElseThrow();
+        User persistedStudent = userRepository.findById(student.getId()).orElseThrow();
+        assertThat(persistedBooking.getScore()).isEqualTo("10");
+        assertThat(persistedStudent.getSkillLevel()).isEqualTo(1.40);
+
+        // Progression curve includes the evaluated session
+        var progression = bookingService.getUserProgression(student.getId());
+        assertThat(progression.get(progression.size() - 1).currentLevel()).isEqualTo(1.40);
+
+        // Re-evaluating the same booking throws 409 Conflict
+        long trainingId = training.getId();
+        assertThatThrownBy(() -> bookingService.evaluateTraining(trainingId, 7))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("already been evaluated");
     }
 }
