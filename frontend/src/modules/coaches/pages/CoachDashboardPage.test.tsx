@@ -261,4 +261,99 @@ describe('CoachDashboardPage', () => {
     expect(await screen.findByText('Unable to cancel booking')).toBeInTheDocument();
     expect(authService.getErrorMessage).toHaveBeenCalledWith(error);
   });
+
+  it('orders unevaluated bookings first by recency and propagates updated skill level across all bookings of the same student', async () => {
+    const unorderedBookings = [
+      {
+        booking: {
+          id: 21,
+          bookingDate: '2026-11-20',
+          startTime: '10:00:00',
+          endTime: '11:00:00',
+          bookingPrice: 35,
+          status: 'COMPLETED' as const,
+          score: '7',
+        },
+        client: { id: 2, name: null, nickname: 'bob', skillLevel: 2.0 },
+      },
+      {
+        booking: {
+          id: 22,
+          bookingDate: '2026-11-18',
+          startTime: '10:00:00',
+          endTime: '11:00:00',
+          bookingPrice: 35,
+          status: 'COMPLETED' as const,
+          score: null,
+        },
+        client: { id: 2, name: null, nickname: 'bob', skillLevel: 2.0 },
+      },
+      {
+        booking: {
+          id: 23,
+          bookingDate: '2026-11-19',
+          startTime: '10:00:00',
+          endTime: '11:00:00',
+          bookingPrice: 35,
+          status: 'COMPLETED' as const,
+          score: null,
+        },
+        client: { id: 3, name: 'Carlos Ruiz', nickname: 'carlos', skillLevel: 3.1 },
+      },
+    ];
+
+    vi.mocked(api.get).mockResolvedValue({ data: unorderedBookings });
+    vi.mocked(api.patch).mockResolvedValue({
+      data: {
+        booking: {
+          id: 22,
+          bookingDate: '2026-11-18',
+          startTime: '10:00:00',
+          endTime: '11:00:00',
+          bookingPrice: 35,
+          type: 'TRAINING',
+          status: 'COMPLETED',
+          score: '8',
+          userId: 2,
+          courtId: null,
+          coachId: 5,
+        },
+        client: {
+          id: 2,
+          name: null,
+          nickname: 'bob',
+          skillLevel: 2.15,
+        },
+      },
+    });
+
+    renderDashboard();
+
+    await screen.findByText('Carlos Ruiz');
+
+    // Initial order: most recent unevaluated (Carlos, Nov 19) -> older unevaluated (bob, Nov 18) -> evaluated (bob, Nov 20)
+    const initialCards = screen.getAllByText(/^(Carlos Ruiz|bob)/).map((el) => el.textContent);
+    expect(initialCards).toEqual([
+      'Carlos Ruiz - Nivel 3.10',
+      'bob - Nivel 2.00',
+      'bob - Nivel 2.00',
+    ]);
+
+    // Evaluate bob's unevaluated session (second "CALIFICAR ALUMNO" button)
+    const evaluateButtons = screen.getAllByRole('button', { name: 'CALIFICAR ALUMNO' });
+    fireEvent.click(evaluateButtons[1]);
+    fireEvent.click(screen.getByRole('button', { name: '8' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar calificación' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+
+    // Both of bob's cards update to level 2.15 and the newly evaluated session moves after Carlos
+    expect(screen.queryByText('- Nivel 2.00')).not.toBeInTheDocument();
+    const updatedCards = screen.getAllByText(/^(Carlos Ruiz|bob)/).map((el) => el.textContent);
+    expect(updatedCards).toEqual([
+      'Carlos Ruiz - Nivel 3.10',
+      'bob - Nivel 2.15',
+      'bob - Nivel 2.15',
+    ]);
+  });
 });
