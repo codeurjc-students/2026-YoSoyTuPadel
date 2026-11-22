@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button as MuiButton, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../auth/hooks/useAuth';
 import type { AuthUser } from '../../auth/services/authService';
 
@@ -47,8 +47,11 @@ function Navbar() {
     await logout();
   };
 
+  const { pathname } = useLocation();
+  const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/auth';
+
   return (
-    <>
+
       <header className="sticky top-0 z-40 border-b border-brand-line/80 bg-white/95 shadow-sm backdrop-blur">
       <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link
@@ -83,7 +86,7 @@ function Navbar() {
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
-          {isAuthenticated ? (
+          {isAuthenticated && (
             <>
               <Link
                 to="/profile"
@@ -107,7 +110,8 @@ function Navbar() {
                 </svg>
               </button>
             </>
-          ) : (
+          )}
+          {!isAuthenticated && !isAuthPage && (
             <div className="flex items-center gap-2">
               <Link
                 to="/login?mode=register"
@@ -164,7 +168,7 @@ function Navbar() {
                 {link.label}
               </NavLink>
             ))}
-            {isAuthenticated ? (
+            {isAuthenticated && (
               <>
                 <Link
                   to="/profile"
@@ -181,7 +185,8 @@ function Navbar() {
                   Cerrar sesión
                 </button>
               </>
-            ) : (
+            )}
+            {!isAuthenticated && !isAuthPage && (
               <>
                 <Link
                   to="/login"
@@ -227,7 +232,7 @@ function Navbar() {
         </DialogActions>
       </Dialog>
     </header>
-    </>
+
   );
 }
 
