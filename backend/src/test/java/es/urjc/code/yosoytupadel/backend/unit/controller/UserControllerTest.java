@@ -16,8 +16,10 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpHeaders;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,6 +28,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.List;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.Mockito.*;
@@ -123,9 +126,9 @@ class UserControllerTest {
     @Test
     void createUser_ShouldReturnLocationHeader() throws Exception {
         UserDTO newUser = new UserDTO(null, "Test User", "test-user", "test@example.com",
-                "password", null, null, null, 0, java.util.List.of(), null);
+                "password", null, null, null, 0, java.util.List.of(), null, null, null);
         UserDTO savedUser = new UserDTO(5L, "Test User", "test-user", "test@example.com",
-                null, null, null, null, 0, java.util.List.of(), null);
+                null, null, null, null, 0, java.util.List.of(), null, null, null);
         when(userService.createUser(any(UserDTO.class))).thenReturn(savedUser);
 
         mockMvc.perform(post("/api/v1/users/new")
@@ -398,5 +401,82 @@ class UserControllerTest {
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header()
                         .string(HttpHeaders.CONTENT_TYPE, "image/jpeg"));
         verify(userService).getUserImage(1L);
+    }
+
+    @Test
+    void createUser_WithInitialLevelingAnswers_ShouldDeserializeAndReturnCalculatedLevel() throws Exception {
+        String requestJson = """
+                {
+                  "name": "Jugador Medio",
+                  "nickname": "medio",
+                  "email": "medio@example.com",
+                  "password": "password",
+                  "firstTimePlayer": false,
+                  "levelingAnswers": [2, 3, 2, 1, 2]
+                }
+                """;
+        UserDTO savedUser = new UserDTO(6L, "Jugador Medio", "medio", "medio@example.com",
+                null, null, 2.25, null, 0, List.of(), null, null, null);
+        when(userService.createUser(any(UserDTO.class))).thenReturn(savedUser);
+
+        mockMvc.perform(post("/api/v1/users/new")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestJson))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.skillLevel").value(2.25));
+
+        verify(userService).createUser(argThat(dto ->
+                dto.firstTimePlayer()!=null && !dto.firstTimePlayer() && List.of(2, 3, 2, 1, 2).equals(dto.levelingAnswers())
+        ));
+    }
+
+    @Test
+    void createUser_WhenFirstTimePlayer_ShouldDeserializeFlagAndReturnZeroLevel() throws Exception {
+        String requestJson = """
+                {
+                  "name": "Nuevo Jugador",
+                  "nickname": "debutante",
+                  "email": "debutante@example.com",
+                  "password": "password",
+                  "firstTimePlayer": true
+                }
+                """;
+        UserDTO savedUser = new UserDTO(7L, "Nuevo Jugador", "debutante", "debutante@example.com",
+                null, null, 0.0, null, 0, List.of(), null, null, null);
+        when(userService.createUser(any(UserDTO.class))).thenReturn(savedUser);
+
+        mockMvc.perform(post("/api/v1/users/new")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestJson))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.skillLevel").value(0.0));
+
+        verify(userService).createUser(argThat(dto ->
+                dto.firstTimePlayer()==true && dto.levelingAnswers() == null
+        ));
+    }
+
+    @Test
+    void createUser_WhenLevelingAnswersAreInvalid_ShouldReturnBadRequest() throws Exception {
+        String invalidJson = """
+                {
+                  "name": "Jugador Invalido",
+                  "nickname": "invalido",
+                  "email": "invalido@example.com",
+                  "password": "password",
+                  "firstTimePlayer": false,
+                  "levelingAnswers": [1, 2]
+                }
+                """;
+        when(userService.createUser(any(UserDTO.class)))
+                .thenThrow(new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Initial leveling questionnaire requires exactly 5 answers"
+                ));
+
+        mockMvc.perform(post("/api/v1/users/new")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidJson))
+                .andExpect(status().isBadRequest());
     }
 }

@@ -28,5 +28,13 @@ public record UserDTO(
         Long racketId,
         Integer racketUsages,
         List<RacketDTO> racketHistory,
-        Double sessionPrice
+        Double sessionPrice,
+
+        @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+        @Schema(description = "Whether this is the user's first time playing padel", accessMode = Schema.AccessMode.WRITE_ONLY)
+        Boolean firstTimePlayer,
+
+        @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+        @Schema(description = "Answers (0-4) to the 5 initial leveling questions", accessMode = Schema.AccessMode.WRITE_ONLY)
+        List<Integer> levelingAnswers
 ) {}
