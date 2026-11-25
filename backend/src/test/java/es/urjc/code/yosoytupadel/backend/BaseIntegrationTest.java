@@ -4,16 +4,16 @@ package es.urjc.code.yosoytupadel.backend;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.mysql.MySQLContainer;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = "spring.profiles.active=test")
 public abstract class BaseIntegrationTest {
 
 
-    static final MySQLContainer<?> mysql;
+    static final MySQLContainer mysql;
 
     static {
-        mysql = new MySQLContainer<>("mysql:8.0")
+        mysql = new MySQLContainer("mysql:8.0")
                 .withDatabaseName("testdb")
                 .withUsername("test")
                 .withPassword("test");

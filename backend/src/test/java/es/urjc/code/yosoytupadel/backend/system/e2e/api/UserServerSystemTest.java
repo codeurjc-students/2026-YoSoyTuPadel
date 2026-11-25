@@ -139,4 +139,62 @@ class UserServerSystemTest extends BaseIntegrationTest {
                 .then()
                 .statusCode(403);
     }
+
+    @Test
+    void shouldValidateRegistrationAvailabilityAndCreatePlayersWithInitialSkillLevel() {
+        // Unauthenticated availability check succeeds when email and nickname are free
+        given()
+                .queryParam("email", "debutante@yosoytupadel.com")
+                .queryParam("nickname", "debutante")
+                .when()
+                .get("/api/v1/users/availability")
+                .then()
+                .statusCode(204);
+
+        // Register first-time player -> skillLevel 0.0
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                        {
+                          "name": "Nuevo Debutante",
+                          "nickname": "debutante",
+                          "email": "debutante@yosoytupadel.com",
+                          "password": "Password123",
+                          "firstTimePlayer": true
+                        }
+                        """)
+                .when()
+                .post("/api/v1/users/new")
+                .then()
+                .statusCode(201)
+                .body("skillLevel", equalTo(0.0f));
+
+        // Repeated nickname is rejected with 409 before and during registration
+        given()
+                .queryParam("email", "otro@yosoytupadel.com")
+                .queryParam("nickname", "debutante")
+                .when()
+                .get("/api/v1/users/availability")
+                .then()
+                .statusCode(409);
+
+        // Register experienced player -> 0.25 + (2 + 3 + 2 + 1 + 2) * 0.20 = 2.25
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                        {
+                          "name": "Jugador Experimentado",
+                          "nickname": "experimentado",
+                          "email": "experimentado@yosoytupadel.com",
+                          "password": "Password123",
+                          "firstTimePlayer": false,
+                          "levelingAnswers": [2, 3, 2, 1, 2]
+                        }
+                        """)
+                .when()
+                .post("/api/v1/users/new")
+                .then()
+                .statusCode(201)
+                .body("skillLevel", equalTo(2.25f));
+    }
 }

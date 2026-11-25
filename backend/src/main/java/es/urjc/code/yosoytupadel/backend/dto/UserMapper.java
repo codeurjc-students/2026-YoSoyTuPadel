@@ -11,6 +11,8 @@ public interface UserMapper {
 
     @Mapping(source = "racket.id", target = "racketId")
     @Mapping(target = "password", ignore = true)
+    @Mapping(target = "firstTimePlayer", ignore = true)
+    @Mapping(target = "levelingAnswers", ignore = true)
     UserDTO toDTO(User user);
 
     List<UserDTO> toDTOs(Collection<User> users);

@@ -359,6 +359,7 @@ class UserServiceTest {
         User newUser = new User();
         when(studentDTO.email()).thenReturn("new@example.com");
         when(studentDTO.password()).thenReturn("password");
+        when(studentDTO.firstTimePlayer()).thenReturn(null);
         when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
         when(userMapper.toDomain(studentDTO)).thenReturn(newUser);
         when(passwordEncoder.encode("password")).thenReturn("encoded");
@@ -371,6 +372,7 @@ class UserServiceTest {
         // Then
         assertThat(result).isEqualTo(studentDTO);
         assertThat(newUser.getSkillLevel()).isEqualTo(1.0);
+        assertThat(newUser.getBaseLevel()).isEqualTo(1.0);
         assertThat(newUser.getRole()).isEqualTo(UserRole.USER);
         assertThat(newUser.getEncodedPassword()).isEqualTo("encoded");
         verify(userRepository).save(newUser);
@@ -533,7 +535,7 @@ class UserServiceTest {
         // When / Then
         assertThatThrownBy(() -> userService.updateUser(2L, updateDTO))
                 .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("Email is already in use.");
+                .hasMessageContaining("Email is already in use");
     }
 
     @Test
@@ -552,5 +554,89 @@ class UserServiceTest {
 
         // Verify that a default image has been assigned
         assertThat(student.getProfilePicture()).isNotNull();
+    }
+
+    @Test
+    void createUser_WhenFirstTimePlayer_ShouldSetSkillLevelToZero() {
+        // Given
+        UserDTO registerDTO = new UserDTO(
+                null, "Nuevo Jugador", "nuevo", "debutante@example.com", "password",
+                null, null, null, null, null, null, true, null
+        );
+        User newUser = new User();
+        when(userRepository.existsByEmail("debutante@example.com")).thenReturn(false);
+        when(userMapper.toDomain(registerDTO)).thenReturn(newUser);
+        when(passwordEncoder.encode("password")).thenReturn("encoded");
+        when(userRepository.save(newUser)).thenReturn(newUser);
+        when(userMapper.toDTO(newUser)).thenReturn(studentDTO);
+
+        // When
+        UserDTO result = userService.createUser(registerDTO);
+
+        // Then
+        assertThat(result).isEqualTo(studentDTO);
+        assertThat(newUser.getSkillLevel()).isZero();
+        assertThat(newUser.getBaseLevel()).isZero();
+        verify(userRepository).save(newUser);
+    }
+
+    @Test
+    void createUser_WhenExperiencedPlayerWithAnswers_ShouldCalculateInitialSkillLevel() {
+        // Given: suma = 2 + 3 + 2 + 1 + 2 = 10 -> 0.25 + (10 * 0.20) = 2.25
+        UserDTO registerDTO = new UserDTO(
+                null, "Jugador Medio", "medio", "medio@example.com", "password",
+                null, null, null, null, null, null, false, List.of(2, 3, 2, 1, 2)
+        );
+        User newUser = new User();
+        when(userRepository.existsByEmail("medio@example.com")).thenReturn(false);
+        when(userMapper.toDomain(registerDTO)).thenReturn(newUser);
+        when(passwordEncoder.encode("password")).thenReturn("encoded");
+        when(userRepository.save(newUser)).thenReturn(newUser);
+        when(userMapper.toDTO(newUser)).thenReturn(studentDTO);
+
+        // When
+        UserDTO result = userService.createUser(registerDTO);
+
+        // Then
+        assertThat(result).isEqualTo(studentDTO);
+        assertThat(newUser.getSkillLevel()).isEqualTo(2.25);
+        assertThat(newUser.getBaseLevel()).isEqualTo(2.25);
+        verify(userRepository).save(newUser);
+    }
+
+    @Test
+    void createUser_WhenAnswersCountIsInvalid_ShouldThrowBadRequest() {
+        // Given
+        UserDTO invalidDTO = new UserDTO(
+                null, "Jugador", "jug", "invalid@example.com", "password",
+                null, null, null, null, null, null, false, List.of(1, 2, 3)
+        );
+        when(userRepository.existsByEmail("invalid@example.com")).thenReturn(false);
+        when(userMapper.toDomain(invalidDTO)).thenReturn(new User());
+        when(passwordEncoder.encode("password")).thenReturn("encoded");
+
+        // When / Then
+        assertThatThrownBy(() -> userService.createUser(invalidDTO))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("exactly 5 answers");
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void createUser_WhenAnswerScoreOutOfRange_ShouldThrowBadRequest() {
+        // Given
+        UserDTO invalidScoreDTO = new UserDTO(
+                null, "Jugador", "jug", "outofrange@example.com", "password",
+                null, null, null, null, null, null, false, List.of(1, 2, 5, 2, 1)
+        );
+        when(userRepository.existsByEmail("outofrange@example.com")).thenReturn(false);
+        when(userMapper.toDomain(invalidScoreDTO)).thenReturn(new User());
+        when(passwordEncoder.encode("password")).thenReturn("encoded");
+
+        // When / Then
+        assertThatThrownBy(() -> userService.createUser(invalidScoreDTO))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("between 0 and 4");
+        verify(userRepository, never()).save(any());
     }
 }

@@ -97,7 +97,8 @@ describe('Core layout', () => {
     );
 
     expect(screen.getByRole('heading', { name: 'Inicia sesión' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Iniciar sesión' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Iniciar sesión' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Crear cuenta' })).not.toBeInTheDocument();
   });
 
   test('shows the current Spanish date and counts from the API', async () => {
@@ -127,6 +128,8 @@ describe('Core layout', () => {
     fireEvent.click(screen.getByRole('link', { name: 'Crear cuenta' }));
 
     expect(await screen.findByRole('heading', { name: 'Crea tu cuenta' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Iniciar sesión' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Crear cuenta' })).not.toBeInTheDocument();
   });
 
   test('opens the mobile menu and navigates to the rackets page', async () => {

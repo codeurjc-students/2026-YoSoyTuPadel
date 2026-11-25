@@ -73,6 +73,31 @@ function isPending(booking: CoachBooking) {
   return booking.booking.bookingDate >= todayValue && booking.booking.status === 'PENDING';
 }
 
+function hasBookingScore(booking: CoachBooking) {
+    const score = booking.booking.score;
+    return score !== null && score !== undefined && score.trim() !== '';
+}
+
+function isPendingEvaluation(booking: CoachBooking) {
+    return booking.booking.status === 'COMPLETED' && !hasBookingScore(booking);
+}
+
+function compareCompletedBookings(a: CoachBooking, b: CoachBooking) {
+    const aPendingEval = isPendingEvaluation(a);
+    const bPendingEval = isPendingEvaluation(b);
+
+    if (aPendingEval !== bPendingEval) {
+        return aPendingEval ? -1 : 1;
+    }
+
+    const dateComparison = b.booking.bookingDate.localeCompare(a.booking.bookingDate);
+    if (dateComparison !== 0) {
+        return dateComparison;
+    }
+
+    return b.booking.startTime.localeCompare(a.booking.startTime);
+}
+
 const SCORE_OPTIONS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 function getScoreDescription(score: number| null): string {
@@ -238,7 +263,7 @@ function CoachDashboardPage() {
   }, [user?.id]);
 
   const pendingBookings = useMemo(() => bookings.filter(isPending), [bookings]);
-  const completedBookings = useMemo(() => bookings.filter((booking) => !isPending(booking)), [bookings]);
+  const completedBookings = useMemo(() => bookings.filter((booking) => !isPending(booking)).sort(compareCompletedBookings), [bookings],);
 
   const cancelBooking = async () => {
     if (!bookingToCancel) return;
@@ -263,13 +288,29 @@ function CoachDashboardPage() {
     setIsEvaluating(true);
     try {
       const updated = await coachService.evaluateTraining(bookingToEvaluate.booking.id, selectedScore);
-      setBookings((current) => current.map((item) => item.booking.id === updated.booking.id
-          ? {
-            ...item,
-            booking: { ...item.booking, status: updated.booking.status, score: updated.booking.score },
-            client: { ...item.client, skillLevel: updated.client.skillLevel ?? item.client.skillLevel },
-          }
-          : item));
+        const targetClientId = updated.client.id ?? bookingToEvaluate.client.id;
+        const updatedSkillLevel = updated.client.skillLevel;
+
+        setBookings((current) =>
+            current.map((item) => {
+                const isEvaluatedBooking = item.booking.id === updated.booking.id;
+                const isSameClient = item.client.id === targetClientId;
+
+                if (!isEvaluatedBooking && !isSameClient) {
+                    return item;
+                }
+
+                return {
+                    booking: isEvaluatedBooking
+                        ? { ...item.booking, status: updated.booking.status, score: updated.booking.score }
+                        : item.booking,
+                    client:
+                        isSameClient && typeof updatedSkillLevel === 'number'
+                            ? { ...item.client, skillLevel: updatedSkillLevel }
+                            : item.client,
+                };
+            }),
+        );
       setBookingToEvaluate(null);
     } catch (error: unknown) {
       setLoadError(authService.getErrorMessage(error));

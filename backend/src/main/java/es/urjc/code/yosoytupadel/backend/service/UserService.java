@@ -32,14 +32,20 @@ import javax.sql.rowset.serial.SerialBlob;
 import jakarta.validation.Valid;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.sql.Blob;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 @Service
 public class UserService {
+
+    private static final String DEFAULT_PROFILE_IMAGE_PATH = "static/images/emptyImage.png";
+    private static final int LEVELING_QUESTIONS_COUNT = 5;
+    private static final int MIN_ANSWER_SCORE = 0;
+    private static final int MAX_ANSWER_SCORE = 4;
+
 
     @Autowired
     private UserRepository userRepository;
@@ -79,22 +85,27 @@ public class UserService {
 
     @Transactional
     public UserDTO createUser(UserDTO userDTO) {
-        if (existsByEmail(userDTO.email())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email is already in use");
-        }
+        validateRegistrationAvailability(userDTO.email(), userDTO.nickname());
 
         User user = userMapper.toDomain(userDTO);
+        if (user.getEmail() != null) {
+            user.setEmail(user.getEmail().trim());
+        }
+        if (user.getNickname() != null) {
+            user.setNickname(user.getNickname().trim());
+        }
+
         user.setEncodedPassword(passwordEncoder.encode(userDTO.password()));
         user.setRole(UserRole.USER);
         user.setRacket(null);
 
-        if (user.getSkillLevel() == null || user.getSkillLevel() == 0.0) {
-            user.setSkillLevel(1.0);
-        }
-        user.setBaseLevel(user.getSkillLevel());
+        double initialLevel = resolveInitialSkillLevel(userDTO);
+        user.setSkillLevel(initialLevel);
+        user.setBaseLevel(initialLevel);
+
 
         try {
-            ClassPathResource imgFileDefault = new ClassPathResource("static/images/emptyImage.png");
+            ClassPathResource imgFileDefault = new ClassPathResource(DEFAULT_PROFILE_IMAGE_PATH);
             try (InputStream inputStream = imgFileDefault.getInputStream()) {
                 byte[] imageBytes = inputStream.readAllBytes();
                 Blob imageBlob = new SerialBlob(imageBytes);
@@ -106,6 +117,54 @@ public class UserService {
 
         User savedUser = userRepository.save(user);
         return userMapper.toDTO(savedUser);
+    }
+
+    public void validateRegistrationAvailability(String email, String nickname) {
+        String normalizedEmail = email == null ? "" : email.trim();
+        String normalizedNickname = nickname == null ? "" : nickname.trim();
+
+        if (existsByEmail(normalizedEmail)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email is already in use");
+        }
+        if (!normalizedNickname.isEmpty() && userRepository.existsByNickname(normalizedNickname)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Nickname is already in use");
+        }
+    }
+
+    private double resolveInitialSkillLevel(UserDTO userDTO) {
+        if (userDTO.firstTimePlayer() != null) {
+            if (userDTO.firstTimePlayer()) {
+                return 0.0;
+            }
+            return calculateLevelFromAnswers(userDTO.levelingAnswers());
+        }
+        if (userDTO.skillLevel() != null && userDTO.skillLevel() > 0.0) {
+            return Math.clamp(userDTO.skillLevel(), 0.0, 5.0);
+        }
+        return 1.0;
+    }
+
+    private double calculateLevelFromAnswers(List<Integer> answers) {
+        if (answers == null || answers.size() != LEVELING_QUESTIONS_COUNT) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Initial leveling questionnaire requires exactly 5 answers"
+            );
+        }
+
+        int totalScore = 0;
+        for (Integer answer : answers) {
+            if (answer == null || answer < MIN_ANSWER_SCORE || answer > MAX_ANSWER_SCORE) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Each leveling answer must be between 0 and 4"
+                );
+            }
+            totalScore += answer;
+        }
+
+        double rawLevel = Math.round((0.25 + totalScore * 0.20) * 100.0) / 100.0;
+        return Math.clamp(rawLevel, 0.0, 5.0);
     }
 
     @Transactional
@@ -129,7 +188,7 @@ public class UserService {
             if (image != null && !image.isEmpty()) {
                 coach.setProfilePicture(BlobProxy.generateProxy(image.getInputStream(), image.getSize()));
             } else {
-                ClassPathResource defaultImage = new ClassPathResource("static/images/emptyImage.png");
+                ClassPathResource defaultImage = new ClassPathResource(DEFAULT_PROFILE_IMAGE_PATH);
                 try (InputStream inputStream = defaultImage.getInputStream()) {
                     coach.setProfilePicture(new SerialBlob(inputStream.readAllBytes()));
                 }
@@ -153,7 +212,14 @@ public class UserService {
         if (updateDTO.email() != null && !updateDTO.email().isBlank()) {
             Optional<User> existingUserByEmail = userRepository.findByEmail(updateDTO.email().trim());
             if (existingUserByEmail.isPresent() && !existingUserByEmail.get().getId().equals(existingUser.getId())) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Email is already in use.");
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Email is already in use");
+            }
+        }
+
+        if (updateDTO.nickname() != null && !updateDTO.nickname().isBlank()) {
+            Optional<User> existingUserByNickname = userRepository.findByNickname(updateDTO.nickname().trim());
+            if (existingUserByNickname.isPresent() && !existingUserByNickname.get().getId().equals(existingUser.getId())) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Nickname is already in use");
             }
         }
 
@@ -297,7 +363,7 @@ public class UserService {
     public void deleteUserImage(long id) {
         try {
             User user = getUserEntityById(id);
-            ClassPathResource defaultImage = new ClassPathResource("static/images/emptyImage.png");
+            ClassPathResource defaultImage = new ClassPathResource(DEFAULT_PROFILE_IMAGE_PATH);
             try (InputStream inputStream = defaultImage.getInputStream()) {
                 user.setProfilePicture(new SerialBlob(inputStream.readAllBytes()));
             }
