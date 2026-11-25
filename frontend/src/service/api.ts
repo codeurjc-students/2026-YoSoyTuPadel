@@ -2,6 +2,11 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { isLoginAuthenticationError, isLoginForbidden } from '../modules/auth/constants/authErrors';
 
+const API_ERROR_MESSAGES: Record<string, string> = {
+    'Email is already in use': 'El correo electrónico ya está en uso.',
+    'Nickname is already in use': 'El nombre de usuario ya está en uso.',
+};
+
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL || '/',
     withCredentials: true,
@@ -47,7 +52,10 @@ api.interceptors.response.use(
             const fallbackMessage = error.response
                 ? `No se pudo completar la petición (${error.response.status}).`
                 : 'No se pudo conectar con el servidor.';
-            const backendMessage = error.response?.data?.message ?? error.response?.data?.error;
+            const rawBackendMessage = error.response?.data?.message ?? error.response?.data?.error;
+            const backendMessage = rawBackendMessage
+                ? (API_ERROR_MESSAGES[rawBackendMessage] ?? rawBackendMessage)
+                : undefined;
             const isAlreadyRentedRacket = error.config?.method?.toLowerCase() === 'patch'
                 && /^\/api\/v1\/users\/\d+\/racket\/\d+$/.test(error.config.url ?? '')
                 && backendMessage?.toLowerCase().includes('already have a rented racket') === true;

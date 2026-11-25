@@ -48,7 +48,7 @@ describe('authService', () => {
     expect(api.get).not.toHaveBeenCalled();
   });
 
-  it('registers a user with the normalized request payload', async () => {
+  it('registers a first-time player with the normalized request payload', async () => {
     vi.mocked(api.post).mockResolvedValue({ data: {} });
 
     await expect(authService.register({
@@ -56,6 +56,7 @@ describe('authService', () => {
       nickname: ' alex ',
       email: ' alex@example.com ',
       password: 'secret',
+      firstTimePlayer: true,
     })).resolves.toBeUndefined();
 
     expect(api.post).toHaveBeenCalledWith('/api/v1/users/new', {
@@ -68,6 +69,49 @@ describe('authService', () => {
       skillLevel: null,
       racketId: null,
       racketUsages: 0,
+      firstTimePlayer: true,
+      levelingAnswers: null,
+    });
+  });
+
+  it('registers an experienced player with the 5 leveling answers', async () => {
+    vi.mocked(api.post).mockResolvedValue({ data: {} });
+
+    await expect(authService.register({
+      name: ' Alex Smith ',
+      nickname: ' alex ',
+      email: ' alex@example.com ',
+      password: 'secret',
+      firstTimePlayer: false,
+      levelingAnswers: [2, 3, 2, 1, 2],
+    })).resolves.toBeUndefined();
+
+    expect(api.post).toHaveBeenCalledWith('/api/v1/users/new', {
+      id: null,
+      name: 'Alex Smith',
+      nickname: 'alex',
+      email: 'alex@example.com',
+      password: 'secret',
+      role: null,
+      skillLevel: null,
+      racketId: null,
+      racketUsages: 0,
+      firstTimePlayer: false,
+      levelingAnswers: [2, 3, 2, 1, 2],
+    });
+  });
+
+  it('checks email and nickname availability with trimmed parameters', async () => {
+    vi.mocked(api.get).mockResolvedValue({ data: undefined });
+
+    await expect(authService.checkAvailability(' alex@example.com ', ' alex '))
+        .resolves.toBeUndefined();
+
+    expect(api.get).toHaveBeenCalledWith('/api/v1/users/availability', {
+      params: {
+        email: 'alex@example.com',
+        nickname: 'alex',
+      },
     });
   });
 
@@ -111,7 +155,24 @@ describe('authService', () => {
       { status: 500, statusText: 'Internal Server Error', headers: {}, config: requestConfig, data: { error: 'Service unavailable' } },
     );
 
+    const duplicateEmailError = new axios.AxiosError(
+        'Conflict',
+        'ERR_BAD_REQUEST',
+        undefined,
+        undefined,
+        { status: 409, statusText: 'Conflict', headers: {}, config: requestConfig, data: { message: 'Email is already in use' } },
+    );
+    const duplicateNicknameError = new axios.AxiosError(
+        'Conflict',
+        'ERR_BAD_REQUEST',
+        undefined,
+        undefined,
+        { status: 409, statusText: 'Conflict', headers: {}, config: requestConfig, data: { message: 'Nickname is already in use' } },
+    );
+
     expect(authService.getErrorMessage(unauthorizedError)).toBe('Invalid credentials');
     expect(authService.getErrorMessage(serverError)).toBe('Service unavailable');
+    expect(authService.getErrorMessage(duplicateEmailError)).toBe('El correo electrónico ya está en uso.');
+    expect(authService.getErrorMessage(duplicateNicknameError)).toBe('El nombre de usuario ya está en uso.');
   });
 });

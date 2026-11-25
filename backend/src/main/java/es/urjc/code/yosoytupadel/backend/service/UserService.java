@@ -85,11 +85,16 @@ public class UserService {
 
     @Transactional
     public UserDTO createUser(UserDTO userDTO) {
-        if (existsByEmail(userDTO.email())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email is already in use");
-        }
+        validateRegistrationAvailability(userDTO.email(), userDTO.nickname());
 
         User user = userMapper.toDomain(userDTO);
+        if (user.getEmail() != null) {
+            user.setEmail(user.getEmail().trim());
+        }
+        if (user.getNickname() != null) {
+            user.setNickname(user.getNickname().trim());
+        }
+
         user.setEncodedPassword(passwordEncoder.encode(userDTO.password()));
         user.setRole(UserRole.USER);
         user.setRacket(null);
@@ -112,6 +117,18 @@ public class UserService {
 
         User savedUser = userRepository.save(user);
         return userMapper.toDTO(savedUser);
+    }
+
+    public void validateRegistrationAvailability(String email, String nickname) {
+        String normalizedEmail = email == null ? "" : email.trim();
+        String normalizedNickname = nickname == null ? "" : nickname.trim();
+
+        if (existsByEmail(normalizedEmail)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email is already in use");
+        }
+        if (!normalizedNickname.isEmpty() && userRepository.existsByNickname(normalizedNickname)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Nickname is already in use");
+        }
     }
 
     private double resolveInitialSkillLevel(UserDTO userDTO) {
@@ -195,7 +212,14 @@ public class UserService {
         if (updateDTO.email() != null && !updateDTO.email().isBlank()) {
             Optional<User> existingUserByEmail = userRepository.findByEmail(updateDTO.email().trim());
             if (existingUserByEmail.isPresent() && !existingUserByEmail.get().getId().equals(existingUser.getId())) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Email is already in use.");
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Email is already in use");
+            }
+        }
+
+        if (updateDTO.nickname() != null && !updateDTO.nickname().isBlank()) {
+            Optional<User> existingUserByNickname = userRepository.findByNickname(updateDTO.nickname().trim());
+            if (existingUserByNickname.isPresent() && !existingUserByNickname.get().getId().equals(existingUser.getId())) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Nickname is already in use");
             }
         }
 

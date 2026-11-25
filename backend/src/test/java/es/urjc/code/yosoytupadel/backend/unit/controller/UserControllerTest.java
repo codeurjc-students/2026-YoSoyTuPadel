@@ -479,4 +479,27 @@ class UserControllerTest {
                         .content(invalidJson))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    void checkRegistrationAvailability_WhenAvailable_ShouldReturnNoContent() throws Exception {
+        doNothing().when(userService).validateRegistrationAvailability("nuevo@example.com", "nuevo");
+
+        mockMvc.perform(get("/api/v1/users/availability")
+                        .param("email", "nuevo@example.com")
+                        .param("nickname", "nuevo"))
+                .andExpect(status().isNoContent());
+
+        verify(userService).validateRegistrationAvailability("nuevo@example.com", "nuevo");
+    }
+
+    @Test
+    void checkRegistrationAvailability_WhenEmailOrNicknameIsTaken_ShouldReturnConflict() throws Exception {
+        doThrow(new ResponseStatusException(HttpStatus.CONFLICT, "Nickname is already in use."))
+                .when(userService).validateRegistrationAvailability("nuevo@example.com", "victorcc02");
+
+        mockMvc.perform(get("/api/v1/users/availability")
+                        .param("email", "nuevo@example.com")
+                        .param("nickname", "victorcc02"))
+                .andExpect(status().isConflict());
+    }
 }

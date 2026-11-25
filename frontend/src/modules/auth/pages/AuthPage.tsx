@@ -22,6 +22,8 @@ import { toast } from 'react-hot-toast';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import PadelBallField from '../../core/components/PadelBallField';
+import { InitialLevelingDialog } from '../components/InitialLevelingDialog';
+import { authService } from '../services/authService';
 
 type AuthMode = 'login' | 'register';
 
@@ -33,30 +35,53 @@ function AuthPage() {
   );
   const [name, setName] = useState('');
   const [nickname, setNickname] = useState('');
-  const [email, setEmail] = useState('');
+  const [loginEmail, setLoginEmail] = useState('');
+  const [registerEmail, setRegisterEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [isTermsDialogOpen, setIsTermsDialogOpen] = useState(false);
+  const [isLevelingDialogOpen, setIsLevelingDialogOpen] = useState(false);
+  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+  const [availabilityError, setAvailabilityError] = useState<string | null>(null);
   const { login, register, isLoading, error, clearError } = useAuth();
   const navigate = useNavigate();
   const isRegistering = mode === 'register';
 
+
+  const currentEmail = isRegistering ? registerEmail : loginEmail;
+
+  const handleEmailChange = (value: string) => {
+      if (isRegistering) {
+          setRegisterEmail(value);
+      } else {
+          setLoginEmail(value);
+      }
+  };
+
+  const displayError = availabilityError ?? error;
+  const isBusy = isLoading || isCheckingAvailability;
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     clearError();
+    setAvailabilityError(null);
 
     if (isRegistering) {
-      const created = await register({ name, nickname, email, password });
-      if (created) {
-        setMode('login');
-        setPassword('');
-      }
-      return;
+        setIsCheckingAvailability(true);
+        try {
+            await authService.checkAvailability(registerEmail, nickname);
+            setIsLevelingDialogOpen(true);
+        } catch (err: unknown) {
+            setAvailabilityError(authService.getErrorMessage(err));
+        } finally {
+            setIsCheckingAvailability(false);
+        }
+        return;
     }
 
     try {
-      if (await login({ email, password })) {
+      if (await login({ email: loginEmail, password })) {
         void navigate('/', { replace: true });
       } else {
         setPassword('');
@@ -67,8 +92,36 @@ function AuthPage() {
     }
   };
 
+    const handleCompleteLeveling = async (
+        firstTimePlayer: boolean,
+        levelingAnswers?: number[],
+    ) => {
+        const created = await register({
+            name,
+            nickname,
+            email: registerEmail,
+            password,
+            firstTimePlayer,
+            levelingAnswers,
+        });
+        setIsLevelingDialogOpen(false);
+        if (created) {
+            setLoginEmail(registerEmail.trim());
+            setName('');
+            setNickname('');
+            setRegisterEmail('');
+            setPassword('');
+            setAcceptedTerms(false);
+            setShowPassword(false);
+            setMode('login');
+        }
+    };
+
   const changeMode = (nextMode: AuthMode) => {
     clearError();
+    setAvailabilityError(null);
+    setPassword('');
+    setShowPassword(false);
     setMode(nextMode);
   };
 
@@ -257,8 +310,8 @@ function AuthPage() {
                       placeholder="tu@email.com"
                       required
                       fullWidth
-                      value={email}
-                      onChange={(event) => setEmail(event.target.value)}
+                      value={currentEmail}
+                      onChange={(event) => handleEmailChange(event.target.value)}
                     />
                     <TextField
                       id="auth-password"
@@ -335,18 +388,16 @@ function AuthPage() {
                         sx={{ alignItems: 'center', ml: 0 }}
                       />
                     )}
-
-                    {error && (
-                      <Typography role="alert" sx={{ borderRadius: 2, px: 2, py: 1.5, bgcolor: 'error.50', color: 'error.dark', fontSize: 13 }}>
-                        {error}
-                      </Typography>
-                    )}
-
+                      {displayError && (
+                          <Typography role="alert" sx={{ borderRadius: 2, px: 2, py: 1.5, bgcolor: 'error.50', color: 'error.dark', fontSize: 13 }}>
+                              {displayError}
+                          </Typography>
+                      )}
                     <Button
                       type="submit"
                       variant="contained"
                       color="error"
-                      disabled={isLoading || (isRegistering && !acceptedTerms)}
+                      disabled={isBusy || (isRegistering && !acceptedTerms)}
                       fullWidth
                       sx={{
                         mt: 0.5,
@@ -359,7 +410,7 @@ function AuthPage() {
                         '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 14px 28px rgba(230,0,18,.3)' },
                       }}
                     >
-                      {isLoading ? 'Un momento…' : isRegistering ? 'Crear cuenta' : 'Iniciar sesión'}
+                        {isBusy ? 'Un momento…' : isRegistering ? 'Crear cuenta' : 'Iniciar sesión'}
                     </Button>
                   </Stack>
                 </Box>
@@ -444,7 +495,7 @@ function AuthPage() {
                       5. Nivel de Juego (Skill Level)
                   </Typography>
                   <Typography variant="body2" component="ul" color="text.secondary" sx={{ pl: 3, m: 0, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                      <li>El sistema asigna un nivel de juego inicial en una escala del 1.0 al 5.0.</li>
+                      <li>El sistema asigna un nivel de juego inicial en una escala del 0.0 al 5.0.</li>
                       <li>Al participar en entrenamientos, aceptas que los Entrenadores evalúen tu rendimiento y puedan <strong>modificar tu nivel de juego</strong> en la plataforma para reflejar tu desempeño real.</li>
                   </Typography>
               </Box>
@@ -478,6 +529,12 @@ function AuthPage() {
             </Button>
           </DialogActions>
       </Dialog>
+        <InitialLevelingDialog
+            open={isLevelingDialogOpen}
+            isSubmitting={isLoading}
+            onCancel={() => setIsLevelingDialogOpen(false)}
+            onComplete={handleCompleteLeveling}
+        />
     </Box>
   );
 }

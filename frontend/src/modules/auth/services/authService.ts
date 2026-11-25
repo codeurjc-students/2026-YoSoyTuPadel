@@ -32,6 +32,8 @@ export interface LoginCredentials {
 export interface RegistrationDetails extends LoginCredentials {
   name: string;
   nickname: string;
+  firstTimePlayer: boolean;
+  levelingAnswers?: number[];
 }
 
 export interface UserUpdateDetails {
@@ -51,6 +53,13 @@ interface AuthResponse {
 }
 
 const USER_STORAGE_KEY = 'yosoytupadel.auth-user';
+
+const AUTH_ERROR_MESSAGES: Record<string, string> = {
+    'Email is already in use': 'El correo electrónico ya está en uso.',
+    'Nickname is already in use': 'El nombre de usuario ya está en uso.',
+    'Initial leveling questionnaire requires exactly 5 answers': 'El cuestionario inicial requiere exactamente 5 respuestas.',
+    'Each leveling answer must be between 0 and 4': 'Cada respuesta del cuestionario debe estar entre 0 y 4.',
+};
 
 function assertAuthSuccess(response: AuthResponse) {
   if (response.status !== 'SUCCESS') {
@@ -106,8 +115,19 @@ export const authService = {
       skillLevel: null,
       racketId: null,
       racketUsages: 0,
+      firstTimePlayer: details.firstTimePlayer,
+      levelingAnswers: details.firstTimePlayer ? null : (details.levelingAnswers ?? null),
     });
   },
+
+    async checkAvailability(email: string, nickname: string): Promise<void> {
+        await api.get('/api/v1/users/availability', {
+            params: {
+                email: email.trim(),
+                nickname: nickname.trim(),
+            },
+        });
+    },
 
   async getCurrentUser(): Promise<AuthUser> {
     const { data } = await api.get<AuthUser>('/api/v1/users/me');
@@ -172,9 +192,11 @@ export const authService = {
       return 'El correo o la contraseña son incorrectos.';
     }
     if (axios.isAxiosError<{ message?: string; error?: string }>(error)) {
-      return error.response?.data?.message
-        ?? error.response?.data?.error
-        ?? 'No se pudo conectar con el servidor. Inténtalo de nuevo.';
+        const rawMessage = error.response?.data?.message?? error.response?.data?.error;
+        if (rawMessage) {
+            return AUTH_ERROR_MESSAGES[rawMessage] ?? rawMessage;
+        }
+        return 'No se pudo conectar con el servidor. Inténtalo de nuevo.';
     }
     return error instanceof Error ? error.message : 'Se ha producido un error inesperado.';
   },

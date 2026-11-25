@@ -94,6 +94,19 @@ public class UserController {
         return ResponseEntity.created(location).body(responseDTO);
     }
 
+    @Operation(summary = "Check if email and nickname are available for registration")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Email and nickname are available", content = @Content),
+            @ApiResponse(responseCode = "409", description = "Email or nickname is already in use", content = @Content)
+    })
+    @GetMapping("/availability")
+    public ResponseEntity<Void> checkRegistrationAvailability(
+            @RequestParam String email,
+            @RequestParam String nickname) {
+        userService.validateRegistrationAvailability(email, nickname);
+        return ResponseEntity.noContent().build();
+    }
+
     @Operation(summary = "Create a new coach (Admin only)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Coach created successfully"),

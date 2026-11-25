@@ -22,6 +22,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findWithRacketHistoryByEmail(String email);
     Optional<User> findByNickname(String nickname);
     boolean existsByEmail(String email);
+    boolean existsByNickname(String nickname);
     List<User> findByRole(UserRole role);
     Page<User> findAllByRole(UserRole role, Pageable pageable);
     Optional<User> findByIdAndRole(Long id, UserRole role);

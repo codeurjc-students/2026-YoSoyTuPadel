@@ -111,6 +111,7 @@ public class WebSecurityConfig {
                 .requestMatchers(HttpMethod.DELETE, "/api/v1/bookings/**").hasRole("ADMIN")
 
                 // Users
+                .requestMatchers(HttpMethod.GET, "/api/v1/users/availability").permitAll()
                 .requestMatchers(HttpMethod.PATCH, "/api/v1/users/*/racket/*").hasRole("USER")
                 .requestMatchers(HttpMethod.DELETE, "/api/v1/users/*/racket").hasRole("USER")
                 .requestMatchers(HttpMethod.PATCH, "/api/v1/users/*/skill-level").hasAnyRole("COACH", "ADMIN")

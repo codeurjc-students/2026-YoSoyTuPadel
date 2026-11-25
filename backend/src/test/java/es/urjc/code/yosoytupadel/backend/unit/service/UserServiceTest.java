@@ -535,7 +535,7 @@ class UserServiceTest {
         // When / Then
         assertThatThrownBy(() -> userService.updateUser(2L, updateDTO))
                 .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("Email is already in use.");
+                .hasMessageContaining("Email is already in use");
     }
 
     @Test
