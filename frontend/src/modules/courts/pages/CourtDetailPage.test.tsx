@@ -11,6 +11,7 @@ vi.mock('../../../service/api', () => ({
   default: {
     get: vi.fn(),
     post: vi.fn(),
+    put: vi.fn(),
   },
 }));
 
@@ -279,5 +280,49 @@ describe('CourtDetailPage', () => {
     expect(await screen.findByText('Esta pista no tiene una ubicación disponible.')).toBeInTheDocument();
     expect(screen.queryByTestId('court-map')).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /cómo llegar/i })).not.toBeInTheDocument();
+  });
+
+  test('allows an admin to edit court coordinates and validates incomplete pairs', async () => {
+    vi.mocked(api.put).mockResolvedValue({
+      data: {
+        id: 4,
+        name: 'Pista central',
+        courtPrice: 8,
+        type: 'INDOOR',
+        surface: 'GLASS',
+        isAvailable: true,
+        latitude: 40.3358,
+        longitude: -3.8767,
+      },
+    });
+
+    renderCourtDetail({
+      ...signedInAuth,
+      user: { ...signedInAuth.user!, role: 'ADMIN' },
+    });
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Editar' }));
+
+    const latInput = await screen.findByLabelText(/Latitud/i);
+    const lngInput = screen.getByLabelText(/Longitud/i);
+    const saveButton = screen.getByRole('button', { name: 'Guardar cambios' });
+
+    expect(saveButton).toBeDisabled();
+
+    fireEvent.change(latInput, { target: { value: '40.3358' } });
+    expect(screen.getByText('Introduce tanto la latitud como la longitud, o deja ambas vacías.')).toBeInTheDocument();
+    expect(saveButton).toBeDisabled();
+
+    fireEvent.change(lngInput, { target: { value: '-3.8767' } });
+    expect(saveButton).toBeEnabled();
+
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      expect(api.put).toHaveBeenCalledWith('/api/v1/courts/4', expect.objectContaining({
+        latitude: 40.3358,
+        longitude: -3.8767,
+      }));
+    });
   });
 });

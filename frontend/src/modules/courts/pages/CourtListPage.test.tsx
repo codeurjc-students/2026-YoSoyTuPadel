@@ -6,12 +6,16 @@ import { AuthContext, type AuthContextValue } from '../../auth/context/authConte
 import { courtService, type CourtPage } from '../services/courtService';
 import CourtListPage from './CourtListPage';
 
-vi.mock('../services/courtService', () => ({
-  courtService: {
-    getCourts: vi.fn(),
-    createCourt: vi.fn(),
-  },
-}));
+vi.mock('../services/courtService', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../services/courtService')>();
+  return {
+    ...actual,
+    courtService: {
+      getCourts: vi.fn(),
+      createCourt: vi.fn(),
+    },
+  };
+});
 
 vi.mock('../components/CourtMiniMap', () => ({
   default: ({
@@ -218,5 +222,43 @@ describe('CourtListPage', () => {
     expect(maps[0]).toHaveAttribute('data-lat', '40.435');
     expect(maps[0]).toHaveAttribute('data-lng', '-3.703');
     expect(maps[0]).toHaveAttribute('data-interactive', 'false');
+  });
+
+  it('validates coordinate pairs and sends latitude and longitude when creating a court', async () => {
+    getCourtsMock.mockResolvedValue(successfulResponse);
+    vi.mocked(courtService.createCourt).mockResolvedValue({
+      id: 3,
+      name: 'Pista Retiro',
+      courtPrice: 18,
+      type: 'OUTDOOR',
+      surface: 'GLASS',
+      isAvailable: true,
+      latitude: 40.4153,
+      longitude: -3.6844,
+    });
+    renderCourtList({ ...defaultAuth, user: adminUser });
+
+    fireEvent.click(await screen.findByRole('button', { name: /Nueva pista/i }));
+    fireEvent.change(await screen.findByLabelText(/Nombre/i), { target: { value: 'Pista Retiro' } });
+    fireEvent.change(screen.getByLabelText(/Precio por hora/i), { target: { value: '18' } });
+
+    // Si solo se rellena una coordenada, muestra error y bloquea el avance
+    fireEvent.change(screen.getByLabelText(/Latitud/i), { target: { value: '40.4153' } });
+    expect(screen.getByText('Introduce tanto la latitud como la longitud, o deja ambas vacías.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Continuar/i })).toBeDisabled();
+
+    // Al completar la longitud, habilita y envía ambas como números
+    fireEvent.change(screen.getByLabelText(/Longitud/i), { target: { value: '-3.6844' } });
+    fireEvent.click(screen.getByRole('button', { name: /Continuar/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /Confirmar/i }));
+
+    expect(courtService.createCourt).toHaveBeenCalledWith({
+      name: 'Pista Retiro',
+      courtPrice: 18,
+      type: 'INDOOR',
+      surface: 'GLASS',
+      latitude: 40.4153,
+      longitude: -3.6844,
+    });
   });
 });

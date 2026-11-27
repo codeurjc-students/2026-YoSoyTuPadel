@@ -38,6 +38,54 @@ export interface BookingDTO {
   courtId: number;
 }
 
+export interface ParsedCoordinates {
+  latitude: number | null;
+  longitude: number | null;
+  isValid: boolean;
+  error: string | null;
+}
+
+export function parseCoordinates(latInput: string, lngInput: string): ParsedCoordinates {
+  const latTrimmed = latInput.trim();
+  const lngTrimmed = lngInput.trim();
+
+  if (latTrimmed === '' && lngTrimmed === '') {
+    return { latitude: null, longitude: null, isValid: true, error: null };
+  }
+
+  if (latTrimmed === '' || lngTrimmed === '') {
+    return {
+      latitude: null,
+      longitude: null,
+      isValid: false,
+      error: 'Introduce tanto la latitud como la longitud, o deja ambas vacías.',
+    };
+  }
+
+  const latitude = Number(latTrimmed);
+  const longitude = Number(lngTrimmed);
+
+  if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90) {
+    return {
+      latitude: null,
+      longitude: null,
+      isValid: false,
+      error: 'La latitud debe estar entre -90 y 90.',
+    };
+  }
+
+  if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
+    return {
+      latitude: null,
+      longitude: null,
+      isValid: false,
+      error: 'La longitud debe estar entre -180 y 180.',
+    };
+  }
+
+  return { latitude, longitude, isValid: true, error: null };
+}
+
 export const courtService = {
   async createCourt(details: Omit<CourtDTO, 'id' | 'isAvailable'>): Promise<CourtDTO> {
     const { data } = await api.post<CourtDTO>('/api/v1/courts', {

@@ -23,7 +23,7 @@ import { AccessTimeRounded as AccessTimeRoundedIcon } from '@mui/icons-material'
 import DirectionsRoundedIcon from '@mui/icons-material/DirectionsRounded';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../auth/hooks/useAuth';
-import { courtService, type CourtDTO } from '../services/courtService';
+import { courtService, parseCoordinates, type CourtDTO } from '../services/courtService';
 import CourtMap from '../components/CourtMiniMap';
 
 const timeSlots = Array.from({ length: 13 }, (_, index) => `${String(index + 9).padStart(2, '0')}:00`);
@@ -84,6 +84,11 @@ function hasCoordinates(court: CourtDTO): court is CourtDTO & { latitude: number
     && Number.isFinite(court.longitude);
 }
 
+interface CourtEditForm extends CourtDTO {
+    latitudeInput: string;
+    longitudeInput: string;
+}
+
 function CourtDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
@@ -110,7 +115,7 @@ function CourtDetailPage() {
   const [availabilityErrorDate, setAvailabilityErrorDate] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [editForm, setEditForm] = useState<CourtDTO | null>(null);
+  const [editForm, setEditForm] = useState<CourtEditForm | null>(null);
   const dayListRef = useRef<HTMLDivElement | null>(null);
   const selectedDay = bookingDays.find((date) => formatDate(date) === selectedDate);
   const reservedSlots = availability?.date === selectedDate ? availability.slots : [];
@@ -127,12 +132,19 @@ function CourtDetailPage() {
       && time <= `${String(currentTime.getHours()).padStart(2, '0')}:${String(currentTime.getMinutes()).padStart(2, '0')}`;
     return !reservedSlots.includes(time) && !isPast;
   });
-  const hasCourtChanges = Boolean(editForm && court && (
+
+  const parsedEditCoords = editForm
+    ? parseCoordinates(editForm.latitudeInput, editForm.longitudeInput)
+    : { latitude: null, longitude: null, isValid: true, error: null };
+
+  const hasCourtChanges = Boolean(editForm && court && parsedEditCoords.isValid &&  editForm.name.trim() !== '' && Number.isFinite(editForm.courtPrice) && editForm.courtPrice >= 0 &&(
     editForm.name !== court.name
     || editForm.courtPrice !== court.courtPrice
     || editForm.type !== court.type
     || editForm.surface !== court.surface
     || editForm.isAvailable !== court.isAvailable
+    || parsedEditCoords.latitude !== (court.latitude ?? null)
+    || parsedEditCoords.longitude !== (court.longitude ?? null)
   ));
 
   useEffect(() => {
@@ -213,9 +225,18 @@ function CourtDetailPage() {
   };
 
   const saveCourt = async () => {
-    if (!editForm) return;
+    if (!editForm || !parsedEditCoords.isValid) return;
     try {
-      const updated = await courtService.updateCourt(editForm);
+      const updated = await courtService.updateCourt({
+          id: editForm.id,
+          name: editForm.name,
+          courtPrice: editForm.courtPrice,
+          type: editForm.type,
+          surface: editForm.surface,
+          isAvailable: editForm.isAvailable,
+          latitude: parsedEditCoords.latitude,
+          longitude: parsedEditCoords.longitude,
+      });
       setCourt(updated);
       setEditOpen(false);
       setSnackbar({ open: true, message: 'Pista actualizada correctamente', severity: 'success' });
@@ -264,7 +285,7 @@ function CourtDetailPage() {
         <Grid container spacing={{ xs: 2.5, md: 3 }}  sx={{ maxWidth: 1400, mx: 'auto', alignItems:'stretch' }}>
           <Grid size={{ xs: 12, md: 4 }} sx={{ order: { xs: 1, md: 1 } }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, height: '100%' }}>
-              <Paper elevation={2} sx={{ p: { xs: 2.25, sm: 3 }, borderRadius: 3 }}>
+              <Paper elevation={0} sx={{ p: { xs: 2.25, sm: 3 }, borderRadius: 4, boxShadow: '0 12px 32px rgba(17, 19, 24, 0.08)' }}>
                 <Box sx={{
                   display: 'flex',
                   flexDirection: { xs: 'column', sm: 'row' },
@@ -283,20 +304,40 @@ function CourtDetailPage() {
                     <Typography variant="caption" sx={{ color: '#626875' }}>por hora</Typography>
                   </Box>
                 </Box>
-                <Grid container spacing={2} sx={{ mt: 2, justifyContent: 'center' }}>
+                <Grid container spacing={1.25} sx={{ mt: 2, justifyContent: 'center' }}>
                   {[
                     { title: 'Modalidad', value: courtTypeLabel(court.type) },
                     { title: 'Tipo', value: surfaceLabel(court.surface) },
                     { title: 'Estado', value: court.isAvailable ? 'Disponible' : 'No disponible' },
                   ].map(({ title, value }) => (
-                    <Grid key={title} size={{ xs: 12, sm: 4 }}>
-                      <Box sx={{ height: '100%', p: 1.5, bgcolor: '#f0f1f4', borderRadius: 2, textAlign: 'center' }}>
-                        <Typography variant="caption" sx={{ display: 'block', color: title === 'Estado' && !court.isAvailable ? 'error.main' : '#626875', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', whiteSpace: 'normal' }}>
-                          {title}
-                        </Typography>
-                        <Typography variant="body2" sx={{ mt: 0.4, color: title === 'Estado' && !court.isAvailable ? 'error.main' : '#17191e', fontWeight: title === 'Estado' && !court.isAvailable ? 900 : 700, whiteSpace: 'normal' }}>
-                          {value}
-                        </Typography>
+                    <Grid key={title} size={{ xs: 12, sm: 4, md: 12, lg: 4 }}>
+                        <Box sx={{ height: '100%', px: 1, py: 1.5, bgcolor: '#f0f1f4', borderRadius: 3, textAlign: 'center', minWidth: 0 }}>
+                            <Typography
+                                variant="caption"
+                                sx={{
+                                    display: 'block',
+                                    color: title === 'Estado' && !court.isAvailable ? 'error.main' : '#626875',
+                                    fontSize: '0.68rem',
+                                    fontWeight: 800,
+                                    letterSpacing: '0.06em',
+                                    textTransform: 'uppercase',
+                                    overflowWrap: 'anywhere',
+                                }}
+                            >
+                                {title}
+                            </Typography>
+                            <Typography
+                                variant="body2"
+                                sx={{
+                                    mt: 0.4,
+                                    color: title === 'Estado' && !court.isAvailable ? 'error.main' : '#17191e',
+                                    fontSize: '0.825rem',
+                                    lineHeight: 1.25,
+                                    fontWeight: title === 'Estado' && !court.isAvailable ? 900 : 700,
+                                }}
+                            >
+                                {value}
+                            </Typography>
                       </Box>
                     </Grid>
                   ))}
@@ -306,7 +347,7 @@ function CourtDetailPage() {
           </Grid>
 
           <Grid size={{ xs: 12, md: 4 }} sx={{ order: { xs: 3, md: 3 } }}>
-            <Paper elevation={3} sx={{ height: '100%', overflow: 'hidden', borderRadius: 3 }}>
+            <Paper elevation={0} sx={{ height: '100%', overflow: 'hidden', borderRadius: 4, boxShadow: '0 12px 32px rgba(17, 19, 24, 0.08)' }}>
               {hasCoordinates(court) ? (
                 <>
                   <Box sx={{ height: { xs: 300, sm: 360, md: 420 } }}>
@@ -325,14 +366,21 @@ function CourtDetailPage() {
                       variant="contained"
                       color="error"
                       startIcon={<DirectionsRoundedIcon />}
-                      sx={{ borderRadius: 2, fontWeight: 800, textTransform: 'none' }}
+                      sx={{
+                        borderRadius: 3,
+                        bgcolor: '#e60012',
+                        boxShadow: '0 8px 20px rgba(230,0,18,.22)',
+                        '&:hover': { bgcolor: '#c4000f' },
+                        fontWeight: 800,
+                        textTransform: 'none',
+                      }}
                     >
                       Cómo llegar
                     </Button>
                   </Box>
                 </>
               ) : (
-                <Alert severity="info" sx={{ m: 2, borderRadius: 2 }}>
+                <Alert severity="info" sx={{ m: 2, borderRadius: 3 }}>
                   Esta pista no tiene una ubicación disponible.
                 </Alert>
               )}
@@ -341,11 +389,12 @@ function CourtDetailPage() {
 
           <Grid size={{ xs: 12, md: 4 }} sx={{ display: isAdmin ? 'none' : undefined, order: { xs: 2, md: 2 } }}>
             <Paper
-              elevation={3}
+              elevation={0}
               sx={{
                 height: '100%',
                 p: { xs: 2.25, sm: 3 },
-                borderRadius: 3,
+                borderRadius: 4,
+                boxShadow: '0 12px 32px rgba(17, 19, 24, 0.08)',
               }}
             >
               <Typography variant="overline" sx={{ color: '#16181d', fontWeight: 900, letterSpacing: '0.14em' }}>
@@ -376,7 +425,7 @@ function CourtDetailPage() {
                     flex: '1 1 auto',
                     gap: 1,
                     minWidth: 0,
-                  overflowX: 'auto',
+                    overflowX: 'auto',
                     overflowY: 'hidden',
                     pb: 1,
                     scrollBehavior: 'smooth',
@@ -405,13 +454,17 @@ function CourtDetailPage() {
                         flex: '0 0 auto',
                         px: 1.5,
                         minHeight: 42,
-                        borderRadius: 2,
+                        borderRadius: 2.5,
                         whiteSpace: 'nowrap',
                         textTransform: 'none',
                         fontWeight: 700,
                         color: isSelected ? 'white' : '#515866',
                         borderColor: '#d8dbe1',
                         bgcolor: isSelected ? undefined : '#f0f1f4',
+                        '&:hover': {
+                          bgcolor: isSelected ? '#c4000f' : '#e5e7eb',
+                          borderColor: isSelected ? '#c4000f' : '#c5c9d2',
+                        },
                       }}
                     >
                       {label}
@@ -438,63 +491,70 @@ function CourtDetailPage() {
                   {spanishWeekdayDate.format(selectedDay)}
                 </Typography>
               )}
-              {isLoadingAvailability && (
-                <Box role="status" aria-label="Consultando horarios" sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
-                  <CircularProgress size={22} color="error" />
-                </Box>
-              )}
-              {!isLoadingAvailability && !availabilityError && availableSlots.length === 0 ? (
-                <Box sx={{ py: 4, px: 2, textAlign: 'center', bgcolor: 'grey.900', borderRadius: 3, border: '1px solid', borderColor: 'grey.800', my: 2 }}>
-                  <AccessTimeRoundedIcon sx={{ color: 'grey.300', fontSize: 34, mb: 1 }} />
-                  <Typography sx={{ color: 'white', fontWeight: 900 }}>No hay horas disponibles</Typography>
-                  <Typography sx={{ color: 'grey.400', mt: 0.75 }}>
-                    Selecciona otra fecha en el calendario para ver las franjas libres.
-                  </Typography>
-                </Box>
-              ) : (
-              <Grid container spacing={1}>
-                {timeSlots.map((time) => {
-                  const isSelected = selectedTime === time;
-                  const isReserved = reservedSlots.includes(time);
-                  const isPast = selectedDate === currentDate
-                    && time <= `${String(currentTime.getHours()).padStart(2, '0')}:${String(currentTime.getMinutes()).padStart(2, '0')}`;
-                  const isUnavailable = isReserved || isPast;
-                  return (
-                    <Grid key={time} size={{ xs: 4, sm: 3 }}>
-                      <Button
-                        fullWidth
-                        variant={isSelected ? 'contained' : 'outlined'}
-                        color={isSelected ? 'error' : 'inherit'}
-                        aria-pressed={isSelected}
-                        aria-label={isReserved ? `${time}, reservada` : isPast ? `${time}, no disponible` : time}
-                        disabled={isUnavailable || isLoadingAvailability || availabilityError}
-                        onClick={() => setSelectedTime(time)}
-                        sx={{
-                          minHeight: 42,
-                          borderRadius: 2,
-                          color: isUnavailable ? '#858b96' : isSelected ? 'white' : '#23262d',
-                          borderColor: '#d8dbe1',
-                          bgcolor: isUnavailable ? '#e5e7eb' : isSelected ? undefined : '#f7f7f9',
-                          fontWeight: 800,
-                          '&.Mui-disabled': {
-                            color: '#858b96',
-                            borderColor: '#d8dbe1',
-                            bgcolor: '#e5e7eb',
-                          },
-                          '&:hover': {
-                            borderColor: '#e60012',
-                            bgcolor: isSelected ? '#c90010' : '#fff1f2',
-                          },
-                        }}
-                      >
-                        {time}
-                      </Button>
-                    </Grid>
-                  );
-                })}
-              </Grid>
-              )}
-
+              <Box sx={{ position: 'relative' }}>
+                {isLoadingAvailability && (
+                  <Box role="status" aria-label="Consultando horarios" sx={{
+                    position: 'absolute',
+                    inset: 0,
+                    display: 'grid',
+                    placeItems: 'center',
+                    zIndex: 1,
+                  }}>
+                    <CircularProgress size={24} color="error" />
+                  </Box>
+                )}
+                {!isLoadingAvailability && !availabilityError && availableSlots.length === 0 ? (
+                  <Box sx={{ py: 4, px: 2, textAlign: 'center', bgcolor: 'grey.900', borderRadius: 3, border: '1px solid', borderColor: 'grey.800', my: 2 }}>
+                    <AccessTimeRoundedIcon sx={{ color: 'grey.300', fontSize: 34, mb: 1 }} />
+                    <Typography sx={{ color: 'white', fontWeight: 900 }}>No hay horas disponibles</Typography>
+                    <Typography sx={{ color: 'grey.400', mt: 0.75 }}>
+                      Selecciona otra fecha en el calendario para ver las franjas libres.
+                    </Typography>
+                  </Box>
+                ) : (
+                <Grid container spacing={1}  sx={{opacity: isLoadingAvailability ? 0.45 : 1, transition: 'opacity 0.15s ease'}}>
+                  {timeSlots.map((time) => {
+                    const isSelected = selectedTime === time;
+                    const isReserved = reservedSlots.includes(time);
+                    const isPast = selectedDate === currentDate
+                      && time <= `${String(currentTime.getHours()).padStart(2, '0')}:${String(currentTime.getMinutes()).padStart(2, '0')}`;
+                    const isUnavailable = isReserved || isPast;
+                    return (
+                      <Grid key={time} size={{ xs: 4, sm: 3 }}>
+                        <Button
+                          fullWidth
+                          variant={isSelected ? 'contained' : 'outlined'}
+                          color={isSelected ? 'error' : 'inherit'}
+                          aria-pressed={isSelected}
+                          aria-label={isReserved ? `${time}, reservada` : isPast ? `${time}, no disponible` : time}
+                          disabled={isUnavailable || isLoadingAvailability || availabilityError}
+                          onClick={() => setSelectedTime(time)}
+                          sx={{
+                            minHeight: 42,
+                            borderRadius: 2.5,
+                            color: isUnavailable ? '#858b96' : isSelected ? 'white' : '#23262d',
+                            borderColor: isSelected ? '#e60012' : '#d8dbe1',
+                            bgcolor: isUnavailable ? '#e5e7eb' : isSelected ? '#e60012' : '#f7f7f9',
+                            fontWeight: 800,
+                            '&.Mui-disabled': {
+                              color: '#858b96',
+                              borderColor: '#d8dbe1',
+                              bgcolor: '#e5e7eb',
+                            },
+                            '&:hover': {
+                              borderColor: '#e60012',
+                              bgcolor: isSelected ? '#c4000f' : '#fff1f2',
+                            },
+                          }}
+                        >
+                          {time}
+                        </Button>
+                      </Grid>
+                    );
+                  })}
+                </Grid>
+                )}
+              </Box>
               <Button
                 fullWidth
                 size="large"
@@ -504,13 +564,13 @@ function CourtDetailPage() {
                 onClick={() => setIsDialogOpen(true)}
                 sx={{
                   mt: 2.5,
-                  minHeight: 52,
-                  borderRadius: 2,
+                  minHeight: 50,
+                  borderRadius: 3,
                   bgcolor: '#e60012',
                   fontWeight: 900,
                   textTransform: 'uppercase',
-                  boxShadow: '0 8px 18px rgba(230,0,18,0.22)',
-                  '&:hover': { bgcolor: '#c90010', boxShadow: '0 10px 22px rgba(230,0,18,0.28)' },
+                  boxShadow: '0 8px 20px rgba(230,0,18,0.22)',
+                  '&:hover': { bgcolor: '#c4000f', boxShadow: '0 10px 22px rgba(230,0,18,0.28)' },
                 }}
               >
                 Finalizar reserva{selectedTime ? ` · ${selectedTime}` : ''}
@@ -520,16 +580,26 @@ function CourtDetailPage() {
         </Grid>
         {isAdmin && (
           <Stack direction="row" spacing={2} sx={{ justifyContent: 'center', mt: 3 }}>
-            <Button variant="contained" onClick={() => { setEditForm({ ...court }); setEditOpen(true); }} sx={{ bgcolor: 'white', color: 'grey.900', fontWeight: 800, textTransform: 'none', borderRadius: 2, '&:hover': { bgcolor: 'grey.200' } }}>Editar</Button>
-            <Button variant="contained" color="error" onClick={() => setDeleteOpen(true)} sx={{ fontWeight: 800, textTransform: 'none', borderRadius: 2 }}>Eliminar</Button>
+            <Button variant="contained" onClick={() => {
+                setEditForm({
+                    ...court,
+                    latitudeInput: court.latitude != null ? String(court.latitude) : '',
+                    longitudeInput: court.longitude != null ? String(court.longitude) : '',
+                });
+                setEditOpen(true);
+            }} sx={{ bgcolor: 'white', color: 'grey.900', fontWeight: 800, textTransform: 'none', borderRadius: 3, px:3, '&:hover': { bgcolor: 'grey.200' } }}
+            >
+                Editar
+            </Button>
+            <Button variant="contained" color="error" onClick={() => setDeleteOpen(true)} sx={{ bgcolor: '#e60012', boxShadow: '0 8px 20px rgba(230,0,18,.22)', '&:hover': { bgcolor: '#c4000f' }, fontWeight: 800, textTransform: 'none', borderRadius: 3, px: 3 }}>Eliminar</Button>
           </Stack>
         )}
         </>
       )}
 
-      <Dialog open={editOpen} onClose={() => setEditOpen(false)} fullWidth maxWidth="sm" slotProps={{ paper: { sx: { bgcolor: 'white', borderRadius: 3, color: 'grey.900' } } }}>
-        <DialogTitle sx={{ color: 'grey.900', fontWeight: 900 }}>Editar pista</DialogTitle>
-        <DialogContent>
+      <Dialog open={editOpen} onClose={() => setEditOpen(false)} fullWidth maxWidth="sm" slotProps={{ paper: { sx: { borderRadius: 4, p: 0.5, m: { xs: 2, sm: 4 }}} }}>
+        <DialogTitle sx={{ px: { xs: 2.5, sm: 3 }, pt: 2.5, pb: 1, fontWeight: 900 }}>Editar pista</DialogTitle>
+        <DialogContent sx={{ px: { xs: 2.5, sm: 3 }, pb: 1.5 }}>
           <Stack spacing={2} sx={{ pt: 1 }}>
             <TextField variant="outlined" label="Nombre" value={editForm?.name ?? ''} onChange={(event) => setEditForm((current) => current ? { ...current, name: event.target.value } : current)} fullWidth />
             <TextField variant="outlined" label="Precio por hora" type="number" value={editForm?.courtPrice ?? ''} onChange={(event) => setEditForm((current) => current ? { ...current, courtPrice: Number(event.target.value) } : current)} fullWidth />
@@ -546,45 +616,191 @@ function CourtDetailPage() {
               <MenuItem value="false">No disponible</MenuItem>
             </TextField>
           </Stack>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 2 }}>
+                <TextField
+                    variant="outlined"
+                    label="Latitud (opcional)"
+                    type="number"
+                    placeholder="Ej. 40.3358"
+                    value={editForm?.latitudeInput ?? ''}
+                    onChange={(event) => setEditForm((current) => current ? { ...current, latitudeInput: event.target.value } : current)}
+                    slotProps={{ htmlInput: { min: -90, max: 90, step: 'any' } }}
+                    fullWidth
+                />
+                <TextField
+                    variant="outlined"
+                    label="Longitud (opcional)"
+                    type="number"
+                    placeholder="Ej. -3.8767"
+                    value={editForm?.longitudeInput ?? ''}
+                    onChange={(event) => setEditForm((current) => current ? { ...current, longitudeInput: event.target.value } : current)}
+                    slotProps={{ htmlInput: { min: -180, max: 180, step: 'any' } }}
+                    fullWidth
+                />
+            </Stack>
+            {parsedEditCoords.error && (
+                <Typography variant="caption" color="error" sx={{ fontWeight: 600 }}>
+                    {parsedEditCoords.error}
+                </Typography>
+            )}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEditOpen(false)} variant="text" sx={{ color: 'grey.700', textTransform: 'none' }}>Cancelar</Button>
-          <Button disabled={!hasCourtChanges} variant="contained" color="error" onClick={() => void saveCourt()} sx={{ textTransform: 'none' }}>Guardar cambios</Button>
+        <DialogActions sx={{
+          px: { xs: 2.5, sm: 3 },
+          pb: 2.5,
+          pt: 1,
+          gap: 1.25,
+          flexDirection: { xs: 'column-reverse', sm: 'row' },
+          '& > :not(style) ~ :not(style)': { ml: { xs: 0, sm: 1.25 } },
+        }}>
+          <Button onClick={() => setEditOpen(false)} variant="outlined" color="inherit" sx={{ width: { xs: '100%', sm: 'auto' }, borderRadius: 3, borderColor: 'grey.300',  color: 'grey.800', textTransform: 'none', fontWeight: 700, px: 2.5, py: 0.9  }}>Cancelar</Button>
+          <Button disabled={!hasCourtChanges} variant="contained"  onClick={() => void saveCourt()} sx={{ width: { xs: '100%', sm: 'auto' }, borderRadius: 3, bgcolor: '#e60012', boxShadow: '0 8px 20px rgba(230,0,18,.22)', '&:hover': { bgcolor: '#c4000f' }, fontWeight: 800, textTransform: 'none', px: 2.5, py: 0.9 }}>Guardar cambios</Button>
         </DialogActions>
       </Dialog>
-      <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)}><DialogTitle>¿Eliminar pista?</DialogTitle><DialogContent><DialogContentText>Esta acción no se puede deshacer.</DialogContentText></DialogContent><DialogActions><Button onClick={() => setDeleteOpen(false)}>Cancelar</Button><Button color="error" variant="contained" onClick={() => void deleteCourt()}>Eliminar</Button></DialogActions></Dialog>
-
+      <Dialog
+          open={deleteOpen}
+          onClose={() => setDeleteOpen(false)}
+          fullWidth
+          maxWidth="xs"
+          slotProps={{
+            paper: {
+              sx: { borderRadius: 4, p: 0.5, m: { xs: 2, sm: 4 } },
+            },
+          }}
+      >
+        <DialogTitle sx={{ px: { xs: 2.5, sm: 3 }, pt: 2.5, pb: 1, fontWeight: 900 }}>
+          ¿Eliminar pista?
+        </DialogTitle>
+        <DialogContent sx={{ px: { xs: 2.5, sm: 3 }, pb: 1.5 }}>
+          <DialogContentText sx={{ color: 'grey.700' }}>
+            Esta acción no se puede deshacer.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions
+            sx={{
+              px: { xs: 2.5, sm: 3 },
+              pb: 2.5,
+              pt: 1,
+              gap: 1.25,
+              flexDirection: { xs: 'column-reverse', sm: 'row' },
+              '& > :not(style) ~ :not(style)': { ml: { xs: 0, sm: 1.25 } },
+            }}
+        >
+          <Button
+              onClick={() => setDeleteOpen(false)}
+              variant="outlined"
+              color="inherit"
+              sx={{
+                width: { xs: '100%', sm: 'auto' },
+                borderRadius: 3,
+                borderColor: 'grey.300',
+                color: 'grey.800',
+                textTransform: 'none',
+                fontWeight: 700,
+                px: 2.5,
+                py: 0.9,
+              }}
+          >
+            Cancelar
+          </Button>
+          <Button
+              variant="contained"
+              onClick={() => void deleteCourt()}
+              sx={{
+                width: { xs: '100%', sm: 'auto' },
+                borderRadius: 3,
+                bgcolor: '#e60012',
+                boxShadow: '0 8px 20px rgba(230,0,18,.22)',
+                '&:hover': { bgcolor: '#c4000f' },
+                fontWeight: 800,
+                textTransform: 'none',
+                px: 2.5,
+                py: 0.9,
+              }}
+          >
+            Eliminar
+          </Button>
+        </DialogActions>
+      </Dialog>
       <Dialog
         open={isDialogOpen}
         onClose={() => {
           if (!isSubmitting) setIsDialogOpen(false);
         }}
-        slotProps={{ paper: { sx: { width: '100%', maxWidth: 440, m: 2, borderRadius: 3 } } }}
+        fullWidth
+        maxWidth="xs"
+        slotProps={{
+          paper: {
+            sx: { borderRadius: 4, p: 0.5, m: { xs: 2, sm: 4 } },
+          },
+        }}
       >
-        <DialogTitle sx={{ fontWeight: 900 }}>Confirmar reserva</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
+        <DialogTitle sx={{ px: { xs: 2.5, sm: 3 }, pt: 2.5, pb: 1, fontWeight: 900 }}>Confirmar reserva</DialogTitle>
+        <DialogContent sx={{ px: { xs: 2.5, sm: 3 }, pb: 1.5 }}>
+          <DialogContentText sx={{ color: 'grey.700' }}>
             ¿Confirmar reserva de {court?.name ?? 'esta pista'} para el día {formatBookingDate(selectedDate)} a las {selectedTime}?
           </DialogContentText>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-          <Button onClick={() => setIsDialogOpen(false)} disabled={isSubmitting} color="inherit">
+        <DialogActions sx={{
+          px: { xs: 2.5, sm: 3 },
+          pb: 2.5,
+          pt: 1,
+          gap: 1.25,
+          flexDirection: { xs: 'column-reverse', sm: 'row' },
+          '& > :not(style) ~ :not(style)': { ml: { xs: 0, sm: 1.25 } },
+        }}>
+          <Button
+              onClick={() => setIsDialogOpen(false)}
+              disabled={isSubmitting}
+              variant="outlined"
+              color="inherit"
+              sx={{
+                width: { xs: '100%', sm: 'auto' },
+                borderRadius: 3,
+                borderColor: 'grey.300',
+                color: 'grey.800',
+                textTransform: 'none',
+                fontWeight: 700,
+                px: 2.5,
+                py: 0.9,
+              }}
+          >
             Volver
           </Button>
-          <Button onClick={() => void confirmBooking()} disabled={isSubmitting} variant="contained" color="error">
+          <Button
+              onClick={() => void confirmBooking()}
+              disabled={isSubmitting}
+              variant="contained"
+              sx={{
+                width: { xs: '100%', sm: 'auto' },
+                borderRadius: 3,
+                bgcolor: '#e60012',
+                boxShadow: '0 8px 20px rgba(230,0,18,.22)',
+                '&:hover': { bgcolor: '#c4000f' },
+                fontWeight: 800,
+                textTransform: 'none',
+                px: 2.5,
+                py: 0.9,
+              }}
+          >
             {isSubmitting ? <CircularProgress size={21} color="inherit" /> : 'Confirmar'}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog
-        open={isSuccessDialogOpen}
-        onClose={() => setIsSuccessDialogOpen(false)}
-        aria-labelledby="booking-success-title"
-        slotProps={{ paper: { sx: { width: '100%', maxWidth: 420, m: 2, p: { xs: 2, sm: 3 }, borderRadius: 3 } } }}
+          open={isSuccessDialogOpen}
+          onClose={() => setIsSuccessDialogOpen(false)}
+          aria-labelledby="booking-success-title"
+          fullWidth
+          maxWidth="xs"
+          slotProps={{
+            paper: {
+              sx: { borderRadius: 4, p: { xs: 2.5, sm: 3 }, m: { xs: 2, sm: 4 } },
+            },
+          }}
       >
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', py: 1 }}>
-          <Box sx={{ display: 'grid', width: 64, height: 64, placeItems: 'center', borderRadius: 2, bgcolor: '#d1fae5', color: '#059669', fontSize: 38, fontWeight: 700 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', py: 0.5 }}>
+          <Box sx={{ display: 'grid', width: 64, height: 64, placeItems: 'center', borderRadius: 3, bgcolor: '#d1fae5', color: '#059669', fontSize: 38, fontWeight: 700 }}>
             ✓
           </Box>
           <Typography id="booking-success-title" component="h2" variant="h5" sx={{ mt: 2.5, color: '#111318', fontWeight: 900, lineHeight: 1.15 }}>
@@ -597,26 +813,34 @@ function CourtDetailPage() {
             {formatBookingDate(selectedDate)} · <Box component="span" sx={{ color: '#17191e', fontWeight: 800 }}>{selectedTime}</Box>
           </Typography>
           {court && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, width: '100%', mt: 2.5, p: 1.75, borderRadius: 2, bgcolor: '#f0f1f4', textAlign: 'left' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
-                <Typography variant="body2" sx={{ color: '#626875' }}>Precio</Typography>
-                <Typography variant="body2" sx={{ color: '#17191e', fontWeight: 800 }}>€{court.courtPrice}/h</Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, width: '100%', mt: 2.5, p: 1.75, borderRadius: 3, bgcolor: '#f0f1f4', textAlign: 'left' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+                  <Typography variant="body2" sx={{ color: '#626875' }}>Precio</Typography>
+                  <Typography variant="body2" sx={{ color: '#17191e', fontWeight: 800 }}>€{court.courtPrice}/h</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+                  <Typography variant="body2" sx={{ color: '#626875' }}>Tipo</Typography>
+                  <Typography variant="body2" sx={{ color: '#17191e', fontWeight: 800 }}>{surfaceLabel(court.surface)} {courtTypeLabel(court.type)}</Typography>
+                </Box>
               </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
-                <Typography variant="body2" sx={{ color: '#626875' }}>Tipo</Typography>
-                <Typography variant="body2" sx={{ color: '#17191e', fontWeight: 800 }}>{surfaceLabel(court.surface)} {courtTypeLabel(court.type)}</Typography>
-              </Box>
-            </Box>
           )}
           <Button
-            fullWidth
-            variant="contained"
-            color="error"
-            onClick={() => {
-              setIsSuccessDialogOpen(false);
-              void navigate('/courts');
-            }}
-            sx={{ mt: 2.5, minHeight: 46, borderRadius: 2, fontWeight: 900, textTransform: 'none' }}
+              fullWidth
+              variant="contained"
+              onClick={() => {
+                setIsSuccessDialogOpen(false);
+                void navigate('/courts');
+              }}
+              sx={{
+                mt: 2.5,
+                minHeight: 46,
+                borderRadius: 3,
+                bgcolor: '#e60012',
+                boxShadow: '0 8px 20px rgba(230,0,18,.22)',
+                '&:hover': { bgcolor: '#c4000f' },
+                fontWeight: 800,
+                textTransform: 'none',
+              }}
           >
             Volver a pistas
           </Button>

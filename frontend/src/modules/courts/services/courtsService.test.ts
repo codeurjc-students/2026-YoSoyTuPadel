@@ -62,4 +62,27 @@ describe('courtService REST API integration', () => {
     expect(apiMock.history.put[0].url).toBe('/api/v1/courts/4');
     expect(JSON.parse(apiMock.history.put[0].data)).toEqual(court);
   });
+
+  it('creates and updates a court including coordinates', async () => {
+    const courtWithCoords: CourtDTO = {
+      ...court,
+      latitude: 40.3358,
+      longitude: -3.8767,
+    };
+    apiMock.onPost('/api/v1/courts').reply(201, courtWithCoords);
+    apiMock.onPut('/api/v1/courts/4', courtWithCoords).reply(200, courtWithCoords);
+
+    const created = await courtService.createCourt({
+      name: courtWithCoords.name,
+      courtPrice: courtWithCoords.courtPrice,
+      type: courtWithCoords.type,
+      surface: courtWithCoords.surface,
+      latitude: courtWithCoords.latitude,
+      longitude: courtWithCoords.longitude,
+    });
+    expect(created).toEqual(courtWithCoords);
+
+    const updated = await courtService.updateCourt(courtWithCoords);
+    expect(updated).toEqual(courtWithCoords);
+  });
 });
