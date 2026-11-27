@@ -34,6 +34,7 @@ const initialForm: CoachCreateDetails = {
 function CreateCoachDialog({ open, onClose, onCreated }: CreateCoachDialogProps) {
   const [form, setForm] = useState(initialForm);
   const [image, setImage] = useState<File | null>(null);
+  const [skillLevelTouched, setSkillLevelTouched] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   const emailIsValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim());
@@ -51,6 +52,7 @@ function CreateCoachDialog({ open, onClose, onCreated }: CreateCoachDialogProps)
     if (!isSaving) {
       setForm(initialForm);
       setImage(null);
+      setSkillLevelTouched(false);
       onClose();
     }
   };
@@ -69,6 +71,7 @@ function CreateCoachDialog({ open, onClose, onCreated }: CreateCoachDialogProps)
       toast.success('Entrenador creado correctamente.');
       setForm(initialForm);
       setImage(null);
+      setSkillLevelTouched(false);
       onClose();
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : 'No se pudo crear el entrenador.');
@@ -83,10 +86,10 @@ function CreateCoachDialog({ open, onClose, onCreated }: CreateCoachDialogProps)
       onClose={handleClose}
       fullWidth
       maxWidth="sm"
-      slotProps={{ paper: { sx: { bgcolor: 'white', color: 'grey.900', borderRadius: 3 } } }}
+      slotProps={{ paper: { sx: { bgcolor: 'white', color: 'grey.900', borderRadius: 4, p: 0.5, m: { xs: 2, sm: 4 } } } }}
     >
-      <DialogTitle sx={{ color: 'grey.900', fontWeight: 900 }}>Añadir entrenador</DialogTitle>
-      <DialogContent>
+      <DialogTitle sx={{ px: { xs: 2.5, sm: 3 }, pt: 2.5, pb: 1, color: 'grey.900', fontWeight: 900 }}>Añadir entrenador</DialogTitle>
+      <DialogContent sx={{ px: { xs: 2.5, sm: 3 }, pb: 1.5 }}>
         <Stack spacing={2} sx={{ pt: 1 }}>
           <TextField
             label="Nombre"
@@ -132,16 +135,20 @@ function CreateCoachDialog({ open, onClose, onCreated }: CreateCoachDialogProps)
             required
             label="Nivel de certificación"
             value={form.skillLevel ?? ''}
-            onChange={(event) => updateForm('skillLevel', Number(event.target.value))}
-            error={!skillLevelIsValid}
-            helperText={skillLevelIsValid ? '' : 'Selecciona un nivel del 1 al 3.'}
+            onChange={(event) => {
+              setSkillLevelTouched(true);
+              updateForm('skillLevel', Number(event.target.value));
+            }}
+            onBlur={() => setSkillLevelTouched(true)}
+            error={skillLevelTouched && !skillLevelIsValid}
+            helperText={skillLevelTouched && !skillLevelIsValid ? 'Selecciona un nivel del 1 al 3.' : ''}
             fullWidth
           >
             {[1, 2, 3].map((level) => (
               <MenuItem key={level} value={level}>Nivel {level}</MenuItem>
             ))}
           </TextField>
-          <Button component="label" variant="outlined" sx={{ alignSelf: 'flex-start' }}>
+          <Button component="label" variant="outlined" color="inherit" sx={{ alignSelf: 'flex-start', borderRadius: 3, borderColor: 'grey.300', color: 'grey.800', fontWeight: 700, textTransform: 'none' }}>
             {image ? image.name : 'Adjuntar imagen (opcional)'}
             <input
               type="file"
@@ -152,16 +159,15 @@ function CreateCoachDialog({ open, onClose, onCreated }: CreateCoachDialogProps)
           </Button>
         </Stack>
       </DialogContent>
-      <DialogActions sx={{ p: 2 }}>
-        <Button onClick={handleClose} disabled={isSaving} sx={{ color: 'grey.700', textTransform: 'none' }}>
+      <DialogActions sx={{ px: { xs: 2.5, sm: 3 }, pb: 2.5, pt: 1, gap: 1.25, flexDirection: { xs: 'column-reverse', sm: 'row' }, '& > :not(style) ~ :not(style)': { ml: { xs: 0, sm: 1.25 } } }}>
+        <Button onClick={handleClose} disabled={isSaving} variant="outlined" color="inherit" sx={{ width: { xs: '100%', sm: 'auto' }, borderRadius: 3, borderColor: 'grey.300', color: 'grey.800', textTransform: 'none', fontWeight: 700, px: 2.5, py: 0.9 }}>
           Volver
         </Button>
         <Button
           onClick={() => void handleSave()}
           disabled={isSaving || !formIsValid}
           variant="contained"
-          color="error"
-          sx={{ fontWeight: 800, textTransform: 'uppercase' }}
+          sx={{ width: { xs: '100%', sm: 'auto' }, borderRadius: 3, bgcolor: '#e60012', boxShadow: '0 8px 20px rgba(230,0,18,.22)', '&:hover': { bgcolor: '#c4000f' }, fontWeight: 800, textTransform: 'uppercase', px: 2.5, py: 0.9 }}
         >
           GUARDAR
         </Button>

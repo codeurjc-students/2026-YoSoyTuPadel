@@ -78,9 +78,14 @@ function CoachListPage() {
     <Box component="section" sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, py: { xs: 4, sm: 6 } }}>
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { sm: 'end' }, gap: 2, mb: 4 }}>
         <Box>
-          <Link to="/" className="mb-4 inline-flex items-center gap-2 text-sm font-semibold text-slate-300 transition hover:text-white">
-            <span aria-hidden="true">←</span> Volver al inicio
-          </Link>
+          <Button
+              component={Link}
+              to="/"
+              color="inherit"
+              sx={{ mb: 1.5, px: 0, minWidth: 0, color: '#cbd5e1', fontSize: 14, fontWeight: 600, textTransform: 'none', '&:hover': { color: 'white', bgcolor: 'transparent' } }}
+          >
+            ← Volver al inicio
+          </Button>
           <Typography component="p" sx={{ color: '#e60012', fontSize: 12, fontWeight: 700, lineHeight: '16px', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
             Mejora tu juego
           </Typography>
@@ -105,17 +110,17 @@ function CoachListPage() {
       )}
 
       {error && (
-        <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+        <Alert severity="error" sx={{ mb: 3, borderRadius: 3 }}>
           {error}
         </Alert>
       )}
 
       {!isLoading && !error && coaches.length === 0 && (
-        <Alert severity="info" sx={{ borderRadius: 2 }}>No hay entrenadores disponibles en estos momentos.</Alert>
+        <Alert severity="info" sx={{ borderRadius: 3 }}>No hay entrenadores disponibles en estos momentos.</Alert>
       )}
 
       {!isLoading && !error && coaches.length > 0 && (
-        <Box sx={{ mb: 3, p: { xs: 2.5, sm: 3 }, border: '1px solid #fff', borderRadius: 2, bgcolor: 'white', boxShadow: '0 0 16px rgba(255,255,255,0.12)', display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { sm: 'center' }, justifyContent: 'space-between', gap: 2 }}>
+        <Box sx={{ mb: 3, p: { xs: 2.5, sm: 3 }, border: '1px solid #fff', borderRadius: 4, bgcolor: 'white',  boxShadow: '0 12px 32px rgba(17, 19, 24, 0.08)', display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { sm: 'center' }, justifyContent: 'space-between', gap: 2 }}>
           <Box>
             <Typography component="h2" sx={{ color: '#111318', fontSize: { xs: 18, sm: 20 }, fontWeight: 900, letterSpacing: '0.04em' }}>
               CERTIFICADOS POR LA FEP
@@ -164,16 +169,16 @@ function CoachListPage() {
           {coaches.map((coach) => (
             <Grid key={coach.id} size={{ xs: 12, sm: 6, lg: 4 }}>
               <Card
-                elevation={2}
+                elevation={0}
                 sx={{
                   height: '100%',
                   overflow: 'hidden',
                   border: '1px solid #e8e8eb',
-                  borderRadius: '24px',
+                  borderRadius: 4,
                   bgcolor: 'white',
-                  boxShadow: '0 1px 2px rgba(16,24,40,0.08)',
+                  boxShadow: '0 12px 32px rgba(17, 19, 24, 0.08)',
                   transition: 'transform 300ms ease, box-shadow 300ms ease',
-                  '&:hover': { transform: 'translateY(-4px)', boxShadow: '0 12px 28px rgba(16,24,40,0.14)' },
+                  '&:hover': { transform: 'translateY(-4px)', boxShadow: '0 16px 36px rgba(17, 19, 24, 0.14)' },
                 }}
               >
                 <CardMedia
@@ -203,7 +208,7 @@ function CoachListPage() {
                         to={`/coaches/${coach.id}`}
                         variant="contained"
                         color="error"
-                        sx={{ minHeight: 40, borderRadius: 2, px: { xs: 1.25, sm: 2 }, bgcolor: '#e60012', fontWeight: 800, fontSize: 12, textTransform: 'none', whiteSpace: 'nowrap', boxShadow: 'none', '&:hover': { bgcolor: '#c90010', boxShadow: 'none' } }}
+                        sx={{ minHeight: 40, borderRadius: 3, px: { xs: 1.25, sm: 2 }, bgcolor: '#e60012', fontWeight: 800, fontSize: 12, textTransform: 'none', whiteSpace: 'nowrap', boxShadow: 'none', '&:hover': { bgcolor: '#c90010', boxShadow: 'none' } }}
                       >
                         Ver detalles
                       </Button>
@@ -213,7 +218,7 @@ function CoachListPage() {
                         to="/login"
                         variant="contained"
                         color="error"
-                        sx={{ minHeight: 40, borderRadius: 2, px: { xs: 1.25, sm: 2 }, bgcolor: '#e60012', color: 'white', fontWeight: 800, fontSize: 12, textTransform: 'none', whiteSpace: 'nowrap', boxShadow: 'none', '&:hover': { bgcolor: '#c90010', boxShadow: 'none' } }}
+                        sx={{ minHeight: 40, borderRadius: 3, px: { xs: 1.25, sm: 2 }, bgcolor: '#e60012', color: 'white', fontWeight: 800, fontSize: 12, textTransform: 'none', whiteSpace: 'nowrap', boxShadow: 'none', '&:hover': { bgcolor: '#c90010', boxShadow: 'none' } }}
                       >
                         Inicia sesión para reservar
                       </Button>
@@ -237,9 +242,9 @@ function CoachListPage() {
               px: 3,
               minHeight: 44,
               bgcolor: 'white',
-              color: 'primary.main',
+              color: '#111318',
               borderColor: 'white',
-              borderRadius: 2,
+              borderRadius: 3,
               fontWeight: 700,
               textTransform: 'none',
               '&:hover': { bgcolor: 'grey.100', borderColor: 'grey.100' },

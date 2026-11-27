@@ -12,7 +12,7 @@ function NotFoundPage() {
         <Typography variant="h6" sx={{ color: '#000000', mt: 2 }}>
           Parece que te has salido de la pista. La página que buscas no existe o ha sido movida.
         </Typography>
-        <Button sx={{ mt: 4 }} variant="contained" color="error" onClick={() => navigate('/')}>Volver a la pista central</Button>
+        <Button sx={{ mt: 4, borderRadius: 3, bgcolor: '#e60012', boxShadow: '0 8px 20px rgba(230,0,18,.22)', '&:hover': { bgcolor: '#c4000f' }, fontWeight: 800, textTransform: 'none', px: 3, py: 1.1 }} variant="contained" onClick={() => navigate('/')}>Volver a la pista central</Button>
       </Box>
     </ErrorLayout>
   );

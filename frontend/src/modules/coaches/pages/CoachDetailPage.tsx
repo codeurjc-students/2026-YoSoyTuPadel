@@ -215,7 +215,7 @@ function CoachDetailPage() {
 
           <Grid size={{ xs: 12, md: 7 }}>
             <Stack spacing={3}>
-              <Paper elevation={2} sx={{ p: { xs: 2.25, sm: 3 }, borderRadius: 3 }}>
+              <Paper elevation={0} sx={{ p: { xs: 2.25, sm: 3 }, borderRadius: 4, boxShadow: '0 12px 32px rgba(17, 19, 24, 0.08)' }}>
                 <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', gap: 1.5 }}>
                   <Typography component="h2" variant="h4" sx={{ color: '#111318', fontWeight: 900 }}>
                     {coach.name}
@@ -229,7 +229,7 @@ function CoachDetailPage() {
                 </Box>
                 <Grid container spacing={1.25} sx={{ mt: 2 }}>
                   <Grid size={{ xs: 12, sm: 5 }}>
-                    <Box sx={{ height: '100%', p: 1.5, bgcolor: '#f0f1f4', borderRadius: 2 }}>
+                    <Box sx={{ height: '100%', p: 1.5, bgcolor: '#f0f1f4', borderRadius: 3 }}>
                       <Typography variant="caption" sx={{ display: 'block', color: '#626875', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
                         Certificación FEP
                       </Typography>
@@ -239,11 +239,11 @@ function CoachDetailPage() {
                     </Box>
                   </Grid>
                   <Grid size={{ xs: 12, sm: 7 }}>
-                    <Box sx={{ height: '100%', p: 1.5, bgcolor: '#f0f1f4', borderRadius: 2 }}>
+                    <Box sx={{ height: '100%', p: 1.5, bgcolor: '#f0f1f4', borderRadius: 3 }}>
                       <Typography variant="caption" sx={{ display: 'block', color: '#626875', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
                         Especialidad
                       </Typography>
-                      <Typography variant="subtitle1" sx={{ mt: 0.8, color: '#17191e', fontWeight: 700, fontSize: '1rem' }}>
+                      <Typography variant="subtitle1" sx={{ mt: 0.4, color: '#17191e', fontWeight: 700, fontSize: '1rem' }}>
                         {getCoachLevelAudience(coach.skillLevel)}
                       </Typography>
                     </Box>
@@ -251,7 +251,7 @@ function CoachDetailPage() {
                 </Grid>
               </Paper>
 
-              <Paper elevation={2} sx={{ p: { xs: 2.25, sm: 3 }, borderRadius: 3 }}>
+              <Paper elevation={0} sx={{ p: { xs: 2.25, sm: 3 }, borderRadius: 4, boxShadow: '0 12px 32px rgba(17, 19, 24, 0.08)' }}>
                 <Typography variant="overline" sx={{ color: '#16181d', fontWeight: 900, letterSpacing: '0.14em' }}>
                   Seleccionar día
                 </Typography>
@@ -270,8 +270,22 @@ function CoachDetailPage() {
                           setSelectedDate(value);
                           setSelectedTime('');
                         }}
-                        sx={{ flex: '0 0 auto', px: 1.5, minHeight: 42, borderRadius: 2, whiteSpace: 'nowrap', textTransform: 'none', fontWeight: selected ? 800 : 700, fontSize: selected ? '1rem' : undefined, color: selected ? 'white' : '#515866', borderColor: '#d8dbe1', bgcolor: selected ? undefined : '#f0f1f4' }}
-                      >
+                        sx={{
+                          flex: '0 0 auto',
+                          px: 1.5,
+                          minHeight: 42,
+                          borderRadius: 2.5,
+                          whiteSpace: 'nowrap',
+                          textTransform: 'none',
+                          fontWeight: 700,
+                          color: selected ? 'white' : '#515866',
+                          borderColor: selected ? '#e60012' : '#d8dbe1',
+                          bgcolor: selected ? '#e60012' : '#f0f1f4',
+                          '&:hover': {
+                            bgcolor: selected ? '#c4000f' : '#e5e7eb',
+                            borderColor: selected ? '#c4000f' : '#c5c9d2',
+                          },
+                        }}                      >
                         {label}
                       </Button>
                     );
@@ -281,50 +295,96 @@ function CoachDetailPage() {
                 <Typography variant="overline" sx={{ display: 'block', mt: 2.5, color: '#16181d', fontWeight: 900, letterSpacing: '0.14em' }}>
                   Horas disponibles
                 </Typography>
-                {isLoadingAvailability && (
-                  <Box role="status" aria-label="Consultando horarios" sx={{ display: 'flex', justifyContent: 'center', py: 1.5 }}>
-                    <CircularProgress size={22} color="error" />
-                  </Box>
-                )}
+
                 {availabilityError && (
-                  <Alert severity="error" sx={{ mt: 1, borderRadius: 2 }}>
+                  <Alert severity="error" sx={{ mt: 1, borderRadius: 3 }}>
                     No se han podido consultar los horarios. Inténtalo de nuevo seleccionando otra fecha.
                   </Alert>
                 )}
-                {!isLoadingAvailability && !availabilityError && availableSlots.length === 0 ? (
-                  <Box sx={{ py: 4, px: 2, textAlign: 'center', bgcolor: 'grey.900', borderRadius: 3, border: '1px solid', borderColor: 'grey.800', my: 2 }}>
-                    <AccessTimeRoundedIcon sx={{ color: 'grey.300', fontSize: 34, mb: 1 }} />
-                    <Typography sx={{ color: 'white', fontWeight: 900 }}>No hay horas disponibles</Typography>
-                    <Typography sx={{ color: 'grey.400', mt: 0.75 }}>
-                      Selecciona otra fecha en el calendario para ver las franjas libres.
-                    </Typography>
-                  </Box>
-                ) : (
-                <Grid container spacing={1} sx={{ mt: 0.5 }}>
-                  {timeSlots.map((time) => {
-                    const selected = selectedTime === time;
-                    const isPast = isPastTimeSlot(selectedDate, time);
-                    const isReserved = reservedSlots.includes(time);
-                    const isUnavailable = isPast || isReserved;
-                    return (
-                      <Grid key={time} size={{ xs: 4, sm: 4 }}>
-                        <Button
-                          fullWidth
-                          disabled={isUnavailable || isLoadingAvailability || availabilityError}
-                          variant={selected ? 'contained' : 'outlined'}
-                          color={selected ? 'error' : 'inherit'}
-                          aria-pressed={selected}
-                          aria-label={isReserved ? `${time}, reservada` : isPast ? `${time}, no disponible` : time}
-                          onClick={() => setSelectedTime(time)}
-                          sx={{ minHeight: 44, borderRadius: 2, color: isUnavailable ? '#858b96' : selected ? 'white' : '#23262d', borderColor: '#d8dbe1', bgcolor: isUnavailable ? '#e5e7eb' : selected ? undefined : '#f7f7f9', fontWeight: 800, '&:hover': { borderColor: '#e60012', bgcolor: selected ? '#c90010' : '#fff1f2' }, '&.Mui-disabled': { color: '#858b96', borderColor: '#d8dbe1', bgcolor: '#e5e7eb' } }}
-                        >
-                          {time}
-                        </Button>
-                      </Grid>
-                    );
-                  })}
-                  </Grid>
+                <Box sx={{ position: 'relative', mt: 1 }}>
+                  {isLoadingAvailability && (
+                      <Box
+                          role="status"
+                          aria-label="Consultando horarios"
+                          sx={{
+                            position: 'absolute',
+                            inset: 0,
+                            display: 'grid',
+                            placeItems: 'center',
+                            zIndex: 1,
+                          }}
+                      >
+                        <CircularProgress size={24} color="error" />
+                      </Box>
                   )}
+                  {!isLoadingAvailability && !availabilityError && availableSlots.length === 0 ? (
+                      <Box sx={{
+                        minHeight: 96,
+                        px: 2.5,
+                        py: 1.5,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 1.75,
+                        bgcolor: 'grey.900',
+                        borderRadius: 3,
+                        border: '1px solid',
+                        borderColor: 'grey.800',
+                      }}
+                      >
+                        <AccessTimeRoundedIcon sx={{ color: 'grey.300', fontSize: 28, flexShrink: 0 }} />
+                        <Box sx={{ textAlign: 'left' }}>
+                          <Typography variant="body2" sx={{ color: 'white', fontWeight: 900, lineHeight: 1.25 }}>
+                            No hay horas disponibles
+                          </Typography>
+                          <Typography variant="caption" sx={{ display: 'block', color: 'grey.400', mt: 0.35, lineHeight: 1.35 }}>
+                            Selecciona otra fecha en el calendario para ver las franjas libres.
+                          </Typography>
+                        </Box>
+                      </Box>
+                  ) : (
+                      <Grid
+                          container
+                          spacing={1}
+                          sx={{
+                            opacity: isLoadingAvailability ? 0.45 : 1,
+                            transition: 'opacity 0.15s ease',
+                          }}
+                      >
+                        {timeSlots.map((time) => {
+                          const selected = selectedTime === time;
+                          const isPast = isPastTimeSlot(selectedDate, time);
+                          const isReserved = reservedSlots.includes(time);
+                          const isUnavailable = isPast || isReserved;
+                          return (
+                              <Grid key={time} size={{ xs: 4, sm: 4 }}>
+                                <Button
+                                    fullWidth
+                                    disabled={isUnavailable || isLoadingAvailability || availabilityError}
+                                    variant={selected ? 'contained' : 'outlined'}
+                                    color={selected ? 'error' : 'inherit'}
+                                    aria-pressed={selected}
+                                    aria-label={isReserved ? `${time}, reservada` : isPast ? `${time}, no disponible` : time}
+                                    onClick={() => setSelectedTime(time)}
+                                    sx={{
+                                      minHeight: 44,
+                                      borderRadius: 2.5,
+                                      color: isUnavailable ? '#858b96' : selected ? 'white' : '#23262d',
+                                      borderColor: selected ? '#e60012' : '#d8dbe1',
+                                      bgcolor: isUnavailable ? '#e5e7eb' : selected ? '#e60012' : '#f7f7f9',
+                                      fontWeight: 800,
+                                      '&:hover': { borderColor: '#e60012', bgcolor: selected ? '#c4000f' : '#fff1f2' },
+                                      '&.Mui-disabled': { color: '#858b96', borderColor: '#d8dbe1', bgcolor: '#e5e7eb' },
+                                    }}
+                                >
+                                  {time}
+                                </Button>
+                              </Grid>
+                          );
+                        })}
+                      </Grid>
+                  )}
+                </Box>
                 <Button
                   fullWidth
                   size="large"
@@ -333,7 +393,7 @@ function CoachDetailPage() {
                   disabled={!selectedDate || !selectedTime || isPastTimeSlot(selectedDate, selectedTime)
                     || reservedSlots.includes(selectedTime) || isLoadingAvailability || availabilityError}
                   onClick={() => setIsDialogOpen(true)}
-                  sx={{ mt: 2.5, minHeight: 52, borderRadius: 2, bgcolor: '#e60012', fontWeight: 900, textTransform: 'uppercase', boxShadow: '0 8px 18px rgba(230,0,18,0.22)', '&:hover': { bgcolor: '#c90010' } }}
+                  sx={{ mt: 2.5, minHeight: 50, borderRadius: 3, bgcolor: '#e60012', fontWeight: 900, textTransform: 'uppercase', boxShadow: '0 8px 20px rgba(230,0,18,0.22)', '&:hover': { bgcolor: '#c4000f', boxShadow: '0 10px 22px rgba(230,0,18,0.28)' } }}
                 >
                   Reservar sesión{selectedTime ? ` · ${selectedTime}` : ''}
                 </Button>
@@ -348,17 +408,57 @@ function CoachDetailPage() {
         onClose={() => {
           if (!isSubmitting) setIsDialogOpen(false);
         }}
-        slotProps={{ paper: { sx: { width: '100%', maxWidth: 440, m: 2, borderRadius: 3 } } }}
+        fullWidth
+        maxWidth="xs"
+        slotProps={{ paper: { sx: { borderRadius: 4, p: 0.5, m: { xs: 2, sm: 4 } } } }}
       >
-        <DialogTitle sx={{ fontWeight: 900 }}>Confirmar reserva</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
+        <DialogTitle sx={{ px: { xs: 2.5, sm: 3 }, pt: 2.5, pb: 1, fontWeight: 900 }}>Confirmar reserva</DialogTitle>
+        <DialogContent sx={{ px: { xs: 2.5, sm: 3 }, pb: 1.5 }}>
+          <DialogContentText sx={{ color: 'grey.700' }}>
             ¿Confirmar sesión con {coach?.name} para el {formatBookingDate(selectedDate)} a las {selectedTime}?
           </DialogContentText>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-          <Button onClick={() => setIsDialogOpen(false)} disabled={isSubmitting} color="inherit">Cancelar</Button>
-          <Button onClick={() => void confirmBooking()} disabled={isSubmitting} variant="contained" color="error">
+        <DialogActions sx={{
+          px: { xs: 2.5, sm: 3 },
+          pb: 2.5,
+          pt: 1,
+          gap: 1.25,
+          flexDirection: { xs: 'column-reverse', sm: 'row' },
+          '& > :not(style) ~ :not(style)': { ml: { xs: 0, sm: 1.25 } },
+        }}>
+          <Button
+              onClick={() => setIsDialogOpen(false)}
+              disabled={isSubmitting}
+              color="inherit"
+              sx={{
+                width: { xs: '100%', sm: 'auto' },
+                borderRadius: 3,
+                borderColor: 'grey.300',
+                color: 'grey.800',
+                textTransform: 'none',
+                fontWeight: 700,
+                px: 2.5,
+                py: 0.9,
+              }}
+          >
+            Cancelar
+          </Button>
+          <Button
+              onClick={() => void confirmBooking()}
+              disabled={isSubmitting}
+              variant="contained"
+              sx={{
+                width: { xs: '100%', sm: 'auto' },
+                borderRadius: 3,
+                bgcolor: '#e60012',
+                boxShadow: '0 8px 20px rgba(230,0,18,.22)',
+                '&:hover': { bgcolor: '#c4000f' },
+                fontWeight: 800,
+                textTransform: 'none',
+                px: 2.5,
+                py: 0.9,
+              }}
+          >
             {isSubmitting ? <CircularProgress size={21} color="inherit" /> : 'Confirmar'}
           </Button>
         </DialogActions>
@@ -368,10 +468,12 @@ function CoachDetailPage() {
         open={isSuccessDialogOpen}
         onClose={() => setIsSuccessDialogOpen(false)}
         aria-labelledby="booking-success-title"
-        slotProps={{ paper: { sx: { width: '100%', maxWidth: 420, m: 2, p: { xs: 2, sm: 3 }, borderRadius: 3 } } }}
+        fullWidth
+        maxWidth="xs"
+        slotProps={{ paper: { sx: { borderRadius: 4, p: { xs: 2.5, sm: 3 }, m: { xs: 2, sm: 4 } } } }}
       >
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', py: 1 }}>
-          <Box sx={{ display: 'grid', width: 64, height: 64, placeItems: 'center', borderRadius: 2, bgcolor: '#d1fae5', color: '#059669', fontSize: 38, fontWeight: 700 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', py: 0.5 }}>
+          <Box sx={{ display: 'grid', width: 64, height: 64, placeItems: 'center', borderRadius: 3, bgcolor: '#d1fae5', color: '#059669', fontSize: 38, fontWeight: 700 }}>
             ✓
           </Box>
           <Typography id="booking-success-title" component="h2" variant="h5" sx={{ mt: 2.5, color: '#111318', fontWeight: 900, lineHeight: 1.15 }}>
@@ -384,7 +486,7 @@ function CoachDetailPage() {
             {formatBookingDate(selectedDate)} · <Box component="span" sx={{ color: '#17191e', fontWeight: 800 }}>{selectedTime}</Box>
           </Typography>
           {coach && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, width: '100%', mt: 2.5, p: 1.75, borderRadius: 2, bgcolor: '#f0f1f4', textAlign: 'left' }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, width: '100%', mt: 2.5, p: 1.75, borderRadius: 3, bgcolor: '#f0f1f4', textAlign: 'left' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
                 <Typography variant="body2" sx={{ color: '#626875' }}>Duración</Typography>
                 <Typography variant="body2" sx={{ color: '#17191e', fontWeight: 800 }}>2 horas</Typography>
@@ -403,7 +505,16 @@ function CoachDetailPage() {
               setIsSuccessDialogOpen(false);
               void navigate('/coaches');
             }}
-            sx={{ mt: 2.5, minHeight: 46, borderRadius: 2, fontWeight: 900, textTransform: 'none' }}
+            sx={{
+              mt: 2.5,
+              minHeight: 46,
+              borderRadius: 3,
+              bgcolor: '#e60012',
+              boxShadow: '0 8px 20px rgba(230,0,18,.22)',
+              '&:hover': { bgcolor: '#c4000f' },
+              fontWeight: 800,
+              textTransform: 'none',
+            }}
           >
             Volver a entrenadores
           </Button>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Box, Button, Skeleton, Stack, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import api from '../../../service/api';
@@ -13,7 +14,7 @@ const activities = [
     to: '/courts',
     action: 'Ver pistas',
     image: '/images/padel-court-overhead.jpg',
-    visual: 'from-slate-700 via-slate-900 to-black',
+    visual: 'linear-gradient(to bottom right, #334155, #0f172a, #000000)',
   },
   {
     eyebrow: 'Mejora tu juego',
@@ -22,7 +23,7 @@ const activities = [
     to: '/coaches',
     action: 'Ver entrenadores',
     image: '/images/coach-training.jpg',
-    visual: 'from-red-950 via-brand-dark to-black',
+    visual: 'linear-gradient(to bottom right, #450a0a, #111318, #000000)',
   },
   {
     eyebrow: 'Prueba algo nuevo',
@@ -31,7 +32,7 @@ const activities = [
     to: '/rackets',
     action: 'Explorar palas',
     image: '/images/racket-collection.jpg',
-    visual: 'from-zinc-700 via-brand-dark to-black',
+    visual: 'linear-gradient(to bottom right, #3f3f46, #111318, #000000)',
   },
 ];
 
@@ -98,124 +99,337 @@ function HomePage() {
   }, []);
 
   return (
-    <div>
-      <section className="relative isolate overflow-hidden text-white">
-        <div aria-hidden="true" className="absolute -right-24 -top-40 -z-10 h-[28rem] w-[28rem] rounded-full bg-brand-red/15 blur-3xl" />
-        <div aria-hidden="true" className="absolute -bottom-64 left-1/3 -z-10 h-[30rem] w-[30rem] rounded-full border-[70px] border-white/[0.03]" />
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:px-8 lg:py-24">
-          <div>
-            <motion.p
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35 }}
-              className="mb-5 inline-flex flex-wrap items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-xs font-semibold uppercase tracking-[0.17em] text-slate-300"
-            >
-              <span className="h-2 w-2 rounded-full bg-brand-red" />
-              <time
-                dateTime={today.toISOString().slice(0, 10)}
-                className="ml-1 text-[10px] font-bold tracking-[0.14em] text-slate-400"
-              >
-                {formattedDate}
-              </time>
-            </motion.p>
-            <motion.h1
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45, delay: 0.05 }}
-              className="max-w-3xl text-5xl font-black leading-[0.98] tracking-tight sm:text-6xl lg:text-7xl"
-            >
-              Juega.
-              <br />
-              <span className="text-brand-red">Entrena.</span>
-              <br />
-              Mejora.
-            </motion.h1>
-            <p className="mt-6 max-w-xl text-base leading-7 text-slate-300 sm:text-lg">
-              Organiza tu experiencia de pádel en un mismo lugar. Reserva pistas, encuentra entrenador y descubre material para tu próximo partido.
-            </p>
-          </div>
-
-          <motion.aside
-            initial={{ opacity: 0, scale: 0.97 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.15 }}
-            className="relative overflow-hidden rounded-4xl border border-white/10 bg-white/[0.06] p-6 shadow-2xl backdrop-blur sm:p-8"
+      <Box>
+        <Box component="section" sx={{ position: 'relative', isolation: 'isolate', overflow: 'hidden', color: 'white' }}>
+          <Box
+              aria-hidden="true"
+              sx={{
+                position: 'absolute',
+                right: -96,
+                top: -160,
+                zIndex: -1,
+                width: 448,
+                height: 448,
+                borderRadius: '50%',
+                bgcolor: 'rgba(230, 0, 18, 0.15)',
+                filter: 'blur(64px)',
+              }}
+          />
+          <Box
+              aria-hidden="true"
+              sx={{
+                position: 'absolute',
+                bottom: -256,
+                left: '33.333%',
+                zIndex: -1,
+                width: 480,
+                height: 480,
+                borderRadius: '50%',
+                border: '70px solid rgba(255, 255, 255, 0.03)',
+              }}
+          />
+          <Box
+              sx={{
+                mx: 'auto',
+                display: 'grid',
+                maxWidth: 1280,
+                gap: 5,
+                px: { xs: 2, sm: 3, lg: 4 },
+                py: { xs: 8, sm: 10, lg: 12 },
+                gridTemplateColumns: { xs: '1fr', lg: '1.15fr 0.85fr' },
+                alignItems: { lg: 'center' },
+              }}
           >
-            <div aria-hidden="true" className="absolute -right-10 -top-10 h-44 w-44 rounded-full border-[24px] border-brand-red/20" />
-            <div className="relative">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand-red">YoSoyTuPadel</p>
-              <h2 className="mt-4 text-2xl font-bold leading-tight sm:text-3xl">Todo empieza con el siguiente punto.</h2>
-              <p className="mt-3 text-sm leading-6 text-slate-300">Elige qué te apetece hacer hoy y nosotros te ayudamos con el resto.</p>
-              <div className="mt-8 grid grid-cols-3 gap-3">
-                {statLabels.map(({ key, label }) => (
-                  <div key={key} className="rounded-2xl border border-white/10 bg-black/20 p-3 sm:p-4">
-                    {stats ? (
-                      <p
-                        aria-label={stats[key] === null ? `${label}: no disponible` : `${stats[key]} ${label.toLowerCase()}`}
-                        className="text-xl font-black text-white sm:text-2xl"
-                      >
-                        {stats[key] ?? '—'}
-                      </p>
-                    ) : (
-                      <span aria-label={`Cargando ${label.toLowerCase()}`} className="block h-7 w-10 animate-pulse rounded bg-white/15" />
-                    )}
-                    <p className="mt-1 text-[10px] leading-4 text-slate-400 sm:text-xs">{label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </motion.aside>
-        </div>
-      </section>
-
-      {!isAdmin && !isCoach && <section className="relative isolate mx-auto max-w-7xl overflow-hidden px-4 py-14 text-white sm:px-6 sm:py-16 lg:px-8">
-        <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand-red">Vamos a jugar</p>
-            <h2 className="mt-2 text-2xl font-black tracking-tight text-white sm:text-3xl">¿Qué necesitas hoy?</h2>
-          </div>
-          <div className="flex flex-col gap-2 sm:items-end">
-            <time dateTime={today.toISOString().slice(0, 10)} className="text-sm font-semibold capitalize text-slate-300">
-              {formattedDate}
-            </time>
-          </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-3">
-          {activities.filter((activity) => !isAdmin || activity.to !== '/coaches').map((activity, index) => (
-            <motion.article
-              key={activity.to}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: index * 0.08 }}
-              whileHover={{ y: -5 }}
-              className={`group relative isolate flex min-h-80 flex-col justify-between overflow-hidden rounded-3xl bg-gradient-to-br ${activity.visual} p-6 text-white shadow-soft sm:p-7`}
-            >
-              <img
-                src={activity.image}
-                alt=""
-                aria-hidden="true"
-                className="absolute inset-x-0 top-0 -z-20 h-3/5 w-full object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-              <span aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-t from-black via-black/75 to-black/10 transition-colors duration-300 group-hover:from-black/95" />
-              <span aria-hidden="true" className="absolute -right-9 -top-10 -z-10 h-44 w-44 rounded-full border-[30px] border-brand-red/15 transition-transform duration-500 group-hover:scale-110" />
-              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-300">{activity.eyebrow}</span>
-              <div>
-                <h3 className="text-2xl font-black">{activity.title}</h3>
-                <p className="mt-2 max-w-xs text-sm leading-6 text-slate-300">{activity.description}</p>
-                <Link
-                  to={activity.to}
-                  className="mt-5 inline-flex items-center gap-2 rounded-xl bg-brand-red px-4 py-2.5 text-sm font-bold text-white transition duration-200 hover:bg-red-600 active:scale-95"
+            <Box>
+              <Box
+                  component={motion.p}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35 }}
+                  sx={{
+                    mt: 0,
+                    mb: 2.5,
+                    display: 'inline-flex',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    gap: 1,
+                    borderRadius: 99,
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    bgcolor: 'rgba(255, 255, 255, 0.06)',
+                    px: 2,
+                    py: 1,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.17em',
+                    color: '#cbd5e1',
+                  }}
+              >
+                <Box component="span" sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#e60012' }} />
+                <Box
+                    component="time"
+                    dateTime={today.toISOString().slice(0, 10)}
+                    sx={{ ml: 0.5, fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', color: '#94a3b8' }}
                 >
-                  {activity.action}
-                  <span aria-hidden="true" className="transition-transform group-hover:translate-x-1">→</span>
-                </Link>
-              </div>
-            </motion.article>
-          ))}
-        </div>
-      </section>}
-    </div>
+                  {formattedDate}
+                </Box>
+              </Box>
+              <Typography
+                  component={motion.h1}
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45, delay: 0.05 }}
+                  sx={{
+                    maxWidth: 768,
+                    fontSize: { xs: 48, sm: 60, lg: 72 },
+                    fontWeight: 900,
+                    lineHeight: 0.98,
+                    letterSpacing: '-0.025em',
+                  }}
+              >
+                Juega.
+                <br />
+                <Box component="span" sx={{ color: '#e60012' }}>Entrena.</Box>
+                <br />
+                Mejora.
+              </Typography>
+              <Typography sx={{ mt: 3, maxWidth: 576, fontSize: { xs: 16, sm: 18 }, lineHeight: 1.75, color: '#cbd5e1' }}>
+                Organiza tu experiencia de pádel en un mismo lugar. Reserva pistas, encuentra entrenador y descubre material para tu próximo partido.
+              </Typography>
+            </Box>
+
+            <Box
+                component={motion.aside}
+                initial={{ opacity: 0, scale: 0.97 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.15 }}
+                sx={{
+                  position: 'relative',
+                  overflow: 'hidden',
+                  borderRadius: 4,
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  bgcolor: 'rgba(255, 255, 255, 0.06)',
+                  p: { xs: 3, sm: 4 },
+                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                  backdropFilter: 'blur(8px)',
+                }}
+            >
+              <Box
+                  aria-hidden="true"
+                  sx={{
+                    position: 'absolute',
+                    right: -40,
+                    top: -40,
+                    width: 176,
+                    height: 176,
+                    borderRadius: '50%',
+                    border: '24px solid rgba(230, 0, 18, 0.2)',
+                  }}
+              />
+              <Box sx={{ position: 'relative' }}>
+                <Typography sx={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.2em', color: '#e60012' }}>
+                  YoSoyTuPadel
+                </Typography>
+                <Typography component="h2" sx={{ mt: 2, fontSize: { xs: 24, sm: 30 }, fontWeight: 800, lineHeight: 1.2 }}>
+                  Todo empieza con el siguiente punto.
+                </Typography>
+                <Typography sx={{ mt: 1.5, fontSize: 14, lineHeight: 1.6, color: '#cbd5e1' }}>
+                  Elige qué te apetece hacer hoy y nosotros te ayudamos con el resto.
+                </Typography>
+                <Box sx={{ mt: 4, display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 1.5 }}>
+                  {statLabels.map(({ key, label }) => (
+                      <Box
+                          key={key}
+                          sx={{
+                            borderRadius: 4,
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            bgcolor: 'rgba(0, 0, 0, 0.2)',
+                            p: { xs: 1.5, sm: 2 },
+                          }}
+                      >
+                        {stats ? (
+                            <Typography
+                                aria-label={stats[key] === null ? `${label}: no disponible` : `${stats[key]} ${label.toLowerCase()}`}
+                                sx={{ fontSize: { xs: 20, sm: 24 }, fontWeight: 900, color: 'white' }}
+                            >
+                              {stats[key] ?? '—'}
+                            </Typography>
+                        ) : (
+                            <Skeleton
+                                variant="rounded"
+                                width={40}
+                                height={28}
+                                aria-label={`Cargando ${label.toLowerCase()}`}
+                                sx={{ bgcolor: 'rgba(255, 255, 255, 0.15)' }}
+                            />
+                        )}
+                        <Typography sx={{ mt: 0.5, fontSize: { xs: 10, sm: 12 }, lineHeight: 1.35, color: '#94a3b8' }}>
+                          {label}
+                        </Typography>
+                      </Box>
+                  ))}
+                </Box>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+
+        {!isAdmin && !isCoach && (
+            <Box
+                component="section"
+                sx={{
+                  position: 'relative',
+                  isolation: 'isolate',
+                  mx: 'auto',
+                  maxWidth: 1280,
+                  overflow: 'hidden',
+                  px: { xs: 2, sm: 3, lg: 4 },
+                  py: { xs: 7, sm: 8 },
+                  color: 'white',
+                }}
+            >
+              <Stack
+                  direction={{ xs: 'column', sm: 'row' }}
+                  spacing={1.5}
+                  sx={{ mb: 3.5, alignItems: { sm: 'flex-end' }, justifyContent: { sm: 'space-between' } }}
+              >
+                <Box>
+                  <Typography sx={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.2em', color: '#e60012' }}>
+                    Vamos a jugar
+                  </Typography>
+                  <Typography component="h2" sx={{ mt: 1, fontSize: { xs: 24, sm: 30 }, fontWeight: 900, letterSpacing: '-0.025em', color: 'white' }}>
+                    ¿Qué necesitas hoy?
+                  </Typography>
+                </Box>
+                <Stack spacing={1} sx={{ alignItems: { sm: 'flex-end' } }}>
+                  <Box
+                      component="time"
+                      dateTime={today.toISOString().slice(0, 10)}
+                      sx={{ fontSize: 14, fontWeight: 600, textTransform: 'capitalize', color: '#cbd5e1' }}
+                  >
+                    {formattedDate}
+                  </Box>
+                </Stack>
+              </Stack>
+
+              <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' } }}>
+                {activities.filter((activity) => !isAdmin || activity.to !== '/coaches').map((activity, index) => (
+                    <Box
+                        component={motion.article}
+                        key={activity.to}
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.35, delay: index * 0.08 }}
+                        whileHover={{ y: -5 }}
+                        sx={{
+                          position: 'relative',
+                          isolation: 'isolate',
+                          display: 'flex',
+                          minHeight: 320,
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          overflow: 'hidden',
+                          borderRadius: 4,
+                          background: activity.visual,
+                          p: { xs: 3, sm: 3.5 },
+                          color: 'white',
+                          boxShadow: '0 12px 32px rgba(17, 19, 24, 0.08)',
+                          '&:hover .card-bg-img': { transform: 'scale(1.05)' },
+                          '&:hover .card-overlay': {
+                            background: 'linear-gradient(to top, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.1))',
+                          },
+                          '&:hover .card-ring': { transform: 'scale(1.1)' },
+                          '&:hover .card-arrow': { transform: 'translateX(4px)' },
+                        }}
+                    >
+                      <Box
+                          component="img"
+                          className="card-bg-img"
+                          src={activity.image}
+                          alt=""
+                          aria-hidden="true"
+                          sx={{
+                            position: 'absolute',
+                            insetInline: 0,
+                            top: 0,
+                            zIndex: -2,
+                            height: '60%',
+                            width: '100%',
+                            objectFit: 'cover',
+                            transition: 'transform 700ms ease',
+                          }}
+                      />
+                      <Box
+                          component="span"
+                          className="card-overlay"
+                          aria-hidden="true"
+                          sx={{
+                            position: 'absolute',
+                            inset: 0,
+                            zIndex: -1,
+                            background: 'linear-gradient(to top, #000000, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.1))',
+                            transition: 'background 300ms ease',
+                          }}
+                      />
+                      <Box
+                          component="span"
+                          className="card-ring"
+                          aria-hidden="true"
+                          sx={{
+                            position: 'absolute',
+                            right: -36,
+                            top: -40,
+                            zIndex: -1,
+                            width: 176,
+                            height: 176,
+                            borderRadius: '50%',
+                            border: '30px solid rgba(230, 0, 18, 0.15)',
+                            transition: 'transform 500ms ease',
+                          }}
+                      />
+                      <Typography component="span" sx={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.16em', color: '#cbd5e1' }}>
+                        {activity.eyebrow}
+                      </Typography>
+                      <Box>
+                        <Typography component="h3" sx={{ fontSize: 24, fontWeight: 900 }}>
+                          {activity.title}
+                        </Typography>
+                        <Typography sx={{ mt: 1, maxWidth: 320, fontSize: 14, lineHeight: 1.6, color: '#cbd5e1' }}>
+                          {activity.description}
+                        </Typography>
+                        <Button
+                            component={Link}
+                            to={activity.to}
+                            variant="contained"
+                            sx={{
+                              mt: 2.5,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 1,
+                              borderRadius: 3,
+                              bgcolor: '#e60012',
+                              px: 2,
+                              py: 1.1,
+                              fontSize: 14,
+                              fontWeight: 800,
+                              textTransform: 'none',
+                              color: 'white',
+                              boxShadow: 'none',
+                              '&:hover': { bgcolor: '#c4000f', boxShadow: 'none' },
+                            }}
+                        >
+                          {activity.action}
+                          <Box component="span" className="card-arrow" aria-hidden="true" sx={{ transition: 'transform 200ms ease' }}>
+                            →
+                          </Box>
+                        </Button>
+                      </Box>
+                    </Box>
+                ))}
+              </Box>
+            </Box>
+        )}
+      </Box>
   );
 }
 

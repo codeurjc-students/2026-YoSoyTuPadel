@@ -396,18 +396,19 @@ function AuthPage() {
                     <Button
                       type="submit"
                       variant="contained"
-                      color="error"
                       disabled={isBusy || (isRegistering && !acceptedTerms)}
                       fullWidth
                       sx={{
                         mt: 0.5,
                         py: 1.7,
                         borderRadius: 3,
+                        bgcolor: '#e60012',
                         fontWeight: 900,
-                        letterSpacing: 1,
+                        letterSpacing: 0.5,
+                        textTransform: 'none',
                         boxShadow: '0 10px 24px rgba(230,0,18,.22)',
-                        transition: 'transform .2s, box-shadow .2s',
-                        '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 14px 28px rgba(230,0,18,.3)' },
+                        transition: 'transform .2s, box-shadow .2s, background-color .2s',
+                        '&:hover': { bgcolor: '#c4000f', transform: 'translateY(-2px)', boxShadow: '0 14px 28px rgba(230,0,18,.3)' },
                       }}
                     >
                         {isBusy ? 'Un momento…' : isRegistering ? 'Crear cuenta' : 'Iniciar sesión'}
@@ -436,8 +437,13 @@ function AuthPage() {
         aria-labelledby="terms-dialog-title"
         fullWidth
         maxWidth="sm"
+        slotProps={{
+           paper: {
+             sx: { borderRadius: 4, p: 0.5, m: { xs: 2, sm: 4 } },
+           },
+        }}
       >
-          <DialogTitle id="terms-dialog-title" sx={{ fontWeight: 800 }}>
+          <DialogTitle id="terms-dialog-title" sx={{ px: { xs: 2.5, sm: 3 }, pt: 2.5, pb: 1.5, fontWeight: 900 }}>
               Términos y Condiciones
           </DialogTitle>
           <DialogContent dividers sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -519,11 +525,19 @@ function AuthPage() {
                   </Typography>
               </Box>
           </DialogContent>
-        <DialogActions>
+          <DialogActions sx={{ px: { xs: 2.5, sm: 3 }, py: 2 }}>
             <Button
               onClick={() => setIsTermsDialogOpen(false)}
               variant="contained"
-              color="error"
+              sx={{
+                borderRadius: 3,
+                bgcolor: '#e60012',
+                boxShadow: '0 8px 20px rgba(230,0,18,.22)',
+                '&:hover': { bgcolor: '#c4000f' },
+                fontWeight: 800,
+                textTransform: 'none',
+                px: 3,
+              }}
             >
               Cerrar
             </Button>

@@ -1,3 +1,4 @@
+import { Box } from '@mui/material';
 import { motion, useAnimationFrame, useMotionValue } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -24,11 +25,11 @@ interface BallConfig {
 }
 
 function PadelBall({
-  index,
-  width,
-  height,
-  config,
-}: {
+                     index,
+                     width,
+                     height,
+                     config,
+                   }: {
   index: number;
   width: number;
   height: number;
@@ -93,7 +94,7 @@ function PadelBall({
 
     state.boostElapsed = Math.min(BOOST_DURATION, state.boostElapsed + elapsed);
     state.currentSpeed = state.speed
-      + (state.boostStartSpeed - state.speed) * (state.boostElapsed / BOOST_DURATION);
+        + (state.boostStartSpeed - state.speed) * (state.boostElapsed / BOOST_DURATION);
     const velocityMagnitude = Math.hypot(state.velocityX, state.velocityY) || 1;
     state.velocityX = (state.velocityX / velocityMagnitude) * state.currentSpeed;
     state.velocityY = (state.velocityY / velocityMagnitude) * state.currentSpeed;
@@ -116,14 +117,33 @@ function PadelBall({
   };
 
   return (
-    <motion.button
+      <Box
+      component={motion.button}
       type="button"
       aria-label={`Cambiar dirección de la pelota ${index + 1}`}
       onPointerDown={changeDirection}
       onClick={(event) => {
         if (event.detail === 0) changeDirection();
       }}
-      className="pointer-events-auto absolute left-0 top-0 grid h-14 w-14 cursor-pointer place-items-center rounded-full border-0 bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-200"
+      sx={{
+        pointerEvents: 'auto',
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        display: 'grid',
+        width: BALL_SIZE,
+        height: BALL_SIZE,
+        cursor: 'pointer',
+        placeItems: 'center',
+        borderRadius: '50%',
+        border: 0,
+        bgcolor: 'transparent',
+        p: 0,
+        '&:focus-visible': {
+          outline: 'none',
+          boxShadow: '0 0 0 2px #d9f99d',
+        },
+      }}
       style={{
         x,
         y,
@@ -132,14 +152,47 @@ function PadelBall({
         animationDuration: `${config.duration}s`,
       }}
     >
-      <span
-        className="relative block rounded-full border border-lime-200/70 bg-[radial-gradient(circle_at_30%_28%,#efffa8,#b8e650_58%,#70982c)] shadow-[0_0_28px_rgba(190,242,100,0.48)]"
-        style={{ width: BALL_VISUAL_SIZE, height: BALL_VISUAL_SIZE }}
+    <Box
+        component="span"
+        sx={{
+          position: 'relative',
+          display: 'block',
+          width: BALL_VISUAL_SIZE,
+          height: BALL_VISUAL_SIZE,
+          borderRadius: '50%',
+          border: '1px solid rgba(217, 249, 157, 0.7)',
+          background: 'radial-gradient(circle at 30% 28%, #efffa8, #b8e650 58%, #70982c)',
+          boxShadow: '0 0 28px rgba(190, 242, 100, 0.48)',
+        }}
       >
-        <span className="absolute left-[13px] top-0 h-full w-3 rotate-45 rounded-full border-r border-white/70" />
-        <span className="absolute left-0 top-3 h-3 w-full rotate-[-35deg] rounded-full border-t border-white/70" />
-      </span>
-    </motion.button>
+          <Box
+              component="span"
+              sx={{
+                position: 'absolute',
+                left: '13px',
+                top: 0,
+                height: '100%',
+                width: 12,
+                transform: 'rotate(45deg)',
+                borderRadius: 99,
+                borderRight: '1px solid rgba(255, 255, 255, 0.7)',
+              }}
+          />
+          <Box
+              component="span"
+              sx={{
+                position: 'absolute',
+                left: 0,
+                top: 12,
+                height: 12,
+                width: '100%',
+                transform: 'rotate(-35deg)',
+                borderRadius: 99,
+                borderTop: '1px solid rgba(255, 255, 255, 0.7)',
+              }}
+          />
+        </Box>
+      </Box>
   );
 }
 
@@ -171,7 +224,7 @@ function PadelBallField({ count = 10 }: { count?: number }) {
   }, []);
 
   return (
-    <div ref={fieldRef} className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+    <Box ref={fieldRef} sx={{ pointerEvents: 'none', position: 'absolute', inset: 0, zIndex: 0, overflow: 'hidden' }}>
       {Array.from({ length: count }, (_, index) => (
         <PadelBall
           key={index}
@@ -181,7 +234,7 @@ function PadelBallField({ count = 10 }: { count?: number }) {
           config={ballConfigs[index]}
         />
       ))}
-    </div>
+    </Box>
   );
 }
 

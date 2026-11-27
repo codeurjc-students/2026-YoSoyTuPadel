@@ -71,15 +71,19 @@ interface AdminBooking extends BookingDTO {
 
 type Confirmation =
   | { kind: 'save-user'; user: AdminUser }
+  | { kind: 'delete-user-image'; user: AdminUser }
   | { kind: 'cancel-booking'; booking: AdminBooking }
   | { kind: 'delete-user'; user: AdminUser }
   | { kind: 'delete-booking'; booking: AdminBooking };
 
 const cardSx = {
   borderRadius: 4,
+  border: '1px solid #e8e8eb',
   bgcolor: 'white',
   color: 'grey.900',
-  boxShadow: '0 16px 35px rgba(0,0,0,0.12)',
+  boxShadow: '0 12px 32px rgba(17, 19, 24, 0.08)',
+  transition: 'transform 300ms ease, box-shadow 300ms ease',
+  '&:hover': { transform: 'translateY(-4px)', boxShadow: '0 16px 36px rgba(17, 19, 24, 0.14)' },
 };
 
 function normalizeRole(role: string): UserRole {
@@ -173,15 +177,7 @@ function BookingCard({
   const finalStatus = booking.status === 'CANCELLED' ? 'Cancelada' : 'Terminada';
 
   return (
-    <Card
-      elevation={3}
-      sx={{
-        ...cardSx,
-        mb: 3,
-        transition: 'transform 0.2s',
-        '&:hover': { transform: 'translateY(-2px)', boxShadow: 6 },
-      }}
-    >
+    <Card elevation={0} sx={cardSx}>
       <CardContent sx={{ p: { xs: 2, sm: 2.5 }, '&:last-child': { pb: { xs: 2, sm: 2.5 } } }}>
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2.5} sx={{ alignItems: { xs: 'stretch', md: 'center' } }}>
           <Box
@@ -197,7 +193,7 @@ function BookingCard({
                 color="error"
                 label={booking.type === 'MATCH' ? 'Partido' : 'Entrenamiento'}
                 size="small"
-                sx={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', height: 26, borderRadius: 1.5, color: 'white' }}
+                sx={{ bgcolor: '#e60012', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', height: 26, borderRadius: 1.5, color: 'white' }}
               />
             </Stack>
             <Typography sx={{ color: 'grey.900', fontSize: '1.2rem', fontWeight: 900 }}>
@@ -229,12 +225,12 @@ function BookingCard({
                 fullWidth
                 variant="outlined"
                 onClick={onCancel}
-                sx={{ borderColor: 'grey.800', color: 'grey.900', borderWidth: 2, fontWeight: 'bold', textTransform: 'none', borderRadius: 2, '&:hover': { borderWidth: 2, bgcolor: 'grey.100' } }}
+                sx={{ borderColor: 'grey.800', color: 'grey.900', borderWidth: 2, fontWeight: 'bold', textTransform: 'none', borderRadius: 3, '&:hover': { borderWidth: 2, bgcolor: 'grey.100' } }}
               >
                 Cancelar
               </Button>
             ) : null}
-            <Button fullWidth variant="contained" color="error" onClick={onDelete} sx={{ fontWeight: 800, textTransform: 'none', borderRadius: 2 }}>
+            <Button fullWidth variant="contained" onClick={onDelete} sx={{ bgcolor: '#e60012', '&:hover': { bgcolor: '#c4000f' }, fontWeight: 800, textTransform: 'none', borderRadius: 3 }}>
               Eliminar
             </Button>
           </Stack>
@@ -334,6 +330,8 @@ function AdminDashboardPage() {
         setEditingUser(null);
         setOriginalEditingUser(null);
         setSuccessMessage('Usuario modificado con éxito.');
+      } else if (confirmation.kind === 'delete-user-image') {
+        await handleDeleteUserImage(confirmation.user);
       } else if (confirmation.kind === 'cancel-booking') {
         await api.patch(`/api/v1/bookings/${confirmation.booking.id}`);
         setBookings((current) => current.map((booking) => booking.id === confirmation.booking.id ? { ...booking, status: 'CANCELLED' } : booking));
@@ -372,13 +370,24 @@ function AdminDashboardPage() {
 
           {mainTab === 'users' ? (
             <>
-              <Tabs value={userFilter} onChange={(_, value: UserFilter) => setUserFilter(value)} sx={{ mb: 3, '& .MuiTab-root': { color: 'grey.400', fontWeight: 700, textTransform: 'none' }, '& .Mui-selected': { color: '#fff' }, '& .MuiTabs-indicator': { bgcolor: '#e60012' } }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+              <Tabs value={userFilter} onChange={(_, value: UserFilter) => setUserFilter(value)} sx={{ '& .MuiTab-root': { color: 'grey.400', fontWeight: 700, textTransform: 'none' }, '& .Mui-selected': { color: '#fff' }, '& .MuiTabs-indicator': { bgcolor: '#e60012' } }}>
                 <Tab value="clients" label={`Clientes (${users.filter((user) => user.role === 'USER').length})`} />
                 <Tab value="coaches" label={`Entrenadores (${users.filter((user) => user.role === 'COACH').length})`} />
               </Tabs>
+              {userFilter === 'coaches' && (
+                <Button
+                  variant="contained"
+                  onClick={() => setIsCreateCoachOpen(true)}
+                  sx={{ bgcolor: '#e60012', boxShadow: '0 8px 20px rgba(230,0,18,.22)', '&:hover': { bgcolor: '#c4000f' }, fontWeight: 900, textTransform: 'uppercase', borderRadius: 3 }}
+                >
+                    AÑADIR ENTRENADOR
+                </Button>
+              )}
+              </Box>
               <Stack spacing={2}>
                 {(userFilter === 'clients' ? visibleUsers.slice(0, visibleUsersCount) : visibleCoaches.slice(0, visibleCoachesCount)).map((user) => (
-                  <Card key={user.id} sx={{ ...cardSx, display: 'flex', flexDirection: { xs: 'column', sm: 'row' } }}>
+                    <Card key={user.id} elevation={0} sx={{ ...cardSx, display: 'flex', flexDirection: { xs: 'column', sm: 'row' } }}>
                     <Box sx={{ p: 2.5, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
                       <Avatar src={`/api/v1/users/${user.id}/image?v=${imageVersions[user.id] ?? 0}`} alt={user.name} sx={{ width: 100, height: 100, objectFit: 'cover', bgcolor: '#e60012', fontWeight: 900, fontSize: 28 }}>
                         {initials(user.name)}
@@ -391,8 +400,8 @@ function AdminDashboardPage() {
                     </CardContent>
                     <Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', sm: 'block' } }} />
                     <Stack direction={{ xs: 'row', sm: 'column' }} spacing={1.2} sx={{ p: 2.5, justifyContent: 'center', minWidth: { sm: 165 } }}>
-                      <Button fullWidth variant="outlined" startIcon={<EditOutlinedIcon />} onClick={() => { setEditingUser({ ...user }); setOriginalEditingUser({ ...user }); }} sx={{ borderColor: 'grey.800', color: 'grey.900', borderWidth: 2, fontWeight: 'bold', textTransform: 'none', borderRadius: 2, '&:hover': { borderWidth: 2, bgcolor: 'grey.100' } }}>Modificar</Button>
-                      <Button fullWidth variant="contained" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => setConfirmation({ kind: 'delete-user', user })} sx={{ fontWeight: 800, textTransform: 'none', borderRadius: 2 }}>Eliminar</Button>
+                      <Button fullWidth variant="outlined" startIcon={<EditOutlinedIcon />} onClick={() => { setEditingUser({ ...user }); setOriginalEditingUser({ ...user }); }} sx={{ borderColor: 'grey.800', color: 'grey.900', borderWidth: 2, fontWeight: 'bold', textTransform: 'none', borderRadius: 3, '&:hover': { borderWidth: 2, bgcolor: 'grey.100' } }}>Modificar</Button>
+                      <Button fullWidth variant="contained" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => setConfirmation({ kind: 'delete-user', user })} sx={{ bgcolor: '#e60012', '&:hover': { bgcolor: '#c4000f' }, fontWeight: 800, textTransform: 'none', borderRadius: 3 }}>Eliminar</Button>
                     </Stack>
                   </Card>
                 ))}
@@ -408,7 +417,7 @@ function AdminDashboardPage() {
                           bgcolor: 'white',
                           color: '#111318',
                           borderColor: 'white',
-                          borderRadius: 2,
+                          borderRadius: 3,
                           fontWeight: 700,
                           textTransform: 'none',
                           '&:hover': { bgcolor: 'grey.100', borderColor: 'grey.100' },
@@ -431,7 +440,7 @@ function AdminDashboardPage() {
                               bgcolor: 'white',
                               color: '#111318',
                               borderColor: 'white',
-                              borderRadius: 2,
+                              borderRadius: 3,
                               fontWeight: 700,
                               textTransform: 'none',
                               '&:hover': { bgcolor: 'grey.100', borderColor: 'grey.100' },
@@ -441,16 +450,6 @@ function AdminDashboardPage() {
                       </Button>
                     </Box>
                   )}
-                  <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-                    <Button
-                      variant="contained"
-                      color="error"
-                      onClick={() => setIsCreateCoachOpen(true)}
-                      sx={{ fontWeight: 900, textTransform: 'uppercase', borderRadius: 2 }}
-                    >
-                      AÑADIR ENTRENADOR
-                    </Button>
-                  </Box>
                 </>
               )}
             </>
@@ -478,7 +477,7 @@ function AdminDashboardPage() {
                           variant="contained"
                           disableElevation
                           onClick={handleLoadMore}
-                          sx={{ bgcolor: 'white', color: 'grey.900', fontWeight: 'bold', borderRadius: 2, textTransform: 'none', px: 4, py: 1, '&:hover': { bgcolor: 'grey.200' } }}
+                          sx={{ bgcolor: 'white', color: 'grey.900', fontWeight: 'bold', borderRadius: 3, textTransform: 'none', px: 4, py: 1, '&:hover': { bgcolor: 'grey.200' } }}
                         >
                           Más resultados
                         </Button>
@@ -493,8 +492,8 @@ function AdminDashboardPage() {
       )}
 
       <Dialog open={editingUser !== null} onClose={() => { setEditingUser(null); setOriginalEditingUser(null); }} fullWidth maxWidth="sm" slotProps={{ paper: { sx: { bgcolor: 'white', borderRadius: 3 } } }}>
-        <DialogTitle sx={{ color: 'grey.900', fontWeight: 900 }}>Modificar usuario</DialogTitle>
-        <DialogContent>
+        <DialogTitle sx={{ px: { xs: 2.5, sm: 3 }, pt: 2.5, pb: 1, color: 'grey.900', fontWeight: 900 }}>Modificar usuario</DialogTitle>
+        <DialogContent sx={{ px: { xs: 2.5, sm: 3 }, pb: 1.5 }}>
           <Stack spacing={2} sx={{ pt: 1 }}>
             <TextField label="Nombre" value={editingUser?.name ?? ''} onChange={(event) => setEditingUser((current) => current ? { ...current, name: event.target.value } : current)} fullWidth />
             {editingUser?.role === 'USER' && (
@@ -541,31 +540,33 @@ function AdminDashboardPage() {
             <TextField label="Email" type="email" value={editingUser?.email ?? ''} onChange={(event) => setEditingUser((current) => current ? { ...current, email: event.target.value } : current)} fullWidth />
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setEditingUser(null)} sx={{ color: 'grey.700', textTransform: 'none' }}>Volver</Button>
+        <DialogActions sx={{ px: { xs: 2.5, sm: 3 }, pb: 2.5, pt: 1, gap: 1.25, flexDirection: { xs: 'column-reverse', sm: 'row' }, '& > :not(style) ~ :not(style)': { ml: { xs: 0, sm: 1.25 } } }}>
+          <Button onClick={() => setEditingUser(null)} variant="outlined" color="inherit" sx={{ width: { xs: '100%', sm: 'auto' }, borderRadius: 3, borderColor: 'grey.300', color: 'grey.800', textTransform: 'none', fontWeight: 700, px: 2.5, py: 0.9 }}>Volver</Button>
           <Button
             variant="outlined"
             color="error"
-            onClick={() => editingUser && void handleDeleteUserImage(editingUser)}
+            onClick={() => editingUser && setConfirmation({ kind: 'delete-user-image', user: editingUser })}
+            sx={{ width: { xs: '100%', sm: 'auto' }, borderRadius: 3, fontWeight: 800, px: 2.5, py: 0.9 }}
           >
             ELIMINAR FOTO
           </Button>
-          <Button variant="contained" color="error" disabled={!hasChanges || !editingUser?.name.trim() || !editingUser?.email.trim()} onClick={() => editingUser && setConfirmation({ kind: 'save-user', user: editingUser })} sx={{ fontWeight: 800, textTransform: 'none' }}>Guardar</Button>
+          <Button variant="contained" disabled={!hasChanges || !editingUser?.name.trim() || !editingUser?.email.trim()} onClick={() => editingUser && setConfirmation({ kind: 'save-user', user: editingUser })} sx={{ width: { xs: '100%', sm: 'auto' }, borderRadius: 3, bgcolor: '#e60012', boxShadow: '0 8px 20px rgba(230,0,18,.22)', '&:hover': { bgcolor: '#c4000f' }, fontWeight: 800, textTransform: 'none', px: 2.5, py: 0.9 }}>Guardar</Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={confirmation !== null} onClose={() => setConfirmation(null)} fullWidth maxWidth="xs" slotProps={{ paper: { sx: { bgcolor: 'white', borderRadius: 3 } } }}>
-        <DialogTitle sx={{ color: 'grey.900', fontWeight: 900 }}>¿Estás seguro?</DialogTitle>
-        <DialogContent>
+      <Dialog open={confirmation !== null} onClose={() => setConfirmation(null)} fullWidth maxWidth="xs" slotProps={{ paper: { sx: { bgcolor: 'white', borderRadius: 4, p: 0.5, m: { xs: 2, sm: 4 } } } }}>
+        <DialogTitle sx={{ px: { xs: 2.5, sm: 3 }, pt: 2.5, pb: 1, color: 'grey.900', fontWeight: 900 }}>¿Estás seguro?</DialogTitle>
+        <DialogContent sx={{ px: { xs: 2.5, sm: 3 }, pb: 1.5 }}>
           <DialogContentText sx={{ color: 'grey.700' }}>
             {confirmation?.kind === 'save-user' && 'Se guardarán los cambios del usuario.'}
+            {confirmation?.kind === 'delete-user-image' && 'Se eliminará la foto de perfil del usuario.'}
             {confirmation?.kind === 'cancel-booking' && 'La reserva quedará cancelada.'}
             {(confirmation?.kind === 'delete-user' || confirmation?.kind === 'delete-booking') && 'Esta acción no se puede deshacer.'}
           </DialogContentText>
         </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setConfirmation(null)} sx={{ color: 'grey.700', textTransform: 'none' }}>Volver</Button>
-          <Button variant="contained" color="error" onClick={() => void confirmAction()} sx={{ fontWeight: 800, textTransform: 'none' }}>Confirmar</Button>
+        <DialogActions sx={{ px: { xs: 2.5, sm: 3 }, pb: 2.5, pt: 1, gap: 1.25, flexDirection: { xs: 'column-reverse', sm: 'row' }, '& > :not(style) ~ :not(style)': { ml: { xs: 0, sm: 1.25 } } }}>
+          <Button onClick={() => setConfirmation(null)} variant="outlined" color="inherit" sx={{ width: { xs: '100%', sm: 'auto' }, borderRadius: 3, borderColor: 'grey.300', color: 'grey.800', textTransform: 'none', fontWeight: 700, px: 2.5, py: 0.9 }}>Volver</Button>
+          <Button variant="contained" onClick={() => void confirmAction()} sx={{ width: { xs: '100%', sm: 'auto' }, borderRadius: 3, bgcolor: '#e60012', boxShadow: '0 8px 20px rgba(230,0,18,.22)', '&:hover': { bgcolor: '#c4000f' }, fontWeight: 800, textTransform: 'none', px: 2.5, py: 0.9 }}>Confirmar</Button>
         </DialogActions>
       </Dialog>
 
@@ -575,7 +576,7 @@ function AdminDashboardPage() {
         onCreated={handleCoachCreated}
       />
 
-      <Snackbar open={successMessage !== null} autoHideDuration={4000} onClose={() => setSuccessMessage(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+      <Snackbar open={successMessage !== null} autoHideDuration={4000} onClose={() => setSuccessMessage(null)} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
         <Alert severity="success" variant="filled" onClose={() => setSuccessMessage(null)} sx={{ width: '100%' }}>{successMessage}</Alert>
       </Snackbar>
     </Box>

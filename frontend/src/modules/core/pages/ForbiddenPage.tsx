@@ -12,8 +12,7 @@ function ForbiddenPage() {
         <Typography variant="h6" sx={{ color: '#000000', mt: 2 }}>
           El árbitro ha pitado falta. No tienes los permisos necesarios para entrar en esta zona de la pista.
         </Typography>
-        <Button sx={{ mt: 4 }} variant="contained" color="error" onClick={() => navigate('/')}>Volver al inicio</Button>
-      </Box>
+        <Button sx={{ mt: 4, borderRadius: 3, bgcolor: '#e60012', boxShadow: '0 8px 20px rgba(230,0,18,.22)', '&:hover': { bgcolor: '#c4000f' }, fontWeight: 800, textTransform: 'none', px: 3, py: 1.1 }} variant="contained" onClick={() => navigate('/')}>Volver al inicio</Button>      </Box>
     </ErrorLayout>
   );
 }

@@ -31,7 +31,7 @@ type Feedback = {
 };
 
 function RacketDetailPage() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading, user } = useAuth();
   const isAdmin = user?.role.toUpperCase().replace(/^ROLE_/, '') === 'ADMIN';
   const { id: idParam } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -175,6 +175,14 @@ function RacketDetailPage() {
     }
   };
 
+  if (isAuthLoading) {
+    return (
+        <Box role="status" aria-label="Cargando pala" sx={{ minHeight: '60vh', display: 'grid', placeItems: 'center' }}>
+          <CircularProgress color="error" />
+        </Box>
+    );
+  }
+
   if (!isAuthenticated || !user) {
     return <Navigate to="/login" replace />;
   }
@@ -228,7 +236,7 @@ function RacketDetailPage() {
               <Button
                 component="label"
                 variant="contained"
-                sx={{ mt: 2, bgcolor: 'grey.900', color: 'white', fontWeight: 'bold', textTransform: 'none', borderRadius: 2, '&:hover': { bgcolor: 'grey.800' } }}
+                sx={{ my: 2, bgcolor: 'grey.900', color: 'white', fontWeight: 'bold', textTransform: 'none', borderRadius: 3, '&:hover': { bgcolor: 'grey.800' } }}
               >
                 Actualizar foto
                 <input type="file" hidden accept="image/*" onChange={(event) => {
@@ -318,50 +326,155 @@ function RacketDetailPage() {
         </Grid>
       </Grid>
 
-        {isAdmin && (
+      {isAdmin && (
           <Stack direction="row" spacing={2} sx={{ justifyContent: 'center', mt: 3 }}>
-            <Button variant="contained" onClick={() => { setEditForm({ ...racket }); setEditOpen(true); }} sx={{ bgcolor: 'white', color: 'grey.900', fontWeight: 800, textTransform: 'none', borderRadius: 2, '&:hover': { bgcolor: 'grey.200' } }}>Editar</Button>
-            <Button variant="contained" color="error" onClick={() => setDeleteOpen(true)} sx={{ fontWeight: 800, textTransform: 'none', borderRadius: 2 }}>Eliminar</Button>
+            <Button
+                variant="contained"
+                onClick={() => { setEditForm({ ...racket }); setEditOpen(true); }}
+                sx={{
+                  bgcolor: 'white',
+                  color: 'grey.900',
+                  fontWeight: 800,
+                  textTransform: 'none',
+                  borderRadius: 3,
+                  px: 3,
+                  '&:hover': { bgcolor: 'grey.200' },
+                }}
+            >
+              Editar
+            </Button>
+            <Button
+                variant="contained"
+                onClick={() => setDeleteOpen(true)}
+                sx={{
+                  bgcolor: '#e60012',
+                  boxShadow: '0 8px 20px rgba(230,0,18,.22)',
+                  '&:hover': { bgcolor: '#c4000f' },
+                  fontWeight: 800,
+                  textTransform: 'none',
+                  borderRadius: 3,
+                  px: 3,
+                }}
+            >
+              Eliminar
+            </Button>
           </Stack>
-        )}
-
-        <Dialog open={editOpen} onClose={() => setEditOpen(false)} fullWidth maxWidth="sm" slotProps={{ paper: { sx: { bgcolor: 'white', borderRadius: 3, color: 'grey.900' } } }}>
-          <DialogTitle sx={{ color: 'grey.900', fontWeight: 900 }}>Editar pala</DialogTitle>
-          <DialogContent>
-            <Stack spacing={2} sx={{ pt: 1 }}>
-              <TextField variant="outlined" label="Marca" value={editForm?.brand ?? ''} onChange={(event) => setEditForm((current) => current ? { ...current, brand: event.target.value } : current)} fullWidth />
-              <TextField variant="outlined" label="Nombre" value={editForm?.name ?? ''} onChange={(event) => setEditForm((current) => current ? { ...current, name: event.target.value } : current)} fullWidth />
-              <TextField variant="outlined" label="Descripción" multiline value={editForm?.description ?? ''} onChange={(event) => setEditForm((current) => current ? { ...current, description: event.target.value } : current)} fullWidth />
-              <TextField variant="outlined" label="Precio" type="number" value={editForm?.pricePerDay ?? ''} onChange={(event) => setEditForm((current) => current ? { ...current, pricePerDay: Number(event.target.value) } : current)} fullWidth />
-              <TextField variant="outlined" label="Stock" type="number" value={editForm?.stock ?? ''} onChange={(event) => setEditForm((current) => current ? { ...current, stock: Number(event.target.value) } : current)} fullWidth />
-            </Stack>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setEditOpen(false)} variant="text" sx={{ color: 'grey.700', textTransform: 'none' }}>Cancelar</Button>
-            <Button disabled={!hasRacketChanges} variant="contained" color="error" onClick={() => void saveRacket()} sx={{ textTransform: 'none' }}>Guardar cambios</Button>
-          </DialogActions>
-        </Dialog>
-        <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)}><DialogTitle>¿Eliminar pala?</DialogTitle><DialogContent><DialogContentText>Esta acción no se puede deshacer.</DialogContentText></DialogContent><DialogActions><Button onClick={() => setDeleteOpen(false)}>Cancelar</Button><Button color="error" variant="contained" onClick={() => void deleteRacket()}>Eliminar</Button></DialogActions></Dialog>
-        <Dialog open={photoOpen} onClose={() => setPhotoOpen(false)}><DialogTitle>¿Deseas actualizar la imagen?</DialogTitle><DialogActions><Button onClick={() => setPhotoOpen(false)}>Cancelar</Button><Button color="error" variant="contained" disabled={!selectedPhoto} onClick={() => void uploadPhoto()}>Confirmar</Button></DialogActions></Dialog>
+      )}
 
       <Dialog
-        open={dialogOpen}
-        onClose={(_, reason) => {
-          if (!isSubmitting && reason !== 'backdropClick') setDialogOpen(false);
-        }}
-        aria-labelledby="racket-booking-title"
-        aria-describedby="racket-booking-description"
-        slotProps={{ paper: { sx: { width: '100%', maxWidth: 440, m: 2, borderRadius: 3 } } }}
+          open={editOpen}
+          onClose={() => setEditOpen(false)}
+          fullWidth
+          maxWidth="sm"
+          slotProps={{ paper: { sx: { borderRadius: 4, p: 0.5, m: { xs: 2, sm: 4 } } } }}
       >
-        <DialogTitle id="racket-booking-title" sx={{ fontWeight: 900 }}>Confirmar Reserva</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="racket-booking-description">
+        <DialogTitle sx={{ px: { xs: 2.5, sm: 3 }, pt: 2.5, pb: 1, fontWeight: 900 }}>
+          Editar pala
+        </DialogTitle>
+        <DialogContent sx={{ px: { xs: 2.5, sm: 3 }, pb: 1.5 }}>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <TextField variant="outlined" label="Marca" value={editForm?.brand ?? ''} onChange={(event) => setEditForm((current) => current ? { ...current, brand: event.target.value } : current)} fullWidth />
+            <TextField variant="outlined" label="Nombre" value={editForm?.name ?? ''} onChange={(event) => setEditForm((current) => current ? { ...current, name: event.target.value } : current)} fullWidth />
+            <TextField variant="outlined" label="Descripción" multiline value={editForm?.description ?? ''} onChange={(event) => setEditForm((current) => current ? { ...current, description: event.target.value } : current)} fullWidth />
+            <TextField variant="outlined" label="Precio" type="number" value={editForm?.pricePerDay ?? ''} onChange={(event) => setEditForm((current) => current ? { ...current, pricePerDay: Number(event.target.value) } : current)} fullWidth />
+            <TextField variant="outlined" label="Stock" type="number" value={editForm?.stock ?? ''} onChange={(event) => setEditForm((current) => current ? { ...current, stock: Number(event.target.value) } : current)} fullWidth />
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: { xs: 2.5, sm: 3 }, pb: 2.5, pt: 1, gap: 1.25 }}>
+          <Button onClick={() => setEditOpen(false)} variant="outlined" color="inherit" sx={{ borderRadius: 3, borderColor: 'grey.300', color: 'grey.800', textTransform: 'none', fontWeight: 700, px: 2.5 }}>
+            Cancelar
+          </Button>
+          <Button
+              disabled={!hasRacketChanges}
+              variant="contained"
+              onClick={() => void saveRacket()}
+              sx={{ borderRadius: 3, bgcolor: '#e60012', '&:hover': { bgcolor: '#c4000f' }, fontWeight: 800, textTransform: 'none', px: 2.5 }}
+          >
+            Guardar cambios
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+          open={deleteOpen}
+          onClose={() => setDeleteOpen(false)}
+          fullWidth
+          maxWidth="xs"
+          slotProps={{ paper: { sx: { borderRadius: 4, p: 0.5, m: { xs: 2, sm: 4 } } } }}
+      >
+        <DialogTitle sx={{ px: { xs: 2.5, sm: 3 }, pt: 2.5, pb: 1, fontWeight: 900 }}>
+          ¿Eliminar pala?
+        </DialogTitle>
+        <DialogContent sx={{ px: { xs: 2.5, sm: 3 }, pb: 1.5 }}>
+          <DialogContentText sx={{ color: 'grey.700' }}>
+            Esta acción no se puede deshacer.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: { xs: 2.5, sm: 3 }, pb: 2.5, pt: 1, gap: 1.25 }}>
+          <Button onClick={() => setDeleteOpen(false)} variant="outlined" color="inherit" sx={{ borderRadius: 3, borderColor: 'grey.300', color: 'grey.800', textTransform: 'none', fontWeight: 700, px: 2.5 }}>
+            Cancelar
+          </Button>
+          <Button
+              variant="contained"
+              onClick={() => void deleteRacket()}
+              sx={{ borderRadius: 3, bgcolor: '#e60012', '&:hover': { bgcolor: '#c4000f' }, fontWeight: 800, textTransform: 'none', px: 2.5 }}
+          >
+            Eliminar
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+          open={photoOpen}
+          onClose={() => setPhotoOpen(false)}
+          fullWidth
+          maxWidth="xs"
+          slotProps={{ paper: { sx: { borderRadius: 4, p: 0.5, m: { xs: 2, sm: 4 } } } }}
+      >
+        <DialogTitle sx={{ px: { xs: 2.5, sm: 3 }, pt: 2.5, pb: 1, fontWeight: 900 }}>
+          ¿Deseas actualizar la imagen?
+        </DialogTitle>
+        <DialogActions sx={{ px: { xs: 2.5, sm: 3 }, pb: 2.5, pt: 1.5, gap: 1.25 }}>
+          <Button onClick={() => setPhotoOpen(false)} variant="outlined" color="inherit" sx={{ borderRadius: 3, borderColor: 'grey.300', color: 'grey.800', textTransform: 'none', fontWeight: 700, px: 2.5 }}>
+            Cancelar
+          </Button>
+          <Button
+              variant="contained"
+              disabled={!selectedPhoto}
+              onClick={() => void uploadPhoto()}
+              sx={{ borderRadius: 3, bgcolor: '#e60012', '&:hover': { bgcolor: '#c4000f' }, fontWeight: 800, textTransform: 'none', px: 2.5 }}
+          >
+            Confirmar
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+          open={dialogOpen}
+          onClose={(_, reason) => {
+            if (!isSubmitting && reason !== 'backdropClick') setDialogOpen(false);
+          }}
+          aria-labelledby="racket-booking-title"
+          aria-describedby="racket-booking-description"
+          fullWidth
+          maxWidth="xs"
+          slotProps={{ paper: { sx: { borderRadius: 4, p: 0.5, m: { xs: 2, sm: 4 } } } }}
+      >
+        <DialogTitle id="racket-booking-title" sx={{ px: { xs: 2.5, sm: 3 }, pt: 2.5, pb: 1, fontWeight: 900 }}>
+          Confirmar Reserva
+        </DialogTitle>
+        <DialogContent sx={{ px: { xs: 2.5, sm: 3 }, pb: 1.5 }}>
+          <DialogContentText id="racket-booking-description" sx={{ color: 'grey.700' }}>
             ¿Seguro que quieres alquilar la pala {racket.brand} {racket.name}?
           </DialogContentText>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-          <Button onClick={() => setDialogOpen(false)} disabled={isSubmitting} color="inherit">Cancelar</Button>
-          <Button onClick={() => void confirmBooking()} disabled={isSubmitting || !user} variant="contained" color="error">
+        <DialogActions sx={{ px: { xs: 2.5, sm: 3 }, pb: 2.5, pt: 1, gap: 1.25 }}>
+          <Button onClick={() => setDialogOpen(false)} disabled={isSubmitting} variant="outlined" color="inherit" sx={{ borderRadius: 3, borderColor: 'grey.300', color: 'grey.800', textTransform: 'none', fontWeight: 700, px: 2.5 }}>
+            Cancelar
+          </Button>
+          <Button
+              onClick={() => void confirmBooking()}
+              disabled={isSubmitting || !user}
+              variant="contained"
+              sx={{ borderRadius: 3, bgcolor: '#e60012', '&:hover': { bgcolor: '#c4000f' }, fontWeight: 800, textTransform: 'none', px: 2.5 }}
+          >
             {isSubmitting ? <CircularProgress size={22} color="inherit" aria-label="Confirmando reserva" /> : 'Confirmar'}
           </Button>
         </DialogActions>

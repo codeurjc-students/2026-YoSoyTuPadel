@@ -1,5 +1,13 @@
+import { Box, Stack, Typography } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/hooks/useAuth';
+
+const footerLinkSx = {
+  color: '#cbd5e1',
+  textDecoration: 'none',
+  transition: 'color 200ms ease',
+  '&:hover': { color: 'white' },
+};
 
 function Footer() {
   const { user, isAuthenticated } = useAuth();
@@ -9,48 +17,123 @@ function Footer() {
   const isRegularUser = !isCoach && !isAdmin;
 
   return (
-    <footer className="bg-brand-dark text-white">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.5fr_1fr_1fr] lg:px-8">
-        <div>
-          <Link to="/" className="inline-flex items-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand-red text-[10px] font-black tracking-wider">YSTP</span>
-            <span className="text-sm font-black tracking-[0.2em]">YOSOYTUPADEL</span>
-          </Link>
-          <p className="mt-4 max-w-sm text-sm leading-6 text-slate-400">
-            Juega, entrena y mejora. Todo lo que necesitas para disfrutar del pádel, en una sola academia.
-          </p>
-        </div>
+      <Box component="footer" sx={{ bgcolor: '#0b0b0c', color: 'white' }}>
+        <Box
+            sx={{
+              mx: 'auto',
+              display: 'grid',
+              maxWidth: 1280,
+              gap: 5,
+              px: { xs: 2, sm: 3, lg: 4 },
+              py: 6,
+              gridTemplateColumns: { xs: '1fr', md: '1.5fr 1fr 1fr' },
+            }}
+        >
+          <Box>
+            <Box
+                component={Link}
+                to="/"
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 1.5,
+                  borderRadius: 3,
+                  color: 'inherit',
+                  textDecoration: 'none',
+                }}
+            >
+              <Box
+                  component="span"
+                  sx={{
+                    display: 'grid',
+                    width: 40,
+                    height: 40,
+                    placeItems: 'center',
+                    borderRadius: 3,
+                    bgcolor: '#e60012',
+                    fontSize: 10,
+                    fontWeight: 900,
+                    letterSpacing: '0.05em',
+                  }}
+              >
+                YSTP
+              </Box>
+              <Typography component="span" sx={{ fontSize: 14, fontWeight: 900, letterSpacing: '0.2em' }}>
+                YOSOYTUPADEL
+              </Typography>
+            </Box>
+            <Typography sx={{ mt: 2, maxWidth: 384, fontSize: 14, lineHeight: 1.6, color: '#94a3b8' }}>
+              Juega, entrena y mejora. Todo lo que necesitas para disfrutar del pádel, en una sola academia.
+            </Typography>
+          </Box>
 
-        {isRegularUser && (
-          <div>
-            <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Explora</h2>
-            <div className="mt-4 flex flex-col items-start gap-3 text-sm text-slate-300">
-              <Link className="transition hover:text-white" to="/courts">Reserva de pistas</Link>
-              <Link className="transition hover:text-white" to="/coaches">Entrenadores</Link>
-              <Link className="transition hover:text-white" to="/rackets">Catálogo de palas</Link>
-            </div>
-          </div>
-        )}
+          {isRegularUser && (
+              <Box>
+                <Typography
+                    component="h2"
+                    sx={{
+                      fontSize: 12,
+                      fontWeight: 800,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.2em',
+                      color: '#94a3b8',
+                    }}
+                >
+                  Explora
+                </Typography>
+                <Stack spacing={1.5} sx={{ mt: 2, alignItems: 'flex-start', fontSize: 14 }}>
+                  <Box component={Link} to="/courts" sx={footerLinkSx}>Reserva de pistas</Box>
+                  <Box component={Link} to="/coaches" sx={footerLinkSx}>Entrenadores</Box>
+                  <Box component={Link} to="/rackets" sx={footerLinkSx}>Catálogo de palas</Box>
+                </Stack>
+              </Box>
+          )}
 
-        {user && (
-          <div>
-            <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Tu cuenta</h2>
-            <div className="mt-4 flex flex-col items-start gap-3 text-sm text-slate-300">
-              <Link className="transition hover:text-white" to="/profile">Mi perfil</Link>
-              {isAuthenticated && role === 'USER' && <Link className="transition hover:text-white" to="/bookings">Mis reservas</Link>}
-              {isCoach && <Link className="transition hover:text-white" to="/coach-dashboard">Panel de entrenador</Link>}
-              {isAdmin && <Link className="transition hover:text-white" to="/admin">Panel de administración</Link>}
-            </div>
-          </div>
-        )}
-      </div>
-      <div className="border-t border-white/10">
-        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-5 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-          <span>© {new Date().getFullYear()} YoSoyTuPadel</span>
-          <span>Hecho para disfrutar cada punto.</span>
-        </div>
-      </div>
-    </footer>
+          {user && (
+              <Box>
+                <Typography
+                    component="h2"
+                    sx={{
+                      fontSize: 12,
+                      fontWeight: 800,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.2em',
+                      color: '#94a3b8',
+                    }}
+                >
+                  Tu cuenta
+                </Typography>
+                <Stack spacing={1.5} sx={{ mt: 2, alignItems: 'flex-start', fontSize: 14 }}>
+                  <Box component={Link} to="/profile" sx={footerLinkSx}>Mi perfil</Box>
+                  {isAuthenticated && role === 'USER' && <Box component={Link} to="/bookings" sx={footerLinkSx}>Mis reservas</Box>}
+                  {isCoach && <Box component={Link} to="/coach-dashboard" sx={footerLinkSx}>Panel de entrenador</Box>}
+                  {isAdmin && <Box component={Link} to="/admin" sx={footerLinkSx}>Panel de administración</Box>}
+                </Stack>
+              </Box>
+          )}
+        </Box>
+
+        <Box sx={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
+          <Box
+              sx={{
+                mx: 'auto',
+                display: 'flex',
+                maxWidth: 1280,
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: { sm: 'center' },
+                justifyContent: 'space-between',
+                gap: 1,
+                px: { xs: 2, sm: 3, lg: 4 },
+                py: 2.5,
+                fontSize: 12,
+                color: '#64748b',
+              }}
+          >
+            <span>© {new Date().getFullYear()} YoSoyTuPadel</span>
+            <span>Hecho para disfrutar cada punto.</span>
+          </Box>
+        </Box>
+      </Box>
   );
 }
 

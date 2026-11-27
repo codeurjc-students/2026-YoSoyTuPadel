@@ -43,13 +43,13 @@ const userAuth: AuthContextValue = {
   clearError: vi.fn(),
 };
 
-function renderCatalogue() {
+function renderCatalogue(authValue: AuthContextValue = userAuth) {
   return render(
-    <MemoryRouter>
-      <AuthContext.Provider value={userAuth}>
-        <RacketsPage />
-      </AuthContext.Provider>
-    </MemoryRouter>,
+      <MemoryRouter>
+        <AuthContext.Provider value={authValue}>
+          <RacketsPage />
+        </AuthContext.Provider>
+      </MemoryRouter>,
   );
 }
 
@@ -68,10 +68,10 @@ describe('RacketsPage', () => {
     expect(screen.getByText('2 palas disponibles')).toBeInTheDocument();
     expect(screen.getByText('Agotada')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Ver detalles de Bullpadel Vertex 04' }))
-      .toHaveAttribute('href', '/rackets/1');
+        .toHaveAttribute('href', '/rackets/1');
   });
 
-  it('renders the loading skeleton while the catalogue request is pending', () => {
+  it('renders the loading indicator while the catalogue request is pending', () => {
     vi.mocked(racketService.getRackets).mockReturnValue(new Promise(() => undefined));
 
     renderCatalogue();
@@ -79,43 +79,47 @@ describe('RacketsPage', () => {
     expect(screen.getByRole('status', { name: 'Cargando palas' })).toBeInTheDocument();
   });
 
+  it('renders empty state when there are no rackets', async () => {
+    vi.mocked(racketService.getRackets).mockResolvedValue({
+      ...catalogue,
+      content: [],
+      totalElements: 0,
+    });
+
+    renderCatalogue();
+
+    expect(await screen.findByText('Todavía no hay palas disponibles.')).toBeInTheDocument();
+  });
+
   it('renders login button for unauthenticated users', async () => {
     vi.mocked(racketService.getRackets).mockResolvedValue(catalogue);
-    render(
-        <MemoryRouter>
-          <AuthContext.Provider value={{ ...userAuth, isAuthenticated: false, user: null }}>
-            <RacketsPage />
-          </AuthContext.Provider>
-        </MemoryRouter>,
-    );
+    renderCatalogue({ ...userAuth, isAuthenticated: false, user: null });
 
     const loginLinks = await screen.findAllByRole('link', { name: 'Inicia sesión para reservar' });
     expect(loginLinks.length).toBeGreaterThan(0);
   });
 
-  it('renders error state if initial load fails', async () => {
+  it('renders error state with retry button if initial load fails', async () => {
     vi.mocked(racketService.getRackets).mockRejectedValue(new Error('API Error'));
     renderCatalogue();
 
-    expect(await screen.findByText(/No se ha podido conectar con el servidor/i)).toBeInTheDocument();
+    expect(await screen.findByText('No se ha podido conectar con el servidor.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument();
   });
 
   it('allows an administrator to create a new racket', async () => {
     vi.mocked(racketService.getRackets).mockResolvedValue(catalogue);
     vi.mocked(racketService.createRacket).mockResolvedValue({
-      id: 3, brand: 'Nox', name: 'AT10', description: 'Test', pricePerDay: 5, stock: 10
+      id: 3,
+      brand: 'Nox',
+      name: 'AT10',
+      description: 'Test',
+      pricePerDay: 5,
+      stock: 10,
     });
 
-    const adminAuth = { ...userAuth, user: { ...userAuth.user!, role: 'ADMIN' } };
-    render(
-        <MemoryRouter>
-          <AuthContext.Provider value={adminAuth}>
-            <RacketsPage />
-          </AuthContext.Provider>
-        </MemoryRouter>,
-    );
+    renderCatalogue({ ...userAuth, user: { ...userAuth.user!, role: 'ADMIN' } });
 
-    // Open modal
     const newButton = await screen.findByRole('button', { name: /Nueva pala/i });
     fireEvent.click(newButton);
     const brandInput = await screen.findByLabelText(/Marca/i);
@@ -124,13 +128,12 @@ describe('RacketsPage', () => {
     const stockInput = screen.getByLabelText(/Stock/i);
     const priceInput = screen.getByLabelText(/Precio/i);
 
-    await fireEvent.change(brandInput, { target: { value: 'Nox' } });
-    await fireEvent.change(nameInput, { target: { value: 'AT10' } });
-    await fireEvent.change(descInput, { target: { value: 'Pala de control' } });
-    await fireEvent.change(stockInput, { target: { value: '10' } });
-    await fireEvent.change(priceInput, { target: { value: '5' } });
+    fireEvent.change(brandInput, { target: { value: 'Nox' } });
+    fireEvent.change(nameInput, { target: { value: 'AT10' } });
+    fireEvent.change(descInput, { target: { value: 'Pala de control' } });
+    fireEvent.change(stockInput, { target: { value: '10' } });
+    fireEvent.change(priceInput, { target: { value: '5' } });
 
-    // Submit form
     const continueButton = screen.getByRole('button', { name: /Continuar/i });
     expect(continueButton).not.toBeDisabled();
     fireEvent.click(continueButton);
@@ -138,16 +141,24 @@ describe('RacketsPage', () => {
     fireEvent.click(confirmButton);
 
     expect(racketService.createRacket).toHaveBeenCalledWith({
-      brand: 'Nox', name: 'AT10', description: 'Pala de control', stock: 10, pricePerDay: 5
+      brand: 'Nox',
+      name: 'AT10',
+      description: 'Pala de control',
+      stock: 10,
+      pricePerDay: 5,
     });
   });
 
   it('loads more rackets when clicking the pagination button', async () => {
-    vi.mocked(racketService.getRackets).mockResolvedValue({ ...catalogue, last: false, content: Array(10).fill(catalogue.content[0]) });
+    vi.mocked(racketService.getRackets).mockResolvedValue({
+      ...catalogue,
+      last: false,
+      content: Array(10).fill(catalogue.content[0]),
+    });
     renderCatalogue();
 
     const loadMoreButton = await screen.findByRole('button', { name: /Más resultados/i });
-    loadMoreButton.click();
+    fireEvent.click(loadMoreButton);
 
     expect(racketService.getRackets).toHaveBeenCalledWith(1, 10);
   });

@@ -34,8 +34,48 @@ const cardSx = {
   borderRadius: 4,
   bgcolor: 'white',
   color: 'grey.900',
-  mb: 3,
-  p: 2,
+  boxShadow: '0 12px 32px rgba(17, 19, 24, 0.08)',
+  p: { xs: 1, sm: 2 },
+};
+
+const dialogPaperSx = {
+  borderRadius: 4,
+  bgcolor: 'white',
+  color: 'grey.900',
+  p: 0.5,
+  m: { xs: 2, sm: 4 },
+};
+
+const dialogActionsSx = {
+  px: { xs: 2.5, sm: 3 },
+  pb: 2.5,
+  pt: 1,
+  gap: 1.25,
+  flexDirection: { xs: 'column-reverse', sm: 'row' },
+  '& > :not(style) ~ :not(style)': { ml: { xs: 0, sm: 1.25 } },
+};
+
+const secondaryDialogButtonSx = {
+  width: { xs: '100%', sm: 'auto' },
+  borderRadius: 3,
+  borderColor: 'grey.300',
+  color: 'grey.800',
+  textTransform: 'none',
+  fontWeight: 700,
+  px: 2.5,
+  py: 0.9,
+};
+
+const primaryDialogButtonSx = {
+  width: { xs: '100%', sm: 'auto' },
+  borderRadius: 3,
+  bgcolor: '#e60012',
+  boxShadow: '0 8px 20px rgba(230,0,18,.22)',
+  '&:hover': { bgcolor: '#c4000f' },
+  fontWeight: 800,
+  textTransform: 'none',
+  px: 2.5,
+  py: 0.9,
 };
 
 function UserProfilePage() {
@@ -116,18 +156,31 @@ function UserProfilePage() {
 
   if (!profile) {
     return (
-        <section className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
-          <Card sx={cardSx}>
+        <Box component="section" sx={{ maxWidth: 1024, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, py: 8 }}>
+          <Card elevation={0} sx={cardSx}>
             <CardContent sx={{ p: { xs: 3, sm: 6 }, textAlign: 'center' }}>
-              <Typography variant="h5" sx={{ fontWeight: 800 }}>
+              <Typography variant="h5" sx={{ fontWeight: 900 }}>
                 Inicia sesión para ver tu perfil
               </Typography>
-              <Button sx={{ mt: 3 }} variant="contained" color="error" onClick={() => navigate('/login')}>
+              <Button
+                  variant="contained"
+                  onClick={() => navigate('/login')}
+                  sx={{
+                    mt: 3,
+                    borderRadius: 3,
+                    bgcolor: '#e60012',
+                    boxShadow: '0 8px 20px rgba(230,0,18,.22)',
+                    '&:hover': { bgcolor: '#c4000f' },
+                    fontWeight: 800,
+                    textTransform: 'none',
+                    px: 3,
+                  }}
+              >
                 Ir a iniciar sesión
               </Button>
             </CardContent>
           </Card>
-        </section>
+        </Box>
     );
   }
 
@@ -253,37 +306,71 @@ function UserProfilePage() {
   };
 
   return (
-      <section className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
-        <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative', gap: 2 }}>
+      <Box component="section" sx={{ maxWidth: 1024, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, py: { xs: 4, sm: 6 } }}>
+        <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1.5 }}>
           <Button
               startIcon={<ArrowBackRoundedIcon />}
               onClick={() => navigate(-1)}
-              sx={{ color: 'grey.300', textTransform: 'none', fontWeight: 700, '&:hover': { color: 'white', bgcolor: 'rgba(255,255,255,0.06)' } }}
+              sx={{
+                color: 'grey.300',
+                textTransform: 'none',
+                fontWeight: 700,
+                borderRadius: 3,
+                flexShrink: 0,
+                '&:hover': { color: 'white', bgcolor: 'rgba(255,255,255,0.06)' },
+              }}
           >
             Volver
           </Button>
-          <Typography variant="h5" sx={{ color: 'white', fontWeight: 900, letterSpacing: '0.12em', position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
+          <Typography
+              component="h1"
+              variant="h5"
+              sx={{
+                color: 'white',
+                fontWeight: 900,
+                letterSpacing: '0.12em',
+                textAlign: 'center',
+                fontSize: { xs: '1.1rem', sm: '1.5rem' },
+              }}
+          >
             MI PERFIL
           </Typography>
-          <Stack direction="row" spacing={0.5}>
-            <Button
-                startIcon={<EditOutlinedIcon />}
-                variant="contained"
-                onClick={() => setIsEditOpen(true)}
-                sx={{ bgcolor: 'white', color: 'grey.900', fontWeight: 'bold', borderRadius: 2, textTransform: 'none', '&:hover': { bgcolor: 'grey.200' } }}
-            >
-              Editar
-            </Button>
-          </Stack>
+          <Button
+              startIcon={<EditOutlinedIcon />}
+              variant="contained"
+              onClick={() => setIsEditOpen(true)}
+              sx={{
+                bgcolor: 'white',
+                color: 'grey.900',
+                fontWeight: 800,
+                borderRadius: 3,
+                textTransform: 'none',
+                flexShrink: 0,
+                px: { xs: 2, sm: 2.5 },
+                '&:hover': { bgcolor: 'grey.200' },
+              }}
+          >
+            Editar
+          </Button>
         </Box>
 
-        <Stack spacing={2.5}>
+        <Stack spacing={3}>
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Avatar
                 variant="rounded"
                 src={`/api/v1/users/${profile.id}/image?v=${imageVersion}`}
                 alt={profile.name ?? profile.nickname ?? 'Usuario'}
-                sx={{ width: 220, height: 220, borderRadius: 4, objectFit: 'cover', mb: 2, boxShadow: 2, bgcolor: '#ef3340', fontSize: 72, fontWeight: 800 }}
+                sx={{
+                  width: { xs: 180, sm: 220 },
+                  height: { xs: 180, sm: 220 },
+                  borderRadius: 4,
+                  objectFit: 'cover',
+                  mb: 2,
+                  boxShadow: '0 12px 32px rgba(0, 0, 0, 0.25)',
+                  bgcolor: '#e60012',
+                  fontSize: 72,
+                  fontWeight: 800,
+                }}
             >
               {initials}
             </Avatar>
@@ -292,19 +379,28 @@ function UserProfilePage() {
                 size="small"
                 variant="contained"
                 disabled={isUploading}
-                sx={{ bgcolor: 'white', color: 'grey.900', fontWeight: 'bold', textTransform: 'none', borderRadius: 2, mt: 2, '&:hover': { bgcolor: 'grey.200' } }}
+                sx={{
+                  bgcolor: 'white',
+                  color: 'grey.900',
+                  fontWeight: 800,
+                  textTransform: 'none',
+                  borderRadius: 3,
+                  px: 2.5,
+                  py: 0.85,
+                  '&:hover': { bgcolor: 'grey.200' },
+                }}
             >
               Actualizar foto
               <input type="file" hidden accept="image/*" onChange={handleImageSelection} />
             </Button>
           </Box>
 
-          <Card elevation={3} sx={cardSx}>
+          <Card elevation={0} sx={cardSx}>
             <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
               <Typography sx={{ mb: 3, color: 'grey.900', fontSize: 12, fontWeight: 800, letterSpacing: '0.16em' }}>
                 {isCoach ? 'DATOS DEL ENTRENADOR' : isAdmin ? 'DATOS DEL ADMINISTRADOR' : 'DATOS DEL JUGADOR'}
               </Typography>
-              <Grid container spacing={3}>
+              <Grid container spacing={2.5}>
                 {[
                   ['Nombre completo', profile.name || 'Sin nombre'],
                   ...(isCoach
@@ -315,8 +411,14 @@ function UserProfilePage() {
                   ['Email', profile.email],
                 ].map(([label, value]) => (
                     <Grid key={label} size={{ xs: 12, sm: 6 }}>
-                      <Typography sx={{ color: 'grey.600', fontSize: 12, fontWeight: 700 }}>{label}</Typography>
-                      <Typography sx={{ mt: 0.5, color: 'grey.900', fontWeight: 800, overflowWrap: 'anywhere' }}>{value}</Typography>
+                      <Box sx={{ p: 1.75, bgcolor: '#f0f1f4', borderRadius: 3, height: '100%' }}>
+                        <Typography sx={{ color: '#626875', fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                          {label}
+                        </Typography>
+                        <Typography sx={{ mt: 0.5, color: '#17191e', fontWeight: 800, overflowWrap: 'anywhere' }}>
+                          {value}
+                        </Typography>
+                      </Box>
                     </Grid>
                 ))}
               </Grid>
@@ -326,7 +428,7 @@ function UserProfilePage() {
           {isUser && <LevelProgressionChart userId={profile.id} />}
 
           {activeRacket && (
-              <Card elevation={3} sx={cardSx}>
+              <Card elevation={0} sx={cardSx}>
                 <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
                   <Typography
                       sx={{
@@ -350,8 +452,9 @@ function UserProfilePage() {
                           width: 80,
                           height: 100,
                           mr: { sm: 2 },
-                          bgcolor: 'grey.100',
-                          borderRadius: 2,
+                          bgcolor: '#f0f1f4',
+                          borderRadius: 3,
+                          p: 1,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -375,7 +478,7 @@ function UserProfilePage() {
                     <Box sx={{ minWidth: 0, flex: 1 }}>
                       <Typography
                           sx={{
-                            color: 'grey.900',
+                            color: '#17191e',
                             fontWeight: 800,
                             overflowWrap: 'anywhere',
                           }}
@@ -383,7 +486,7 @@ function UserProfilePage() {
                         {activeRacket.brand} {activeRacket.name}
                       </Typography>
 
-                      <Typography sx={{ mt: 0.5, color: 'grey.600', fontSize: 13 }}>
+                      <Typography sx={{ mt: 0.5, color: '#626875', fontSize: 13 }}>
                         Pala alquilada actualmente
                       </Typography>
                     </Box>
@@ -399,12 +502,14 @@ function UserProfilePage() {
                     >
                       <Button
                           variant="contained"
-                          color="error"
                           onClick={() => navigate('/bookings?tab=material')}
                           sx={{
-                            fontWeight: 'bold',
+                            fontWeight: 800,
                             textTransform: 'none',
-                            borderRadius: 2,
+                            borderRadius: 3,
+                            bgcolor: '#e60012',
+                            boxShadow: '0 8px 20px rgba(230,0,18,.22)',
+                            '&:hover': { bgcolor: '#c4000f' },
                             px: 3,
                           }}
                       >
@@ -418,13 +523,21 @@ function UserProfilePage() {
         </Stack>
 
         {!isAdmin && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 6 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 4 }}>
               <Button
                   startIcon={<DeleteOutlineRoundedIcon />}
                   variant="contained"
-                  color="error"
                   onClick={() => setIsDeleteOpen(true)}
-                  sx={{ fontWeight: 'bold', borderRadius: 2, textTransform: 'none' }}
+                  sx={{
+                    fontWeight: 800,
+                    borderRadius: 3,
+                    bgcolor: '#e60012',
+                    boxShadow: '0 8px 20px rgba(230,0,18,.22)',
+                    '&:hover': { bgcolor: '#c4000f' },
+                    textTransform: 'none',
+                    px: 3,
+                    py: 1,
+                  }}
               >
                 Eliminar Cuenta
               </Button>
@@ -435,24 +548,27 @@ function UserProfilePage() {
             open={isPhotoConfirmOpen}
             onClose={() => !isUploading && setIsPhotoConfirmOpen(false)}
             fullWidth
-            maxWidth="sm"
-            slotProps={{ paper: { sx: { bgcolor: 'white', borderRadius: 3 } } }}
+            maxWidth="xs"
+            slotProps={{ paper: { sx: dialogPaperSx } }}
         >
-          <DialogTitle sx={{ color: 'grey.900', fontWeight: 800 }}>Actualizar foto de perfil</DialogTitle>
-          <DialogContent>
+          <DialogTitle sx={{ px: { xs: 2.5, sm: 3 }, pt: 2.5, pb: 1, fontWeight: 900 }}>
+            Actualizar foto de perfil
+          </DialogTitle>
+          <DialogContent sx={{ px: { xs: 2.5, sm: 3 }, pb: 1.5 }}>
             <DialogContentText sx={{ color: 'grey.700', lineHeight: 1.7 }}>
               ¿Deseas actualizar tu foto de perfil con la imagen seleccionada?
             </DialogContentText>
           </DialogContent>
-          <DialogActions sx={{ p: 2 }}>
+          <DialogActions sx={dialogActionsSx}>
             <Button
                 onClick={() => {
                   setSelectedImage(null);
                   setIsPhotoConfirmOpen(false);
                 }}
                 disabled={isUploading}
-                variant="text"
-                sx={{ color: 'grey.700', textTransform: 'uppercase' }}
+                variant="outlined"
+                color="inherit"
+                sx={secondaryDialogButtonSx}
             >
               VOLVER
             </Button>
@@ -460,9 +576,7 @@ function UserProfilePage() {
                 onClick={() => void handleImageUpload()}
                 disabled={isUploading || !selectedImage}
                 variant="contained"
-                color="error"
-                disableElevation
-                sx={{ fontWeight: 800, textTransform: 'uppercase' }}
+                sx={primaryDialogButtonSx}
             >
               CONFIRMAR
             </Button>
@@ -474,10 +588,12 @@ function UserProfilePage() {
             onClose={() => !isSaving && setIsEditOpen(false)}
             fullWidth
             maxWidth="sm"
-            slotProps={{ paper: { sx: { bgcolor: 'white', color: 'grey.900', borderRadius: 3 } } }}
+            slotProps={{ paper: { sx: dialogPaperSx } }}
         >
-          <DialogTitle sx={{ color: 'grey.900', fontWeight: 800 }}>Editar Perfil</DialogTitle>
-          <DialogContent>
+          <DialogTitle sx={{ px: { xs: 2.5, sm: 3 }, pt: 2.5, pb: 1, fontWeight: 900 }}>
+            Editar Perfil
+          </DialogTitle>
+          <DialogContent sx={{ px: { xs: 2.5, sm: 3 }, pb: 1.5 }}>
             <Stack spacing={2} sx={{ pt: 1 }}>
               <TextField
                   variant="outlined"
@@ -537,11 +653,22 @@ function UserProfilePage() {
               />
             </Stack>
           </DialogContent>
-          <DialogActions sx={{ p: 2 }}>
-            <Button onClick={() => setIsEditOpen(false)} disabled={isSaving} variant="text" sx={{ color: 'grey.700', textTransform: 'uppercase' }}>
+          <DialogActions sx={dialogActionsSx}>
+            <Button
+                onClick={() => setIsEditOpen(false)}
+                disabled={isSaving}
+                variant="outlined"
+                color="inherit"
+                sx={secondaryDialogButtonSx}
+            >
               VOLVER
             </Button>
-            <Button onClick={() => setIsConfirmEditOpen(true)} disabled={isSaving || !hasChanges || !formIsValid} variant="contained" color="error" disableElevation sx={{ fontWeight: 800, textTransform: 'uppercase' }}>
+            <Button
+                onClick={() => setIsConfirmEditOpen(true)}
+                disabled={isSaving || !hasChanges || !formIsValid}
+                variant="contained"
+                sx={primaryDialogButtonSx}
+            >
               GUARDAR
             </Button>
           </DialogActions>
@@ -552,19 +679,32 @@ function UserProfilePage() {
             onClose={() => !isSaving && setIsConfirmEditOpen(false)}
             fullWidth
             maxWidth="xs"
-            slotProps={{ paper: { sx: { bgcolor: 'white', color: 'grey.900', borderRadius: 3 } } }}
+            slotProps={{ paper: { sx: dialogPaperSx } }}
         >
-          <DialogTitle sx={{ color: 'grey.900', fontWeight: 800 }}>Confirmar cambios</DialogTitle>
-          <DialogContent>
+          <DialogTitle sx={{ px: { xs: 2.5, sm: 3 }, pt: 2.5, pb: 1, fontWeight: 900 }}>
+            Confirmar cambios
+          </DialogTitle>
+          <DialogContent sx={{ px: { xs: 2.5, sm: 3 }, pb: 1.5 }}>
             <DialogContentText sx={{ color: 'grey.700', lineHeight: 1.7 }}>
               ¿Estás seguro de que deseas aplicar estos cambios en tu perfil?
             </DialogContentText>
           </DialogContent>
-          <DialogActions sx={{ p: 2 }}>
-            <Button onClick={() => setIsConfirmEditOpen(false)} disabled={isSaving} variant="text" sx={{ color: 'grey.700', textTransform: 'uppercase' }}>
+          <DialogActions sx={dialogActionsSx}>
+            <Button
+                onClick={() => setIsConfirmEditOpen(false)}
+                disabled={isSaving}
+                variant="outlined"
+                color="inherit"
+                sx={secondaryDialogButtonSx}
+            >
               VOLVER
             </Button>
-            <Button onClick={() => void handleConfirmEdit()} disabled={isSaving || !hasChanges || !formIsValid} variant="contained" color="error" disableElevation sx={{ fontWeight: 800, textTransform: 'uppercase' }}>
+            <Button
+                onClick={() => void handleConfirmEdit()}
+                disabled={isSaving || !hasChanges || !formIsValid}
+                variant="contained"
+                sx={primaryDialogButtonSx}
+            >
               CONFIRMAR
             </Button>
           </DialogActions>
@@ -575,30 +715,48 @@ function UserProfilePage() {
             onClose={() => !isDeleting && setIsDeleteOpen(false)}
             fullWidth
             maxWidth="xs"
-            slotProps={{ paper: { sx: { bgcolor: 'white', borderRadius: 3 } } }}
+            slotProps={{ paper: { sx: dialogPaperSx } }}
         >
-          <DialogTitle sx={{ color: 'grey.900', fontWeight: 800 }}>¿Eliminar cuenta?</DialogTitle>
-          <DialogContent>
+          <DialogTitle sx={{ px: { xs: 2.5, sm: 3 }, pt: 2.5, pb: 1, fontWeight: 900 }}>
+            ¿Eliminar cuenta?
+          </DialogTitle>
+          <DialogContent sx={{ px: { xs: 2.5, sm: 3 }, pb: 1.5 }}>
             <DialogContentText sx={{ color: 'grey.700', lineHeight: 1.7 }}>
               Esta acción es permanente. Se eliminarán tu cuenta, tus datos personales y el acceso a tus reservas. No podrás recuperar esta información.
             </DialogContentText>
           </DialogContent>
-          <DialogActions sx={{ p: 2 }}>
-            <Button onClick={() => setIsDeleteOpen(false)} disabled={isDeleting} variant="text" sx={{ color: 'grey.700', textTransform: 'uppercase' }}>
+          <DialogActions sx={dialogActionsSx}>
+            <Button
+                onClick={() => setIsDeleteOpen(false)}
+                disabled={isDeleting}
+                variant="outlined"
+                color="inherit"
+                sx={secondaryDialogButtonSx}
+            >
               VOLVER
             </Button>
-            <Button color="error" variant="contained" disableElevation onClick={() => void handleDeleteAccount()} disabled={isDeleting} sx={{ fontWeight: 800, textTransform: 'uppercase' }}>
+            <Button
+                variant="contained"
+                onClick={() => void handleDeleteAccount()}
+                disabled={isDeleting}
+                sx={primaryDialogButtonSx}
+            >
               ELIMINAR
             </Button>
           </DialogActions>
         </Dialog>
 
-        <Snackbar open={successMessage !== null} autoHideDuration={4000} onClose={() => setSuccessMessage(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <Snackbar
+            open={successMessage !== null}
+            autoHideDuration={4000}
+            onClose={() => setSuccessMessage(null)}
+            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        >
           <Alert onClose={() => setSuccessMessage(null)} severity="success" variant="filled" sx={{ width: '100%' }}>
             {successMessage}
           </Alert>
         </Snackbar>
-      </section>
+      </Box>
   );
 }
 

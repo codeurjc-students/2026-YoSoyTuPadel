@@ -1,3 +1,4 @@
+import { Box, Button, Typography } from '@mui/material';
 import { Link } from 'react-router-dom';
 
 interface ComingSoonPageProps {
@@ -6,20 +7,98 @@ interface ComingSoonPageProps {
 
 function ComingSoonPage({ title }: ComingSoonPageProps) {
   return (
-    <section className="mx-auto flex min-h-[55vh] max-w-3xl flex-col items-center justify-center px-4 py-16 text-center">
-      <span className="grid h-16 w-16 place-items-center rounded-2xl bg-red-50 text-2xl font-black text-brand-red">YSTP</span>
-      <p className="mt-6 text-xs font-bold uppercase tracking-[0.2em] text-brand-red">Estamos preparando la pista</p>
-      <h1 className="mt-3 text-3xl font-black tracking-tight text-white sm:text-4xl">{title}</h1>
-      <p className="mt-4 max-w-lg text-sm leading-6 text-slate-300">
+        <Box
+            component="section"
+            sx={{
+                mx: 'auto',
+                display: 'flex',
+                minHeight: '55vh',
+                maxWidth: 768,
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                px: 2,
+                py: 8,
+                textAlign: 'center',
+            }}
+        >
+            <Box
+                component="span"
+                sx={{
+                    display: 'grid',
+                    width: 64,
+                    height: 64,
+                    placeItems: 'center',
+                    borderRadius: 4,
+                    bgcolor: '#fef2f2',
+                    fontSize: 24,
+                    fontWeight: 900,
+                    color: '#e60012',
+                }}
+            >
+                YSTP
+            </Box>
+            <Typography
+                component="p"
+                sx={{
+                    mt: 3,
+                    fontSize: 12,
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.2em',
+                    color: '#e60012',
+                }}
+            >
+                Estamos preparando la pista
+            </Typography>
+            <Typography
+                component="h1"
+                sx={{
+                    mt: 1.5,
+                    fontSize: { xs: 30, sm: 36 },
+                    fontWeight: 900,
+                    letterSpacing: '-0.025em',
+                    color: 'white',
+                }}
+            >
+                {title}
+            </Typography>
+            <Typography
+                sx={{
+                    mt: 2,
+                    maxWidth: 512,
+                    fontSize: 14,
+                    lineHeight: 1.6,
+                    color: '#cbd5e1',
+                }}
+            >
         Esta sección se incorporará en una próxima entrega. Mientras tanto, puedes explorar el catálogo de palas.
-      </p>
-      <Link
+      </Typography>
+      <Button
+        component={Link}
         to="/rackets"
-        className="mt-7 rounded-2xl bg-brand-red px-6 py-3 text-sm font-bold text-white shadow-red transition hover:-translate-y-0.5 hover:bg-red-600 active:scale-[0.98]"
+                variant="contained"
+                sx={{
+                    mt: 3.5,
+                    borderRadius: 3,
+                    bgcolor: '#e60012',
+                    px: 3,
+                    py: 1.25,
+                    fontSize: 14,
+                    fontWeight: 800,
+                    textTransform: 'none',
+                    color: 'white',
+                    boxShadow: '0 8px 20px rgba(230, 0, 18, 0.22)',
+                    transition: 'transform 200ms ease, background-color 200ms ease',
+                    '&:hover': {
+                        bgcolor: '#c4000f',
+                        transform: 'translateY(-2px)',
+                    },
+                }}
       >
         Explorar palas
-      </Link>
-    </section>
+      </Button>
+      </Box>
   );
 }
 
